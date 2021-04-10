@@ -1,0 +1,4420 @@
+commit 9fbcb99a3335ae9514f97a4a6e882147f5c9f944
+Author: Sheetal Nandi <shkamat@microsoft.com>
+Date:   Tue Jun 2 12:38:40 2020 -0700
+
+    Emit build info even on noEmitOnError or tsc --build (#38853)
+    
+    * Emit buildinfo when there are errors with noEmitOnError?
+    TODO: --build mode
+    
+    * Always emit tsbuild info even if there are non syntax errors in tsc --build mode
+    
+    * Sort affectedFilesPendingEmit for consistent build info text
+
+diff --git a/src/compiler/builder.ts b/src/compiler/builder.ts
+index 3eb2115daa..5f3bc171bb 100644
+--- a/src/compiler/builder.ts
++++ b/src/compiler/builder.ts
+@@ -148,7 +148,7 @@ namespace ts {
+         /**
+          * true if build info is emitted
+          */
+-        emittedBuildInfo?: boolean;
++        buildInfoEmitPending: boolean;
+         /**
+          * Already seen emitted files
+          */
+@@ -250,14 +250,14 @@ namespace ts {
+             BuilderState.getAllFilesExcludingDefaultLibraryFile(state, newProgram, /*firstSourceFile*/ undefined)
+                 .forEach(file => state.changedFilesSet.set(file.resolvedPath, true));
+         }
+-        else if (oldCompilerOptions && compilerOptionsAffectEmit(compilerOptions, oldCompilerOptions)) {
++        else if (oldCompilerOptions && !outFile(compilerOptions) && compilerOptionsAffectEmit(compilerOptions, oldCompilerOptions)) {
+             // Add all files to affectedFilesPendingEmit since emit changed
+             newProgram.getSourceFiles().forEach(f => addToAffectedFilesPendingEmit(state, f.resolvedPath, BuilderFileEmit.Full));
+             Debug.assert(!state.seenAffectedFiles || !state.seenAffectedFiles.size);
+             state.seenAffectedFiles = state.seenAffectedFiles || createMap<true>();
+         }
+ 
+-        state.emittedBuildInfo = !state.changedFilesSet.size && !state.affectedFilesPendingEmit;
++        state.buildInfoEmitPending = !!state.changedFilesSet.size;
+         return state;
+     }
+ 
+@@ -611,7 +611,7 @@ namespace ts {
+         isBuildInfoEmit?: boolean
+     ) {
+         if (isBuildInfoEmit) {
+-            state.emittedBuildInfo = true;
++            state.buildInfoEmitPending = false;
+         }
+         else if (affected === state.program) {
+             state.changedFilesSet.clear();
+@@ -624,6 +624,7 @@ namespace ts {
+             }
+             if (isPendingEmit) {
+                 state.affectedFilesPendingEmitIndex!++;
++                state.buildInfoEmitPending = true;
+             }
+             else {
+                 state.affectedFilesIndex!++;
+@@ -688,12 +689,14 @@ namespace ts {
+     }
+ 
+     export type ProgramBuildInfoDiagnostic = string | [string, readonly ReusableDiagnostic[]];
++    export type ProgramBuilderInfoFilePendingEmit = [string, BuilderFileEmit];
+     export interface ProgramBuildInfo {
+         fileInfos: MapLike<BuilderState.FileInfo>;
+         options: CompilerOptions;
+         referencedMap?: MapLike<string[]>;
+         exportedModulesMap?: MapLike<string[]>;
+         semanticDiagnosticsPerFile?: ProgramBuildInfoDiagnostic[];
++        affectedFilesPendingEmit?: ProgramBuilderInfoFilePendingEmit[];
+     }
+ 
+     /**
+@@ -751,6 +754,17 @@ namespace ts {
+             result.semanticDiagnosticsPerFile = semanticDiagnosticsPerFile;
+         }
+ 
++        if (state.affectedFilesPendingEmit) {
++            const affectedFilesPendingEmit: ProgramBuilderInfoFilePendingEmit[] = [];
++            const seenFiles = createMap<true>();
++            for (const path of state.affectedFilesPendingEmit.slice(state.affectedFilesPendingEmitIndex).sort(compareStringsCaseSensitive)) {
++                if (addToSeen(seenFiles, path)) {
++                    affectedFilesPendingEmit.push([relativeToBuildInfo(path), state.affectedFilesPendingEmitKind!.get(path)!]);
++                }
++            }
++            result.affectedFilesPendingEmit = affectedFilesPendingEmit;
++        }
++
+         return result;
+ 
+         function relativeToBuildInfoEnsuringAbsolutePath(path: string) {
+@@ -916,6 +930,7 @@ namespace ts {
+         else if (kind === BuilderProgramKind.EmitAndSemanticDiagnosticsBuilderProgram) {
+             (builderProgram as EmitAndSemanticDiagnosticsBuilderProgram).getSemanticDiagnosticsOfNextAffectedFile = getSemanticDiagnosticsOfNextAffectedFile;
+             (builderProgram as EmitAndSemanticDiagnosticsBuilderProgram).emitNextAffectedFile = emitNextAffectedFile;
++            builderProgram.emitBuildInfo = emitBuildInfo;
+         }
+         else {
+             notImplemented();
+@@ -923,6 +938,15 @@ namespace ts {
+ 
+         return builderProgram;
+ 
++        function emitBuildInfo(writeFile?: WriteFileCallback, cancellationToken?: CancellationToken): EmitResult {
++            if (state.buildInfoEmitPending) {
++                const result = Debug.checkDefined(state.program).emitBuildInfo(writeFile || maybeBind(host, host.writeFile), cancellationToken);
++                state.buildInfoEmitPending = false;
++                return result;
++            }
++            return emitSkippedWithNoDiagnostics;
++        }
++
+         /**
+          * Emits the next affected file's emit result (EmitResult and sourceFiles emitted) or returns undefined if iteration is complete
+          * The first of writeFile if provided, writeFile of BuilderProgramHost if provided, writeFile of compiler host
+@@ -936,7 +960,7 @@ namespace ts {
+                 if (!outFile(state.compilerOptions)) {
+                     const pendingAffectedFile = getNextAffectedFilePendingEmit(state);
+                     if (!pendingAffectedFile) {
+-                        if (state.emittedBuildInfo) {
++                        if (!state.buildInfoEmitPending) {
+                             return undefined;
+                         }
+ 
+@@ -993,7 +1017,7 @@ namespace ts {
+         function emit(targetSourceFile?: SourceFile, writeFile?: WriteFileCallback, cancellationToken?: CancellationToken, emitOnlyDtsFiles?: boolean, customTransformers?: CustomTransformers): EmitResult {
+             if (kind === BuilderProgramKind.EmitAndSemanticDiagnosticsBuilderProgram) {
+                 assertSourceFileOkWithoutNextAffectedCall(state, targetSourceFile);
+-                const result = handleNoEmitOptions(builderProgram, targetSourceFile, cancellationToken);
++                const result = handleNoEmitOptions(builderProgram, targetSourceFile, writeFile, cancellationToken);
+                 if (result) return result;
+                 if (!targetSourceFile) {
+                     // Emit and report any errors we ran into.
+@@ -1142,7 +1166,10 @@ namespace ts {
+             referencedMap: getMapOfReferencedSet(program.referencedMap, toPath),
+             exportedModulesMap: getMapOfReferencedSet(program.exportedModulesMap, toPath),
+             semanticDiagnosticsPerFile: program.semanticDiagnosticsPerFile && arrayToMap(program.semanticDiagnosticsPerFile, value => toPath(isString(value) ? value : value[0]), value => isString(value) ? emptyArray : value[1]),
+-            hasReusableDiagnostic: true
++            hasReusableDiagnostic: true,
++            affectedFilesPendingEmit: map(program.affectedFilesPendingEmit, value => toPath(value[0])),
++            affectedFilesPendingEmitKind: program.affectedFilesPendingEmit && arrayToMap(program.affectedFilesPendingEmit, value => toPath(value[0]), value => value[1]),
++            affectedFilesPendingEmitIndex: program.affectedFilesPendingEmit && 0,
+         };
+         return {
+             getState: () => state,
+@@ -1165,6 +1192,7 @@ namespace ts {
+             getCurrentDirectory: notImplemented,
+             emitNextAffectedFile: notImplemented,
+             getSemanticDiagnosticsOfNextAffectedFile: notImplemented,
++            emitBuildInfo: notImplemented,
+             close: noop,
+         };
+ 
+@@ -1195,6 +1223,7 @@ namespace ts {
+             getDeclarationDiagnostics: (sourceFile, cancellationToken) => getProgram().getDeclarationDiagnostics(sourceFile, cancellationToken),
+             getSemanticDiagnostics: (sourceFile, cancellationToken) => getProgram().getSemanticDiagnostics(sourceFile, cancellationToken),
+             emit: (sourceFile, writeFile, cancellationToken, emitOnlyDts, customTransformers) => getProgram().emit(sourceFile, writeFile, cancellationToken, emitOnlyDts, customTransformers),
++            emitBuildInfo: (writeFile, cancellationToken) => getProgram().emitBuildInfo(writeFile, cancellationToken),
+             getAllDependencies: notImplemented,
+             getCurrentDirectory: () => getProgram().getCurrentDirectory(),
+             close: noop,
+diff --git a/src/compiler/builderPublic.ts b/src/compiler/builderPublic.ts
+index bff123b915..e7b7aff636 100644
+--- a/src/compiler/builderPublic.ts
++++ b/src/compiler/builderPublic.ts
+@@ -99,6 +99,8 @@ namespace ts {
+          * in that order would be used to write the files
+          */
+         emit(targetSourceFile?: SourceFile, writeFile?: WriteFileCallback, cancellationToken?: CancellationToken, emitOnlyDtsFiles?: boolean, customTransformers?: CustomTransformers): EmitResult;
++        /*@internal*/
++        emitBuildInfo(writeFile?: WriteFileCallback, cancellationToken?: CancellationToken): EmitResult;
+         /**
+          * Get the current directory of the program
+          */
+diff --git a/src/compiler/program.ts b/src/compiler/program.ts
+index c9a3f88476..18f730cafe 100644
+--- a/src/compiler/program.ts
++++ b/src/compiler/program.ts
+@@ -1585,7 +1585,7 @@ namespace ts {
+ 
+         function emitWorker(program: Program, sourceFile: SourceFile | undefined, writeFileCallback: WriteFileCallback | undefined, cancellationToken: CancellationToken | undefined, emitOnlyDtsFiles?: boolean, customTransformers?: CustomTransformers, forceDtsEmit?: boolean): EmitResult {
+             if (!forceDtsEmit) {
+-                const result = handleNoEmitOptions(program, sourceFile, cancellationToken);
++                const result = handleNoEmitOptions(program, sourceFile, writeFileCallback, cancellationToken);
+                 if (result) return result;
+             }
+ 
+@@ -3638,11 +3638,17 @@ namespace ts {
+     }
+ 
+     /*@internal*/
+-    export function handleNoEmitOptions(program: ProgramToEmitFilesAndReportErrors, sourceFile: SourceFile | undefined, cancellationToken: CancellationToken | undefined): EmitResult | undefined {
++    export const emitSkippedWithNoDiagnostics: EmitResult = { diagnostics: emptyArray, sourceMaps: undefined, emittedFiles: undefined, emitSkipped: true };
++
++    /*@internal*/
++    export function handleNoEmitOptions(
++        program: ProgramToEmitFilesAndReportErrors,
++        sourceFile: SourceFile | undefined,
++        writeFile: WriteFileCallback | undefined,
++        cancellationToken: CancellationToken | undefined
++    ): EmitResult | undefined {
+         const options = program.getCompilerOptions();
+-        if (options.noEmit) {
+-            return { diagnostics: emptyArray, sourceMaps: undefined, emittedFiles: undefined, emitSkipped: true };
+-        }
++        if (options.noEmit) return emitSkippedWithNoDiagnostics;
+ 
+         // If the noEmitOnError flag is set, then check if we have any errors so far.  If so,
+         // immediately bail out.  Note that we pass 'undefined' for 'sourceFile' so that we
+@@ -3659,9 +3665,14 @@ namespace ts {
+             diagnostics = program.getDeclarationDiagnostics(/*sourceFile*/ undefined, cancellationToken);
+         }
+ 
+-        return diagnostics.length > 0 ?
+-            { diagnostics, sourceMaps: undefined, emittedFiles: undefined, emitSkipped: true } :
+-            undefined;
++        if (!diagnostics.length) return undefined;
++        let emittedFiles: string[] | undefined;
++        if (!sourceFile && !outFile(options)) {
++            const emitResult = program.emitBuildInfo(writeFile, cancellationToken);
++            if (emitResult.diagnostics) diagnostics = [...diagnostics, ...emitResult.diagnostics];
++            emittedFiles = emitResult.emittedFiles;
++        }
++        return { diagnostics, sourceMaps: undefined, emittedFiles, emitSkipped: true };
+     }
+ 
+     /*@internal*/
+diff --git a/src/compiler/tsbuildPublic.ts b/src/compiler/tsbuildPublic.ts
+index a55712c449..2ec93db074 100644
+--- a/src/compiler/tsbuildPublic.ts
++++ b/src/compiler/tsbuildPublic.ts
+@@ -699,6 +699,18 @@ namespace ts {
+         };
+     }
+ 
++    enum BuildStep {
++        CreateProgram,
++        SyntaxDiagnostics,
++        SemanticDiagnostics,
++        Emit,
++        EmitBundle,
++        EmitBuildInfo,
++        BuildInvalidatedProjectOfBundle,
++        QueueReferencingProjects,
++        Done
++    }
++
+     function createBuildOrUpdateInvalidedProject<T extends BuilderProgram>(
+         kind: InvalidatedProjectKind.Build | InvalidatedProjectKind.UpdateBundle,
+         state: SolutionBuilderState<T>,
+@@ -708,18 +720,7 @@ namespace ts {
+         config: ParsedCommandLine,
+         buildOrder: readonly ResolvedConfigFileName[],
+     ): BuildInvalidedProject<T> | UpdateBundleProject<T> {
+-        enum Step {
+-            CreateProgram,
+-            SyntaxDiagnostics,
+-            SemanticDiagnostics,
+-            Emit,
+-            EmitBundle,
+-            BuildInvalidatedProjectOfBundle,
+-            QueueReferencingProjects,
+-            Done
+-        }
+-
+-        let step = kind === InvalidatedProjectKind.Build ? Step.CreateProgram : Step.EmitBundle;
++        let step = kind === InvalidatedProjectKind.Build ? BuildStep.CreateProgram : BuildStep.EmitBundle;
+         let program: T | undefined;
+         let buildResult: BuildResultFlags | undefined;
+         let invalidatedProjectOfBundle: BuildInvalidedProject<T> | undefined;
+@@ -781,8 +782,11 @@ namespace ts {
+                             program => program.emit(targetSourceFile, writeFile, cancellationToken, emitOnlyDtsFiles, customTransformers)
+                         );
+                     }
+-                    executeSteps(Step.SemanticDiagnostics, cancellationToken);
+-                    if (step !== Step.Emit) return undefined;
++                    executeSteps(BuildStep.SemanticDiagnostics, cancellationToken);
++                    if (step === BuildStep.EmitBuildInfo) {
++                        return emitBuildInfo(writeFile, cancellationToken);
++                    }
++                    if (step !== BuildStep.Emit) return undefined;
+                     return emit(writeFile, cancellationToken, customTransformers);
+                 },
+                 done
+@@ -795,19 +799,19 @@ namespace ts {
+                 getCompilerOptions: () => config.options,
+                 getCurrentDirectory: () => state.currentDirectory,
+                 emit: (writeFile: WriteFileCallback | undefined, customTransformers: CustomTransformers | undefined) => {
+-                    if (step !== Step.EmitBundle) return invalidatedProjectOfBundle;
++                    if (step !== BuildStep.EmitBundle) return invalidatedProjectOfBundle;
+                     return emitBundle(writeFile, customTransformers);
+                 },
+                 done,
+             };
+ 
+         function done(cancellationToken?: CancellationToken, writeFile?: WriteFileCallback, customTransformers?: CustomTransformers) {
+-            executeSteps(Step.Done, cancellationToken, writeFile, customTransformers);
++            executeSteps(BuildStep.Done, cancellationToken, writeFile, customTransformers);
+             return doneInvalidatedProject(state, projectPath);
+         }
+ 
+         function withProgramOrUndefined<U>(action: (program: T) => U | undefined): U | undefined {
+-            executeSteps(Step.CreateProgram);
++            executeSteps(BuildStep.CreateProgram);
+             return program && action(program);
+         }
+ 
+@@ -821,7 +825,7 @@ namespace ts {
+             if (state.options.dry) {
+                 reportStatus(state, Diagnostics.A_non_dry_build_would_build_project_0, project);
+                 buildResult = BuildResultFlags.Success;
+-                step = Step.QueueReferencingProjects;
++                step = BuildStep.QueueReferencingProjects;
+                 return;
+             }
+ 
+@@ -831,7 +835,7 @@ namespace ts {
+                 reportAndStoreErrors(state, projectPath, getConfigFileParsingDiagnostics(config));
+                 // Nothing to build - must be a solution file, basically
+                 buildResult = BuildResultFlags.None;
+-                step = Step.QueueReferencingProjects;
++                step = BuildStep.QueueReferencingProjects;
+                 return;
+             }
+ 
+@@ -854,7 +858,7 @@ namespace ts {
+ 
+         function handleDiagnostics(diagnostics: readonly Diagnostic[], errorFlags: BuildResultFlags, errorType: string) {
+             if (diagnostics.length) {
+-                buildResult = buildErrors(
++                ({ buildResult, step } = buildErrors(
+                     state,
+                     projectPath,
+                     program,
+@@ -862,8 +866,7 @@ namespace ts {
+                     diagnostics,
+                     errorFlags,
+                     errorType
+-                );
+-                step = Step.QueueReferencingProjects;
++                ));
+             }
+             else {
+                 step++;
+@@ -894,7 +897,7 @@ namespace ts {
+ 
+         function emit(writeFileCallback?: WriteFileCallback, cancellationToken?: CancellationToken, customTransformers?: CustomTransformers): EmitResult {
+             Debug.assertIsDefined(program);
+-            Debug.assert(step === Step.Emit);
++            Debug.assert(step === BuildStep.Emit);
+             // Before emitting lets backup state, so we can revert it back if there are declaration errors to handle emit and declaration errors correctly
+             program.backupState();
+             let declDiagnostics: Diagnostic[] | undefined;
+@@ -913,7 +916,7 @@ namespace ts {
+             // Don't emit .d.ts if there are decl file errors
+             if (declDiagnostics) {
+                 program.restoreState();
+-                buildResult = buildErrors(
++                ({ buildResult, step } = buildErrors(
+                     state,
+                     projectPath,
+                     program,
+@@ -921,8 +924,7 @@ namespace ts {
+                     declDiagnostics,
+                     BuildResultFlags.DeclarationEmitErrors,
+                     "Declaration file"
+-                );
+-                step = Step.QueueReferencingProjects;
++                ));
+                 return {
+                     emitSkipped: true,
+                     diagnostics: emitResult.diagnostics
+@@ -967,6 +969,24 @@ namespace ts {
+             return emitResult;
+         }
+ 
++        function emitBuildInfo(writeFileCallback?: WriteFileCallback, cancellationToken?: CancellationToken): EmitResult {
++            Debug.assertIsDefined(program);
++            Debug.assert(step === BuildStep.EmitBuildInfo);
++            const emitResult = program.emitBuildInfo(writeFileCallback, cancellationToken);
++            if (emitResult.diagnostics.length) {
++                reportErrors(state, emitResult.diagnostics);
++                state.diagnostics.set(projectPath, [...state.diagnostics.get(projectPath)!, ...emitResult.diagnostics]);
++                buildResult = BuildResultFlags.EmitErrors & buildResult!;
++            }
++
++            if (emitResult.emittedFiles && state.writeFileName) {
++                emitResult.emittedFiles.forEach(name => listEmittedFile(state, config, name));
++            }
++            afterProgramDone(state, projectPath, program, config);
++            step = BuildStep.QueueReferencingProjects;
++            return emitResult;
++        }
++
+         function finishEmit(
+             emitterDiagnostics: DiagnosticCollection,
+             emittedOutputs: FileMap<string>,
+@@ -977,7 +997,7 @@ namespace ts {
+         ) {
+             const emitDiagnostics = emitterDiagnostics.getDiagnostics();
+             if (emitDiagnostics.length) {
+-                buildResult = buildErrors(
++                ({ buildResult, step } = buildErrors(
+                     state,
+                     projectPath,
+                     program,
+@@ -985,14 +1005,12 @@ namespace ts {
+                     emitDiagnostics,
+                     BuildResultFlags.EmitErrors,
+                     "Emit"
+-                );
+-                step = Step.QueueReferencingProjects;
++                ));
+                 return emitDiagnostics;
+             }
+ 
+             if (state.writeFileName) {
+                 emittedOutputs.forEach(name => listEmittedFile(state, config, name));
+-                if (program) listFiles(program, state.writeFileName);
+             }
+ 
+             // Update time stamps for rest of the outputs
+@@ -1006,8 +1024,7 @@ namespace ts {
+                 oldestOutputFileName
+             });
+             afterProgramDone(state, projectPath, program, config);
+-            state.projectCompilerOptions = state.baseCompilerOptions;
+-            step = Step.QueueReferencingProjects;
++            step = BuildStep.QueueReferencingProjects;
+             buildResult = resultFlags;
+             return emitDiagnostics;
+         }
+@@ -1017,7 +1034,7 @@ namespace ts {
+             if (state.options.dry) {
+                 reportStatus(state, Diagnostics.A_non_dry_build_would_update_output_of_project_0, project);
+                 buildResult = BuildResultFlags.Success;
+-                step = Step.QueueReferencingProjects;
++                step = BuildStep.QueueReferencingProjects;
+                 return undefined;
+             }
+ 
+@@ -1038,7 +1055,7 @@ namespace ts {
+ 
+             if (isString(outputFiles)) {
+                 reportStatus(state, Diagnostics.Cannot_update_output_of_project_0_because_there_was_error_reading_file_1, project, relName(state, outputFiles));
+-                step = Step.BuildInvalidatedProjectOfBundle;
++                step = BuildStep.BuildInvalidatedProjectOfBundle;
+                 return invalidatedProjectOfBundle = createBuildOrUpdateInvalidedProject(
+                     InvalidatedProjectKind.Build,
+                     state,
+@@ -1070,44 +1087,48 @@ namespace ts {
+             return { emitSkipped: false, diagnostics: emitDiagnostics };
+         }
+ 
+-        function executeSteps(till: Step, cancellationToken?: CancellationToken, writeFile?: WriteFileCallback, customTransformers?: CustomTransformers) {
+-            while (step <= till && step < Step.Done) {
++        function executeSteps(till: BuildStep, cancellationToken?: CancellationToken, writeFile?: WriteFileCallback, customTransformers?: CustomTransformers) {
++            while (step <= till && step < BuildStep.Done) {
+                 const currentStep = step;
+                 switch (step) {
+-                    case Step.CreateProgram:
++                    case BuildStep.CreateProgram:
+                         createProgram();
+                         break;
+ 
+-                    case Step.SyntaxDiagnostics:
++                    case BuildStep.SyntaxDiagnostics:
+                         getSyntaxDiagnostics(cancellationToken);
+                         break;
+ 
+-                    case Step.SemanticDiagnostics:
++                    case BuildStep.SemanticDiagnostics:
+                         getSemanticDiagnostics(cancellationToken);
+                         break;
+ 
+-                    case Step.Emit:
++                    case BuildStep.Emit:
+                         emit(writeFile, cancellationToken, customTransformers);
+                         break;
+ 
+-                    case Step.EmitBundle:
++                    case BuildStep.EmitBuildInfo:
++                        emitBuildInfo(writeFile, cancellationToken);
++                        break;
++
++                    case BuildStep.EmitBundle:
+                         emitBundle(writeFile, customTransformers);
+                         break;
+ 
+-                    case Step.BuildInvalidatedProjectOfBundle:
++                    case BuildStep.BuildInvalidatedProjectOfBundle:
+                         Debug.checkDefined(invalidatedProjectOfBundle).done(cancellationToken);
+-                        step = Step.Done;
++                        step = BuildStep.Done;
+                         break;
+ 
+-                    case Step.QueueReferencingProjects:
++                    case BuildStep.QueueReferencingProjects:
+                         queueReferencingProjects(state, project, projectPath, projectIndex, config, buildOrder, Debug.checkDefined(buildResult));
+                         step++;
+                         break;
+ 
+                     // Should never be done
+-                    case Step.Done:
++                    case BuildStep.Done:
+                     default:
+-                        assertType<Step.Done>(step);
++                        assertType<BuildStep.Done>(step);
+ 
+                 }
+                 Debug.assert(step > currentStep);
+@@ -1247,23 +1268,25 @@ namespace ts {
+     }
+ 
+     function afterProgramDone<T extends BuilderProgram>(
+-        { host, watch, builderPrograms }: SolutionBuilderState<T>,
++        state: SolutionBuilderState<T>,
+         proj: ResolvedConfigFilePath,
+         program: T | undefined,
+         config: ParsedCommandLine
+     ) {
+         if (program) {
+-            if (host.afterProgramEmitAndDiagnostics) {
+-                host.afterProgramEmitAndDiagnostics(program);
++            if (program && state.writeFileName) listFiles(program, state.writeFileName);
++            if (state.host.afterProgramEmitAndDiagnostics) {
++                state.host.afterProgramEmitAndDiagnostics(program);
+             }
+-            if (watch) {
++            if (state.watch) {
+                 program.releaseProgram();
+-                builderPrograms.set(proj, program);
++                state.builderPrograms.set(proj, program);
+             }
+         }
+-        else if (host.afterEmitBundle) {
+-            host.afterEmitBundle(config);
++        else if (state.host.afterEmitBundle) {
++            state.host.afterEmitBundle(config);
+         }
++        state.projectCompilerOptions = state.baseCompilerOptions;
+     }
+ 
+     function buildErrors<T extends BuilderProgram>(
+@@ -1272,16 +1295,17 @@ namespace ts {
+         program: T | undefined,
+         config: ParsedCommandLine,
+         diagnostics: readonly Diagnostic[],
+-        errorFlags: BuildResultFlags,
+-        errorType: string
++        buildResult: BuildResultFlags,
++        errorType: string,
+     ) {
++        const canEmitBuildInfo = !(buildResult & BuildResultFlags.SyntaxErrors) && program && !outFile(program.getCompilerOptions());
++
+         reportAndStoreErrors(state, resolvedPath, diagnostics);
+         // List files if any other build error using program (emit errors already report files)
+-        if (program && state.writeFileName) listFiles(program, state.writeFileName);
+         state.projectStatus.set(resolvedPath, { type: UpToDateStatusType.Unbuildable, reason: `${errorType} errors` });
++        if (canEmitBuildInfo) return { buildResult, step: BuildStep.EmitBuildInfo };
+         afterProgramDone(state, resolvedPath, program, config);
+-        state.projectCompilerOptions = state.baseCompilerOptions;
+-        return errorFlags;
++        return { buildResult, step: BuildStep.QueueReferencingProjects };
+     }
+ 
+     function updateModuleResolutionCache(
+diff --git a/src/compiler/watch.ts b/src/compiler/watch.ts
+index c9e428468e..59b8e572e2 100644
+--- a/src/compiler/watch.ts
++++ b/src/compiler/watch.ts
+@@ -127,6 +127,7 @@ namespace ts {
+         getDeclarationDiagnostics(sourceFile?: SourceFile, cancellationToken?: CancellationToken): readonly DiagnosticWithLocation[];
+         getConfigFileParsingDiagnostics(): readonly Diagnostic[];
+         emit(targetSourceFile?: SourceFile, writeFile?: WriteFileCallback, cancellationToken?: CancellationToken, emitOnlyDtsFiles?: boolean, customTransformers?: CustomTransformers): EmitResult;
++        emitBuildInfo(writeFile?: WriteFileCallback, cancellationToken?: CancellationToken): EmitResult;
+     }
+ 
+     export function listFiles(program: ProgramToEmitFilesAndReportErrors, writeFileName: (s: string) => void) {
+diff --git a/src/testRunner/unittests/tsbuild/helpers.ts b/src/testRunner/unittests/tsbuild/helpers.ts
+index f6b1572ed8..9f9143f6a3 100644
+--- a/src/testRunner/unittests/tsbuild/helpers.ts
++++ b/src/testRunner/unittests/tsbuild/helpers.ts
+@@ -270,8 +270,8 @@ interface Symbol {
+         baseFs: vfs.FileSystem;
+         newSys: TscCompileSystem;
+     }
+-    function verifyIncrementalCorrectness(input: () => VerifyIncrementalCorrectness) {
+-        it(`Verify emit output file text is same when built clean`, () => {
++    function verifyIncrementalCorrectness(input: () => VerifyIncrementalCorrectness, index: number) {
++        it(`Verify emit output file text is same when built clean for incremental scenario at:: ${index}`, () => {
+             const {
+                 scenario, subScenario, commandLineArgs,
+                 modifyFs, incrementalModifyFs,
+@@ -291,11 +291,42 @@ interface Symbol {
+             for (const outputFile of arrayFrom(sys.writtenFiles.keys())) {
+                 const expectedText = sys.readFile(outputFile);
+                 const actualText = newSys.readFile(outputFile);
+-                assert.equal(actualText, expectedText, `File: ${outputFile}`);
++                if (!isBuildInfoFile(outputFile)) {
++                    assert.equal(actualText, expectedText, `File: ${outputFile}`);
++                }
++                else if (actualText !== expectedText) {
++                    // Verify build info without affectedFilesPendingEmit
++                    const { text: actualBuildInfoText, affectedFilesPendingEmit: actualAffectedFilesPendingEmit } = getBuildInfoWithoutAffectedFilesPendingEmit(actualText);
++                    const { text: expectedBuildInfoText, affectedFilesPendingEmit: expectedAffectedFilesPendingEmit } = getBuildInfoWithoutAffectedFilesPendingEmit(expectedText);
++                    assert.equal(actualBuildInfoText, expectedBuildInfoText, `TsBuild info text without affectedFilesPendingEmit: ${outputFile}::\nIncremental buildInfoText:: ${actualText}\nClean buildInfoText:: ${expectedText}`);
++                    // Verify that incrementally pending affected file emit are in clean build since clean build can contain more files compared to incremental depending of noEmitOnError option
++                    if (actualAffectedFilesPendingEmit) {
++                        assert.isDefined(expectedAffectedFilesPendingEmit, `Incremental build contains affectedFilesPendingEmit, clean build should also have it: ${outputFile}::\nIncremental buildInfoText:: ${actualText}\nClean buildInfoText:: ${expectedText}`);
++                        let expectedIndex = 0;
++                        actualAffectedFilesPendingEmit.forEach(([actualFile]) => {
++                            expectedIndex = findIndex(expectedAffectedFilesPendingEmit!, ([expectedFile]) => actualFile === expectedFile, expectedIndex);
++                            assert.notEqual(expectedIndex, -1, `Incremental build contains ${actualFile} file as pending emit, clean build should also have it: ${outputFile}::\nIncremental buildInfoText:: ${actualText}\nClean buildInfoText:: ${expectedText}`);
++                            expectedIndex++;
++                        });
++                    }
++                }
+             }
+         });
+     }
+ 
++    function getBuildInfoWithoutAffectedFilesPendingEmit(text: string | undefined): { text: string | undefined; affectedFilesPendingEmit?: ProgramBuildInfo["affectedFilesPendingEmit"]; } {
++        const buildInfo = text ? getBuildInfo(text) : undefined;
++        if (!buildInfo?.program?.affectedFilesPendingEmit) return { text };
++        const { program: { affectedFilesPendingEmit, ...programRest }, ...rest } = buildInfo;
++        return {
++            text: getBuildInfoText({
++                ...rest,
++                program: programRest
++            }),
++            affectedFilesPendingEmit
++        };
++    }
++
+     export interface TscIncremental {
+         buildKind: BuildKind;
+         modifyFs: (fs: vfs.FileSystem) => void;
+@@ -356,12 +387,12 @@ interface Symbol {
+                 verifyTscBaseline(() => sys);
+             });
+ 
+-            for (const {
++            incrementalScenarios.forEach(({
+                 buildKind,
+                 modifyFs: incrementalModifyFs,
+                 subScenario: incrementalSubScenario,
+                 commandLineArgs: incrementalCommandLineArgs
+-            } of incrementalScenarios) {
++            }, index) => {
+                 describe(incrementalSubScenario || buildKind, () => {
+                     let newSys: TscCompileSystem;
+                     before(() => {
+@@ -396,9 +427,9 @@ interface Symbol {
+                         incrementalModifyFs,
+                         modifyFs,
+                         tick
+-                    }));
++                    }), index);
+                 });
+-            }
++            });
+         });
+     }
+ 
+@@ -497,7 +528,7 @@ interface Symbol {
+                     },
+                     modifyFs,
+                     tick
+-                })));
++                }), index));
+             });
+         });
+     }
+diff --git a/src/testRunner/unittests/tsbuild/inferredTypeFromTransitiveModule.ts b/src/testRunner/unittests/tsbuild/inferredTypeFromTransitiveModule.ts
+index f5037f304c..eccd6e41ae 100644
+--- a/src/testRunner/unittests/tsbuild/inferredTypeFromTransitiveModule.ts
++++ b/src/testRunner/unittests/tsbuild/inferredTypeFromTransitiveModule.ts
+@@ -42,10 +42,17 @@ namespace ts {
+ import { default as bar } from './bar';
+ bar("hello");`);
+             },
+-            incrementalScenarios: [{
+-                buildKind: BuildKind.IncrementalDtsChange,
+-                modifyFs: changeBarParam
+-            }]
++            incrementalScenarios: [
++                {
++                    buildKind: BuildKind.IncrementalDtsChange,
++                    modifyFs: changeBarParam
++                },
++                {
++                    subScenario: "Fix Error",
++                    buildKind: BuildKind.IncrementalDtsChange,
++                    modifyFs: fs => replaceText(fs, "/src/lazyIndex.ts", `bar("hello")`, "bar()")
++                },
++            ]
+         });
+     });
+ 
+diff --git a/tests/baselines/reference/tsbuild/demo/initial-build/in-bad-ref-branch-reports-the-error-about-files-not-in-rootDir-at-the-import-location.js b/tests/baselines/reference/tsbuild/demo/initial-build/in-bad-ref-branch-reports-the-error-about-files-not-in-rootDir-at-the-import-location.js
+index e70f1f9d5a..1efc8bd513 100644
+--- a/tests/baselines/reference/tsbuild/demo/initial-build/in-bad-ref-branch-reports-the-error-about-files-not-in-rootDir-at-the-import-location.js
++++ b/tests/baselines/reference/tsbuild/demo/initial-build/in-bad-ref-branch-reports-the-error-about-files-not-in-rootDir-at-the-import-location.js
+@@ -197,3 +197,111 @@ Found 7 errors.
+ exitCode:: ExitStatus.DiagnosticsPresent_OutputsSkipped
+ 
+ 
++//// [/src/lib/core/tsconfig.tsbuildinfo]
++{
++  "program": {
++    "fileInfos": {
++      "../../../lib/lib.d.ts": {
++        "version": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "signature": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "affectsGlobalScope": true
++      },
++      "../../animals/animal.ts": {
++        "version": "-14984181202-export type Size = \"small\" | \"medium\" | \"large\";\r\nexport default interface Animal {\r\n    size: Size;\r\n}\r\n",
++        "signature": "13427676350-export declare type Size = \"small\" | \"medium\" | \"large\";\r\nexport default interface Animal {\r\n    size: Size;\r\n}\r\n",
++        "affectsGlobalScope": false
++      },
++      "../../animals/dog.ts": {
++        "version": "-10991948013-import Animal from '.';\r\nimport { makeRandomName } from '../core/utilities';\r\n\r\nexport interface Dog extends Animal {\r\n    woof(): void;\r\n    name: string;\r\n}\r\n\r\nexport function createDog(): Dog {\r\n    return ({\r\n        size: \"medium\",\r\n        woof: function(this: Dog) {\r\n            console.log(`${this.name} says \"Woof\"!`);\r\n        },\r\n        name: makeRandomName()\r\n    });\r\n}\r\n\r\n",
++        "signature": "10854678623-import Animal from '.';\r\nexport interface Dog extends Animal {\r\n    woof(): void;\r\n    name: string;\r\n}\r\nexport declare function createDog(): Dog;\r\n",
++        "affectsGlobalScope": false
++      },
++      "../../animals/index.ts": {
++        "version": "-5382672599-import Animal from './animal';\r\n\r\nexport default Animal;\r\nimport { createDog, Dog } from './dog';\r\nexport { createDog, Dog };\r\n",
++        "signature": "4477582546-import Animal from './animal';\r\nexport default Animal;\r\nimport { createDog, Dog } from './dog';\r\nexport { createDog, Dog };\r\n",
++        "affectsGlobalScope": false
++      },
++      "../../core/utilities.ts": {
++        "version": "-15713992787-import * as A from '../animals';\n\r\nexport function makeRandomName() {\r\n    return \"Bob!?! \";\r\n}\r\n\r\nexport function lastElementOf<T>(arr: T[]): T | undefined {\r\n    if (arr.length === 0) return undefined;\r\n    return arr[arr.length - 1];\r\n}\r\n\r\n",
++        "signature": "-8177343116-export declare function makeRandomName(): string;\r\nexport declare function lastElementOf<T>(arr: T[]): T | undefined;\r\n",
++        "affectsGlobalScope": false
++      }
++    },
++    "options": {
++      "declaration": true,
++      "target": 1,
++      "module": 1,
++      "strict": true,
++      "noUnusedLocals": true,
++      "noUnusedParameters": true,
++      "noImplicitReturns": true,
++      "noFallthroughCasesInSwitch": true,
++      "composite": true,
++      "outDir": "./",
++      "rootDir": "../../core",
++      "configFilePath": "../../core/tsconfig.json"
++    },
++    "referencedMap": {
++      "../../animals/dog.ts": [
++        "../../animals/index.ts",
++        "../../core/utilities.ts"
++      ],
++      "../../animals/index.ts": [
++        "../../animals/animal.ts",
++        "../../animals/dog.ts"
++      ],
++      "../../core/utilities.ts": [
++        "../../animals/index.ts"
++      ]
++    },
++    "exportedModulesMap": {
++      "../../animals/dog.ts": [
++        "../../animals/index.ts"
++      ],
++      "../../animals/index.ts": [
++        "../../animals/animal.ts",
++        "../../animals/dog.ts"
++      ]
++    },
++    "semanticDiagnosticsPerFile": [
++      "../../../lib/lib.d.ts",
++      "../../animals/animal.ts",
++      "../../animals/dog.ts",
++      "../../animals/index.ts",
++      [
++        "../../core/utilities.ts",
++        [
++          {
++            "file": "../../core/utilities.ts",
++            "start": 0,
++            "length": 32,
++            "messageText": "'A' is declared but its value is never read.",
++            "category": 1,
++            "code": 6133,
++            "reportsUnnecessary": true
++          }
++        ]
++      ]
++    ],
++    "affectedFilesPendingEmit": [
++      [
++        "../../animals/animal.ts",
++        1
++      ],
++      [
++        "../../animals/dog.ts",
++        1
++      ],
++      [
++        "../../animals/index.ts",
++        1
++      ],
++      [
++        "../../core/utilities.ts",
++        1
++      ]
++    ]
++  },
++  "version": "FakeTSVersion"
++}
++
+diff --git a/tests/baselines/reference/tsbuild/inferredTypeFromTransitiveModule/initial-build/reports-errors-in-files-affected-by-change-in-signature-with-isolatedModules.js b/tests/baselines/reference/tsbuild/inferredTypeFromTransitiveModule/initial-build/reports-errors-in-files-affected-by-change-in-signature-with-isolatedModules.js
+index abc2adbd83..000e53f1e6 100644
+--- a/tests/baselines/reference/tsbuild/inferredTypeFromTransitiveModule/initial-build/reports-errors-in-files-affected-by-change-in-signature-with-isolatedModules.js
++++ b/tests/baselines/reference/tsbuild/inferredTypeFromTransitiveModule/initial-build/reports-errors-in-files-affected-by-change-in-signature-with-isolatedModules.js
+@@ -264,3 +264,228 @@ Found 1 error.
+ exitCode:: ExitStatus.DiagnosticsPresent_OutputsSkipped
+ 
+ 
++//// [/src/obj/tsconfig.tsbuildinfo]
++{
++  "program": {
++    "fileInfos": {
++      "../../lib/lib.d.ts": {
++        "version": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "signature": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "affectsGlobalScope": true
++      },
++      "../bar.ts": {
++        "version": "747071916-interface RawAction {\r\n    (...args: any[]): Promise<any> | void;\r\n}\r\ninterface ActionFactory {\r\n    <T extends RawAction>(target: T): T;\r\n}\r\ndeclare function foo<U extends any[] = any[]>(): ActionFactory;\r\nexport default foo()(function foobar(): void {\r\n});",
++        "signature": "-9232740537-declare const _default: () => void;\r\nexport default _default;\r\n",
++        "affectsGlobalScope": false
++      },
++      "../bundling.ts": {
++        "version": "-21659820217-export class LazyModule<TModule> {\r\n    constructor(private importCallback: () => Promise<TModule>) {}\r\n}\r\n\r\nexport class LazyAction<\r\n    TAction extends (...args: any[]) => any,\r\n    TModule\r\n>  {\r\n    constructor(_lazyModule: LazyModule<TModule>, _getter: (module: TModule) => TAction) {\r\n    }\r\n}\r\n",
++        "signature": "-40032907372-export declare class LazyModule<TModule> {\r\n    private importCallback;\r\n    constructor(importCallback: () => Promise<TModule>);\r\n}\r\nexport declare class LazyAction<TAction extends (...args: any[]) => any, TModule> {\r\n    constructor(_lazyModule: LazyModule<TModule>, _getter: (module: TModule) => TAction);\r\n}\r\n",
++        "affectsGlobalScope": false
++      },
++      "../global.d.ts": {
++        "version": "-9780226215-interface PromiseConstructor {\r\n    new <T>(): Promise<T>;\r\n}\r\ndeclare var Promise: PromiseConstructor;\r\ninterface Promise<T> {\r\n}",
++        "signature": "-9780226215-interface PromiseConstructor {\r\n    new <T>(): Promise<T>;\r\n}\r\ndeclare var Promise: PromiseConstructor;\r\ninterface Promise<T> {\r\n}",
++        "affectsGlobalScope": true
++      },
++      "../lazyindex.ts": {
++        "version": "3017320451-export { default as bar } from './bar';\n\nimport { default as bar } from './bar';\nbar(\"hello\");",
++        "signature": "-6224542381-export { default as bar } from './bar';\r\n",
++        "affectsGlobalScope": false
++      },
++      "../index.ts": {
++        "version": "-11602502901-import { LazyAction, LazyModule } from './bundling';\r\nconst lazyModule = new LazyModule(() =>\r\n    import('./lazyIndex')\r\n);\r\nexport const lazyBar = new LazyAction(lazyModule, m => m.bar);",
++        "signature": "6256067474-import { LazyAction } from './bundling';\r\nexport declare const lazyBar: LazyAction<() => void, typeof import(\"./lazyIndex\")>;\r\n",
++        "affectsGlobalScope": false
++      }
++    },
++    "options": {
++      "target": 1,
++      "declaration": true,
++      "outDir": "./",
++      "incremental": true,
++      "isolatedModules": true,
++      "configFilePath": "../tsconfig.json"
++    },
++    "referencedMap": {
++      "../index.ts": [
++        "../bundling.ts",
++        "../lazyindex.ts"
++      ],
++      "../lazyindex.ts": [
++        "../bar.ts"
++      ]
++    },
++    "exportedModulesMap": {
++      "../index.ts": [
++        "../bundling.ts",
++        "../lazyindex.ts"
++      ],
++      "../lazyindex.ts": [
++        "../bar.ts"
++      ]
++    },
++    "semanticDiagnosticsPerFile": [
++      "../../lib/lib.d.ts",
++      "../bar.ts",
++      "../bundling.ts",
++      "../global.d.ts",
++      "../index.ts",
++      [
++        "../lazyindex.ts",
++        [
++          {
++            "file": "../lazyindex.ts",
++            "start": 85,
++            "length": 7,
++            "messageText": "Expected 0 arguments, but got 1.",
++            "category": 1,
++            "code": 2554
++          }
++        ]
++      ]
++    ],
++    "affectedFilesPendingEmit": [
++      [
++        "../bar.ts",
++        1
++      ],
++      [
++        "../index.ts",
++        0
++      ],
++      [
++        "../lazyindex.ts",
++        0
++      ]
++    ]
++  },
++  "version": "FakeTSVersion"
++}
++
++
++
++Change:: Fix Error
++Input::
++//// [/src/lazyIndex.ts]
++export { default as bar } from './bar';
++
++import { default as bar } from './bar';
++bar();
++
++
++
++Output::
++/lib/tsc --b /src --verbose
++[[90m12:07:00 AM[0m] Projects in this build: 
++    * src/tsconfig.json
++
++[[90m12:07:00 AM[0m] Project 'src/tsconfig.json' is out of date because oldest output 'src/obj/bar.js' is older than newest input 'src/lazyIndex.ts'
++
++[[90m12:07:00 AM[0m] Building project '/src/tsconfig.json'...
++
++[[90m12:07:00 AM[0m] Updating unchanged output timestamps of project '/src/tsconfig.json'...
++
++exitCode:: ExitStatus.Success
++
++
++//// [/src/obj/bar.d.ts]
++declare const _default: () => void;
++export default _default;
++
++
++//// [/src/obj/bar.js]
++"use strict";
++Object.defineProperty(exports, "__esModule", { value: true });
++exports.default = foo()(function foobar() {
++});
++
++
++//// [/src/obj/index.d.ts]
++import { LazyAction } from './bundling';
++export declare const lazyBar: LazyAction<() => void, typeof import("./lazyIndex")>;
++
++
++//// [/src/obj/lazyIndex.d.ts] file written with same contents
++//// [/src/obj/lazyIndex.js]
++"use strict";
++Object.defineProperty(exports, "__esModule", { value: true });
++var bar_1 = require("./bar");
++Object.defineProperty(exports, "bar", { enumerable: true, get: function () { return bar_1.default; } });
++var bar_2 = require("./bar");
++bar_2.default();
++
++
++//// [/src/obj/tsconfig.tsbuildinfo]
++{
++  "program": {
++    "fileInfos": {
++      "../../lib/lib.d.ts": {
++        "version": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "signature": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "affectsGlobalScope": true
++      },
++      "../bar.ts": {
++        "version": "747071916-interface RawAction {\r\n    (...args: any[]): Promise<any> | void;\r\n}\r\ninterface ActionFactory {\r\n    <T extends RawAction>(target: T): T;\r\n}\r\ndeclare function foo<U extends any[] = any[]>(): ActionFactory;\r\nexport default foo()(function foobar(): void {\r\n});",
++        "signature": "-9232740537-declare const _default: () => void;\r\nexport default _default;\r\n",
++        "affectsGlobalScope": false
++      },
++      "../bundling.ts": {
++        "version": "-21659820217-export class LazyModule<TModule> {\r\n    constructor(private importCallback: () => Promise<TModule>) {}\r\n}\r\n\r\nexport class LazyAction<\r\n    TAction extends (...args: any[]) => any,\r\n    TModule\r\n>  {\r\n    constructor(_lazyModule: LazyModule<TModule>, _getter: (module: TModule) => TAction) {\r\n    }\r\n}\r\n",
++        "signature": "-40032907372-export declare class LazyModule<TModule> {\r\n    private importCallback;\r\n    constructor(importCallback: () => Promise<TModule>);\r\n}\r\nexport declare class LazyAction<TAction extends (...args: any[]) => any, TModule> {\r\n    constructor(_lazyModule: LazyModule<TModule>, _getter: (module: TModule) => TAction);\r\n}\r\n",
++        "affectsGlobalScope": false
++      },
++      "../global.d.ts": {
++        "version": "-9780226215-interface PromiseConstructor {\r\n    new <T>(): Promise<T>;\r\n}\r\ndeclare var Promise: PromiseConstructor;\r\ninterface Promise<T> {\r\n}",
++        "signature": "-9780226215-interface PromiseConstructor {\r\n    new <T>(): Promise<T>;\r\n}\r\ndeclare var Promise: PromiseConstructor;\r\ninterface Promise<T> {\r\n}",
++        "affectsGlobalScope": true
++      },
++      "../lazyindex.ts": {
++        "version": "-3721262293-export { default as bar } from './bar';\n\nimport { default as bar } from './bar';\nbar();",
++        "signature": "-6224542381-export { default as bar } from './bar';\r\n",
++        "affectsGlobalScope": false
++      },
++      "../index.ts": {
++        "version": "-11602502901-import { LazyAction, LazyModule } from './bundling';\r\nconst lazyModule = new LazyModule(() =>\r\n    import('./lazyIndex')\r\n);\r\nexport const lazyBar = new LazyAction(lazyModule, m => m.bar);",
++        "signature": "6256067474-import { LazyAction } from './bundling';\r\nexport declare const lazyBar: LazyAction<() => void, typeof import(\"./lazyIndex\")>;\r\n",
++        "affectsGlobalScope": false
++      }
++    },
++    "options": {
++      "target": 1,
++      "declaration": true,
++      "outDir": "./",
++      "incremental": true,
++      "isolatedModules": true,
++      "configFilePath": "../tsconfig.json"
++    },
++    "referencedMap": {
++      "../index.ts": [
++        "../bundling.ts",
++        "../lazyindex.ts"
++      ],
++      "../lazyindex.ts": [
++        "../bar.ts"
++      ]
++    },
++    "exportedModulesMap": {
++      "../index.ts": [
++        "../bundling.ts",
++        "../lazyindex.ts"
++      ],
++      "../lazyindex.ts": [
++        "../bar.ts"
++      ]
++    },
++    "semanticDiagnosticsPerFile": [
++      "../../lib/lib.d.ts",
++      "../bar.ts",
++      "../bundling.ts",
++      "../global.d.ts",
++      "../index.ts",
++      "../lazyindex.ts"
++    ]
++  },
++  "version": "FakeTSVersion"
++}
++
+diff --git a/tests/baselines/reference/tsbuild/noEmitOnError/initial-build/semantic-errors-with-incremental.js b/tests/baselines/reference/tsbuild/noEmitOnError/initial-build/semantic-errors-with-incremental.js
+index 091e9d94ba..807e97f2c3 100644
+--- a/tests/baselines/reference/tsbuild/noEmitOnError/initial-build/semantic-errors-with-incremental.js
++++ b/tests/baselines/reference/tsbuild/noEmitOnError/initial-build/semantic-errors-with-incremental.js
+@@ -64,6 +64,79 @@ Semantic diagnostics in builder refreshed for::
+ /src/src/other.ts
+ 
+ 
++//// [/src/dev-build/tsconfig.tsbuildinfo]
++{
++  "program": {
++    "fileInfos": {
++      "../../lib/lib.d.ts": {
++        "version": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "signature": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "affectsGlobalScope": true
++      },
++      "../shared/types/db.ts": {
++        "version": "-9621097780-export interface A {\r\n    name: string;\r\n}",
++        "signature": "-6245214333-export interface A {\r\n    name: string;\r\n}\r\n",
++        "affectsGlobalScope": false
++      },
++      "../src/main.ts": {
++        "version": "-11111345725-import { A } from \"../shared/types/db\";\nconst a: string = 10;",
++        "signature": "-4882119183-export {};\r\n",
++        "affectsGlobalScope": false
++      },
++      "../src/other.ts": {
++        "version": "11373096570-console.log(\"hi\");\r\nexport { }",
++        "signature": "-4882119183-export {};\r\n",
++        "affectsGlobalScope": false
++      }
++    },
++    "options": {
++      "outDir": "./",
++      "noEmitOnError": true,
++      "incremental": true,
++      "configFilePath": "../tsconfig.json"
++    },
++    "referencedMap": {
++      "../src/main.ts": [
++        "../shared/types/db.ts"
++      ]
++    },
++    "exportedModulesMap": {},
++    "semanticDiagnosticsPerFile": [
++      "../../lib/lib.d.ts",
++      "../shared/types/db.ts",
++      [
++        "../src/main.ts",
++        [
++          {
++            "file": "../src/main.ts",
++            "start": 46,
++            "length": 1,
++            "code": 2322,
++            "category": 1,
++            "messageText": "Type 'number' is not assignable to type 'string'."
++          }
++        ]
++      ],
++      "../src/other.ts"
++    ],
++    "affectedFilesPendingEmit": [
++      [
++        "../shared/types/db.ts",
++        1
++      ],
++      [
++        "../src/main.ts",
++        1
++      ],
++      [
++        "../src/other.ts",
++        1
++      ]
++    ]
++  },
++  "version": "FakeTSVersion"
++}
++
+ 
+ 
+ Change:: no-change-run
+@@ -90,10 +163,6 @@ Program files::
+ /src/src/other.ts
+ 
+ Semantic diagnostics in builder refreshed for::
+-/lib/lib.d.ts
+-/src/shared/types/db.ts
+-/src/src/main.ts
+-/src/src/other.ts
+ 
+ 
+ 
+@@ -118,10 +187,7 @@ Program files::
+ /src/src/other.ts
+ 
+ Semantic diagnostics in builder refreshed for::
+-/lib/lib.d.ts
+-/src/shared/types/db.ts
+ /src/src/main.ts
+-/src/src/other.ts
+ 
+ 
+ //// [/src/dev-build/shared/types/db.js]
+diff --git a/tests/baselines/reference/tsbuild/resolveJsonModule/initial-build/include-only.js b/tests/baselines/reference/tsbuild/resolveJsonModule/initial-build/include-only.js
+index e1d0659797..408fd4c552 100644
+--- a/tests/baselines/reference/tsbuild/resolveJsonModule/initial-build/include-only.js
++++ b/tests/baselines/reference/tsbuild/resolveJsonModule/initial-build/include-only.js
+@@ -65,3 +65,59 @@ Found 1 error.
+ exitCode:: ExitStatus.DiagnosticsPresent_OutputsSkipped
+ 
+ 
++//// [/src/dist/tsconfig_withInclude.tsbuildinfo]
++{
++  "program": {
++    "fileInfos": {
++      "../../lib/lib.d.ts": {
++        "version": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "signature": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "affectsGlobalScope": true
++      },
++      "../src/hello.json": {
++        "version": "6651571919-{\n  \"hello\": \"world\"\n}",
++        "signature": "-4341462827-export declare const hello: string;\r\n",
++        "affectsGlobalScope": true
++      },
++      "../src/index.ts": {
++        "version": "-27703454282-import hello from \"./hello.json\"\n\nexport default hello.hello",
++        "signature": "-1680156224-declare const _default: string;\r\nexport default _default;\r\n",
++        "affectsGlobalScope": false
++      }
++    },
++    "options": {
++      "composite": true,
++      "moduleResolution": 2,
++      "module": 1,
++      "resolveJsonModule": true,
++      "esModuleInterop": true,
++      "allowSyntheticDefaultImports": true,
++      "outDir": "./",
++      "skipDefaultLibCheck": true,
++      "configFilePath": "../tsconfig_withInclude.json"
++    },
++    "referencedMap": {
++      "../src/index.ts": [
++        "../src/hello.json"
++      ]
++    },
++    "exportedModulesMap": {},
++    "semanticDiagnosticsPerFile": [
++      "../../lib/lib.d.ts",
++      "../src/hello.json",
++      "../src/index.ts"
++    ],
++    "affectedFilesPendingEmit": [
++      [
++        "../src/hello.json",
++        1
++      ],
++      [
++        "../src/index.ts",
++        1
++      ]
++    ]
++  },
++  "version": "FakeTSVersion"
++}
++
+diff --git a/tests/baselines/reference/tsbuild/sample1/initial-build/does-not-build-downstream-projects-if-upstream-projects-have-errors.js b/tests/baselines/reference/tsbuild/sample1/initial-build/does-not-build-downstream-projects-if-upstream-projects-have-errors.js
+index 20dc078260..d988e83869 100644
+--- a/tests/baselines/reference/tsbuild/sample1/initial-build/does-not-build-downstream-projects-if-upstream-projects-have-errors.js
++++ b/tests/baselines/reference/tsbuild/sample1/initial-build/does-not-build-downstream-projects-if-upstream-projects-have-errors.js
+@@ -196,3 +196,83 @@ exports.multiply = multiply;
+   "version": "FakeTSVersion"
+ }
+ 
++//// [/src/logic/tsconfig.tsbuildinfo]
++{
++  "program": {
++    "fileInfos": {
++      "../../lib/lib.d.ts": {
++        "version": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "signature": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "affectsGlobalScope": true
++      },
++      "../core/index.d.ts": {
++        "version": "-13851440507-export declare const someString: string;\r\nexport declare function leftPad(s: string, n: number): string;\r\nexport declare function multiply(a: number, b: number): number;\r\n//# sourceMappingURL=index.d.ts.map",
++        "signature": "-13851440507-export declare const someString: string;\r\nexport declare function leftPad(s: string, n: number): string;\r\nexport declare function multiply(a: number, b: number): number;\r\n//# sourceMappingURL=index.d.ts.map",
++        "affectsGlobalScope": false
++      },
++      "../core/anothermodule.d.ts": {
++        "version": "7652028357-export declare const World = \"hello\";\r\n//# sourceMappingURL=anotherModule.d.ts.map",
++        "signature": "7652028357-export declare const World = \"hello\";\r\n//# sourceMappingURL=anotherModule.d.ts.map",
++        "affectsGlobalScope": false
++      },
++      "./index.ts": {
++        "version": "-6409874073-import * as c from '../core/index';\r\nexport function getSecondsInDay() {\r\n    return c.muitply();\r\n}\r\nimport * as mod from '../core/anotherModule';\r\nexport const m = mod;\r\n",
++        "signature": "-4761685354-export declare function getSecondsInDay(): any;\r\nimport * as mod from '../core/anotherModule';\r\nexport declare const m: typeof mod;\r\n",
++        "affectsGlobalScope": false
++      }
++    },
++    "options": {
++      "composite": true,
++      "declaration": true,
++      "sourceMap": true,
++      "forceConsistentCasingInFileNames": true,
++      "skipDefaultLibCheck": true,
++      "configFilePath": "./tsconfig.json"
++    },
++    "referencedMap": {
++      "./index.ts": [
++        "../core/anothermodule.d.ts",
++        "../core/index.d.ts"
++      ]
++    },
++    "exportedModulesMap": {
++      "./index.ts": [
++        "../core/anothermodule.d.ts"
++      ]
++    },
++    "semanticDiagnosticsPerFile": [
++      "../../lib/lib.d.ts",
++      "../core/anothermodule.d.ts",
++      "../core/index.d.ts",
++      [
++        "./index.ts",
++        [
++          {
++            "file": "./index.ts",
++            "start": 87,
++            "length": 7,
++            "code": 2339,
++            "category": 1,
++            "messageText": "Property 'muitply' does not exist on type 'typeof import(\"/src/core/index\")'."
++          }
++        ]
++      ]
++    ],
++    "affectedFilesPendingEmit": [
++      [
++        "../core/anothermodule.d.ts",
++        1
++      ],
++      [
++        "../core/index.d.ts",
++        1
++      ],
++      [
++        "./index.ts",
++        1
++      ]
++    ]
++  },
++  "version": "FakeTSVersion"
++}
++
+diff --git a/tests/baselines/reference/tsbuild/transitiveReferences/initial-build/reports-error-about-module-not-found-with-node-resolution-with-external-module-name.js b/tests/baselines/reference/tsbuild/transitiveReferences/initial-build/reports-error-about-module-not-found-with-node-resolution-with-external-module-name.js
+index 10a5f43474..1bc69c6c72 100644
+--- a/tests/baselines/reference/tsbuild/transitiveReferences/initial-build/reports-error-about-module-not-found-with-node-resolution-with-external-module-name.js
++++ b/tests/baselines/reference/tsbuild/transitiveReferences/initial-build/reports-error-about-module-not-found-with-node-resolution-with-external-module-name.js
+@@ -114,3 +114,52 @@ exports.A = A;
+   "version": "FakeTSVersion"
+ }
+ 
++//// [/src/tsconfig.b.tsbuildinfo]
++{
++  "program": {
++    "fileInfos": {
++      "../lib/lib.d.ts": {
++        "version": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "signature": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "affectsGlobalScope": true
++      },
++      "./b.ts": {
++        "version": "-17186364832-import {A} from 'a';\nexport const b = new A();",
++        "signature": "-6598996556-export declare const b: any;\r\n",
++        "affectsGlobalScope": false
++      }
++    },
++    "options": {
++      "composite": true,
++      "moduleResolution": 2,
++      "listFiles": true,
++      "configFilePath": "./tsconfig.b.json"
++    },
++    "referencedMap": {},
++    "exportedModulesMap": {},
++    "semanticDiagnosticsPerFile": [
++      "../lib/lib.d.ts",
++      [
++        "./b.ts",
++        [
++          {
++            "file": "./b.ts",
++            "start": 16,
++            "length": 3,
++            "messageText": "Cannot find module 'a' or its corresponding type declarations.",
++            "category": 1,
++            "code": 2307
++          }
++        ]
++      ]
++    ],
++    "affectedFilesPendingEmit": [
++      [
++        "./b.ts",
++        1
++      ]
++    ]
++  },
++  "version": "FakeTSVersion"
++}
++
+diff --git a/tests/baselines/reference/tsbuild/watchMode/demo/updates-with-bad-reference.js b/tests/baselines/reference/tsbuild/watchMode/demo/updates-with-bad-reference.js
+index a226331508..d13fc00f24 100644
+--- a/tests/baselines/reference/tsbuild/watchMode/demo/updates-with-bad-reference.js
++++ b/tests/baselines/reference/tsbuild/watchMode/demo/updates-with-bad-reference.js
+@@ -204,19 +204,19 @@ Output::
+ [7m [0m [91m                   ~~~~~~~~~~~~[0m
+ 
+ 
+-[[90m12:00:50 AM[0m] Project 'animals/tsconfig.json' can't be built because its dependency 'core' has errors
++[[90m12:00:57 AM[0m] Project 'animals/tsconfig.json' can't be built because its dependency 'core' has errors
+ 
+ 
+-[[90m12:00:51 AM[0m] Skipping build of project '/user/username/projects/demo/animals/tsconfig.json' because its dependency '/user/username/projects/demo/core' has errors
++[[90m12:00:58 AM[0m] Skipping build of project '/user/username/projects/demo/animals/tsconfig.json' because its dependency '/user/username/projects/demo/core' has errors
+ 
+ 
+-[[90m12:00:52 AM[0m] Project 'zoo/tsconfig.json' can't be built because its dependency 'animals' was not built
++[[90m12:00:59 AM[0m] Project 'zoo/tsconfig.json' can't be built because its dependency 'animals' was not built
+ 
+ 
+-[[90m12:00:53 AM[0m] Skipping build of project '/user/username/projects/demo/zoo/tsconfig.json' because its dependency '/user/username/projects/demo/animals' was not built
++[[90m12:01:00 AM[0m] Skipping build of project '/user/username/projects/demo/zoo/tsconfig.json' because its dependency '/user/username/projects/demo/animals' was not built
+ 
+ 
+-[[90m12:00:54 AM[0m] Found 7 errors. Watching for file changes.
++[[90m12:01:01 AM[0m] Found 7 errors. Watching for file changes.
+ 
+ 
+ 
+@@ -268,6 +268,115 @@ FsWatchesRecursive::
+ 
+ exitCode:: ExitStatus.undefined
+ 
++//// [/user/username/projects/demo/lib/core/tsconfig.tsbuildinfo]
++{
++  "program": {
++    "fileInfos": {
++      "../../../../../../a/lib/lib.d.ts": {
++        "version": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "signature": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "affectsGlobalScope": true
++      },
++      "../../animals/animal.ts": {
++        "version": "-14984181202-export type Size = \"small\" | \"medium\" | \"large\";\r\nexport default interface Animal {\r\n    size: Size;\r\n}\r\n",
++        "signature": "-10510161654-export declare type Size = \"small\" | \"medium\" | \"large\";\nexport default interface Animal {\n    size: Size;\n}\n",
++        "affectsGlobalScope": false
++      },
++      "../../animals/dog.ts": {
++        "version": "-10991948013-import Animal from '.';\r\nimport { makeRandomName } from '../core/utilities';\r\n\r\nexport interface Dog extends Animal {\r\n    woof(): void;\r\n    name: string;\r\n}\r\n\r\nexport function createDog(): Dog {\r\n    return ({\r\n        size: \"medium\",\r\n        woof: function(this: Dog) {\r\n            console.log(`${this.name} says \"Woof\"!`);\r\n        },\r\n        name: makeRandomName()\r\n    });\r\n}\r\n\r\n",
++        "signature": "6032048049-import Animal from '.';\nexport interface Dog extends Animal {\n    woof(): void;\n    name: string;\n}\nexport declare function createDog(): Dog;\n",
++        "affectsGlobalScope": false
++      },
++      "../../animals/index.ts": {
++        "version": "-5382672599-import Animal from './animal';\r\n\r\nexport default Animal;\r\nimport { createDog, Dog } from './dog';\r\nexport { createDog, Dog };\r\n",
++        "signature": "1096904574-import Animal from './animal';\nexport default Animal;\nimport { createDog, Dog } from './dog';\nexport { createDog, Dog };\n",
++        "affectsGlobalScope": false
++      },
++      "../../core/utilities.ts": {
++        "version": "-15713992787-import * as A from '../animals';\n\r\nexport function makeRandomName() {\r\n    return \"Bob!?! \";\r\n}\r\n\r\nexport function lastElementOf<T>(arr: T[]): T | undefined {\r\n    if (arr.length === 0) return undefined;\r\n    return arr[arr.length - 1];\r\n}\r\n\r\n",
++        "signature": "-11345568166-export declare function makeRandomName(): string;\nexport declare function lastElementOf<T>(arr: T[]): T | undefined;\n",
++        "affectsGlobalScope": false
++      }
++    },
++    "options": {
++      "declaration": true,
++      "target": 1,
++      "module": 1,
++      "strict": true,
++      "noUnusedLocals": true,
++      "noUnusedParameters": true,
++      "noImplicitReturns": true,
++      "noFallthroughCasesInSwitch": true,
++      "composite": true,
++      "outDir": "./",
++      "rootDir": "../../core",
++      "watch": true,
++      "configFilePath": "../../core/tsconfig.json"
++    },
++    "referencedMap": {
++      "../../animals/dog.ts": [
++        "../../animals/index.ts",
++        "../../core/utilities.ts"
++      ],
++      "../../animals/index.ts": [
++        "../../animals/animal.ts",
++        "../../animals/dog.ts"
++      ],
++      "../../core/utilities.ts": [
++        "../../animals/index.ts"
++      ]
++    },
++    "exportedModulesMap": {
++      "../../animals/dog.ts": [
++        "../../animals/index.ts"
++      ],
++      "../../animals/index.ts": [
++        "../../animals/animal.ts",
++        "../../animals/dog.ts"
++      ]
++    },
++    "semanticDiagnosticsPerFile": [
++      "../../../../../../a/lib/lib.d.ts",
++      "../../animals/animal.ts",
++      "../../animals/dog.ts",
++      "../../animals/index.ts",
++      [
++        "../../core/utilities.ts",
++        [
++          {
++            "file": "../../core/utilities.ts",
++            "start": 0,
++            "length": 32,
++            "messageText": "'A' is declared but its value is never read.",
++            "category": 1,
++            "code": 6133,
++            "reportsUnnecessary": true
++          }
++        ]
++      ]
++    ],
++    "affectedFilesPendingEmit": [
++      [
++        "../../animals/animal.ts",
++        1
++      ],
++      [
++        "../../animals/dog.ts",
++        1
++      ],
++      [
++        "../../animals/index.ts",
++        1
++      ],
++      [
++        "../../core/utilities.ts",
++        1
++      ]
++    ]
++  },
++  "version": "FakeTSVersion"
++}
++
+ 
+ Change:: Prepend a line
+ 
+@@ -290,13 +399,13 @@ export function lastElementOf<T>(arr: T[]): T | undefined {
+ 
+ Output::
+ >> Screen clear
+-[[90m12:00:58 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:01:05 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+-[[90m12:00:59 AM[0m] Project 'core/tsconfig.json' is out of date because output file 'lib/core/utilities.js' does not exist
++[[90m12:01:06 AM[0m] Project 'core/tsconfig.json' is out of date because output file 'lib/core/utilities.js' does not exist
+ 
+ 
+-[[90m12:01:00 AM[0m] Building project '/user/username/projects/demo/core/tsconfig.json'...
++[[90m12:01:07 AM[0m] Building project '/user/username/projects/demo/core/tsconfig.json'...
+ 
+ 
+ [96manimals/index.ts[0m:[93m1[0m:[93m20[0m - [91merror[0m[90m TS6059: [0mFile '/user/username/projects/demo/animals/animal.ts' is not under 'rootDir' '/user/username/projects/demo/core'. 'rootDir' is expected to contain all source files.
+@@ -341,7 +450,7 @@ Output::
+ [7m [0m [91m                   ~~~~~~~~~~~~[0m
+ 
+ 
+-[[90m12:01:01 AM[0m] Found 7 errors. Watching for file changes.
++[[90m12:01:11 AM[0m] Found 7 errors. Watching for file changes.
+ 
+ 
+ 
+@@ -389,3 +498,112 @@ FsWatchesRecursive::
+ 
+ exitCode:: ExitStatus.undefined
+ 
++//// [/user/username/projects/demo/lib/core/tsconfig.tsbuildinfo]
++{
++  "program": {
++    "fileInfos": {
++      "../../../../../../a/lib/lib.d.ts": {
++        "version": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "signature": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "affectsGlobalScope": true
++      },
++      "../../animals/animal.ts": {
++        "version": "-14984181202-export type Size = \"small\" | \"medium\" | \"large\";\r\nexport default interface Animal {\r\n    size: Size;\r\n}\r\n",
++        "signature": "-10510161654-export declare type Size = \"small\" | \"medium\" | \"large\";\nexport default interface Animal {\n    size: Size;\n}\n",
++        "affectsGlobalScope": false
++      },
++      "../../animals/dog.ts": {
++        "version": "-10991948013-import Animal from '.';\r\nimport { makeRandomName } from '../core/utilities';\r\n\r\nexport interface Dog extends Animal {\r\n    woof(): void;\r\n    name: string;\r\n}\r\n\r\nexport function createDog(): Dog {\r\n    return ({\r\n        size: \"medium\",\r\n        woof: function(this: Dog) {\r\n            console.log(`${this.name} says \"Woof\"!`);\r\n        },\r\n        name: makeRandomName()\r\n    });\r\n}\r\n\r\n",
++        "signature": "6032048049-import Animal from '.';\nexport interface Dog extends Animal {\n    woof(): void;\n    name: string;\n}\nexport declare function createDog(): Dog;\n",
++        "affectsGlobalScope": false
++      },
++      "../../animals/index.ts": {
++        "version": "-5382672599-import Animal from './animal';\r\n\r\nexport default Animal;\r\nimport { createDog, Dog } from './dog';\r\nexport { createDog, Dog };\r\n",
++        "signature": "1096904574-import Animal from './animal';\nexport default Animal;\nimport { createDog, Dog } from './dog';\nexport { createDog, Dog };\n",
++        "affectsGlobalScope": false
++      },
++      "../../core/utilities.ts": {
++        "version": "-10926881769-\nimport * as A from '../animals';\n\r\nexport function makeRandomName() {\r\n    return \"Bob!?! \";\r\n}\r\n\r\nexport function lastElementOf<T>(arr: T[]): T | undefined {\r\n    if (arr.length === 0) return undefined;\r\n    return arr[arr.length - 1];\r\n}\r\n\r\n",
++        "signature": "-11345568166-export declare function makeRandomName(): string;\nexport declare function lastElementOf<T>(arr: T[]): T | undefined;\n",
++        "affectsGlobalScope": false
++      }
++    },
++    "options": {
++      "declaration": true,
++      "target": 1,
++      "module": 1,
++      "strict": true,
++      "noUnusedLocals": true,
++      "noUnusedParameters": true,
++      "noImplicitReturns": true,
++      "noFallthroughCasesInSwitch": true,
++      "composite": true,
++      "outDir": "./",
++      "rootDir": "../../core",
++      "watch": true,
++      "configFilePath": "../../core/tsconfig.json"
++    },
++    "referencedMap": {
++      "../../animals/dog.ts": [
++        "../../animals/index.ts",
++        "../../core/utilities.ts"
++      ],
++      "../../animals/index.ts": [
++        "../../animals/animal.ts",
++        "../../animals/dog.ts"
++      ],
++      "../../core/utilities.ts": [
++        "../../animals/index.ts"
++      ]
++    },
++    "exportedModulesMap": {
++      "../../animals/dog.ts": [
++        "../../animals/index.ts"
++      ],
++      "../../animals/index.ts": [
++        "../../animals/animal.ts",
++        "../../animals/dog.ts"
++      ]
++    },
++    "semanticDiagnosticsPerFile": [
++      "../../../../../../a/lib/lib.d.ts",
++      "../../animals/animal.ts",
++      "../../animals/dog.ts",
++      "../../animals/index.ts",
++      [
++        "../../core/utilities.ts",
++        [
++          {
++            "file": "../../core/utilities.ts",
++            "start": 1,
++            "length": 32,
++            "messageText": "'A' is declared but its value is never read.",
++            "category": 1,
++            "code": 6133,
++            "reportsUnnecessary": true
++          }
++        ]
++      ]
++    ],
++    "affectedFilesPendingEmit": [
++      [
++        "../../animals/animal.ts",
++        1
++      ],
++      [
++        "../../animals/dog.ts",
++        1
++      ],
++      [
++        "../../animals/index.ts",
++        1
++      ],
++      [
++        "../../core/utilities.ts",
++        1
++      ]
++    ]
++  },
++  "version": "FakeTSVersion"
++}
++
+diff --git a/tests/baselines/reference/tsbuild/watchMode/noEmitOnError/does-not-emit-any-files-on-error-with-incremental.js b/tests/baselines/reference/tsbuild/watchMode/noEmitOnError/does-not-emit-any-files-on-error-with-incremental.js
+index 49d3e41dac..8d493f6a20 100644
+--- a/tests/baselines/reference/tsbuild/watchMode/noEmitOnError/does-not-emit-any-files-on-error-with-incremental.js
++++ b/tests/baselines/reference/tsbuild/watchMode/noEmitOnError/does-not-emit-any-files-on-error-with-incremental.js
+@@ -309,7 +309,7 @@ Output::
+ [7m [0m [91m      ~[0m
+ 
+ 
+-[[90m12:01:14 AM[0m] Found 1 error. Watching for file changes.
++[[90m12:01:17 AM[0m] Found 1 error. Watching for file changes.
+ 
+ 
+ 
+@@ -342,6 +342,72 @@ FsWatchesRecursive::
+ 
+ exitCode:: ExitStatus.undefined
+ 
++//// [/user/username/projects/noEmitOnError/dev-build/tsconfig.tsbuildinfo]
++{
++  "program": {
++    "fileInfos": {
++      "../../../../../a/lib/lib.d.ts": {
++        "version": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "signature": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "affectsGlobalScope": true
++      },
++      "../shared/types/db.ts": {
++        "version": "-9621097780-export interface A {\r\n    name: string;\r\n}",
++        "signature": "-5014788164-export interface A {\n    name: string;\n}\n",
++        "affectsGlobalScope": false
++      },
++      "../src/main.ts": {
++        "version": "-11111345725-import { A } from \"../shared/types/db\";\nconst a: string = 10;",
++        "signature": "-3531856636-export {};\n",
++        "affectsGlobalScope": false
++      },
++      "../src/other.ts": {
++        "version": "11373096570-console.log(\"hi\");\r\nexport { }",
++        "signature": "-3531856636-export {};\n",
++        "affectsGlobalScope": false
++      }
++    },
++    "options": {
++      "outDir": "./",
++      "noEmitOnError": true,
++      "watch": true,
++      "incremental": true,
++      "configFilePath": "../tsconfig.json"
++    },
++    "referencedMap": {
++      "../src/main.ts": [
++        "../shared/types/db.ts"
++      ]
++    },
++    "exportedModulesMap": {},
++    "semanticDiagnosticsPerFile": [
++      "../../../../../a/lib/lib.d.ts",
++      "../shared/types/db.ts",
++      [
++        "../src/main.ts",
++        [
++          {
++            "file": "../src/main.ts",
++            "start": 46,
++            "length": 1,
++            "code": 2322,
++            "category": 1,
++            "messageText": "Type 'number' is not assignable to type 'string'."
++          }
++        ]
++      ],
++      "../src/other.ts"
++    ],
++    "affectedFilesPendingEmit": [
++      [
++        "../src/main.ts",
++        1
++      ]
++    ]
++  },
++  "version": "FakeTSVersion"
++}
++
+ 
+ Change:: No change
+ 
+@@ -350,13 +416,13 @@ Input::
+ 
+ Output::
+ >> Screen clear
+-[[90m12:01:18 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:01:21 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+-[[90m12:01:19 AM[0m] Project 'tsconfig.json' is out of date because oldest output 'dev-build/shared/types/db.js' is older than newest input 'src/main.ts'
++[[90m12:01:22 AM[0m] Project 'tsconfig.json' is out of date because oldest output 'dev-build/shared/types/db.js' is older than newest input 'src/main.ts'
+ 
+ 
+-[[90m12:01:20 AM[0m] Building project '/user/username/projects/noEmitOnError/tsconfig.json'...
++[[90m12:01:23 AM[0m] Building project '/user/username/projects/noEmitOnError/tsconfig.json'...
+ 
+ 
+ [96msrc/main.ts[0m:[93m2[0m:[93m7[0m - [91merror[0m[90m TS2322: [0mType 'number' is not assignable to type 'string'.
+@@ -365,7 +431,7 @@ Output::
+ [7m [0m [91m      ~[0m
+ 
+ 
+-[[90m12:01:21 AM[0m] Found 1 error. Watching for file changes.
++[[90m12:01:24 AM[0m] Found 1 error. Watching for file changes.
+ 
+ 
+ 
+@@ -408,19 +474,19 @@ const a: string = "hello";
+ 
+ Output::
+ >> Screen clear
+-[[90m12:01:25 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:01:28 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+-[[90m12:01:26 AM[0m] Project 'tsconfig.json' is out of date because oldest output 'dev-build/shared/types/db.js' is older than newest input 'src/main.ts'
++[[90m12:01:29 AM[0m] Project 'tsconfig.json' is out of date because oldest output 'dev-build/shared/types/db.js' is older than newest input 'src/main.ts'
+ 
+ 
+-[[90m12:01:27 AM[0m] Building project '/user/username/projects/noEmitOnError/tsconfig.json'...
++[[90m12:01:30 AM[0m] Building project '/user/username/projects/noEmitOnError/tsconfig.json'...
+ 
+ 
+-[[90m12:01:35 AM[0m] Updating unchanged output timestamps of project '/user/username/projects/noEmitOnError/tsconfig.json'...
++[[90m12:01:38 AM[0m] Updating unchanged output timestamps of project '/user/username/projects/noEmitOnError/tsconfig.json'...
+ 
+ 
+-[[90m12:01:36 AM[0m] Found 0 errors. Watching for file changes.
++[[90m12:01:39 AM[0m] Found 0 errors. Watching for file changes.
+ 
+ 
+ 
+@@ -517,19 +583,19 @@ Input::
+ 
+ Output::
+ >> Screen clear
+-[[90m12:01:40 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:01:43 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+-[[90m12:01:41 AM[0m] Project 'tsconfig.json' is out of date because oldest output 'dev-build/shared/types/db.js' is older than newest input 'src/main.ts'
++[[90m12:01:44 AM[0m] Project 'tsconfig.json' is out of date because oldest output 'dev-build/shared/types/db.js' is older than newest input 'src/main.ts'
+ 
+ 
+-[[90m12:01:42 AM[0m] Building project '/user/username/projects/noEmitOnError/tsconfig.json'...
++[[90m12:01:45 AM[0m] Building project '/user/username/projects/noEmitOnError/tsconfig.json'...
+ 
+ 
+-[[90m12:01:44 AM[0m] Updating unchanged output timestamps of project '/user/username/projects/noEmitOnError/tsconfig.json'...
++[[90m12:01:47 AM[0m] Updating unchanged output timestamps of project '/user/username/projects/noEmitOnError/tsconfig.json'...
+ 
+ 
+-[[90m12:01:45 AM[0m] Found 0 errors. Watching for file changes.
++[[90m12:01:48 AM[0m] Found 0 errors. Watching for file changes.
+ 
+ 
+ 
+diff --git a/tests/baselines/reference/tsbuild/watchMode/programUpdates/reportErrors/when-preserveWatchOutput-is-not-used.js b/tests/baselines/reference/tsbuild/watchMode/programUpdates/reportErrors/when-preserveWatchOutput-is-not-used.js
+index bc2e4ee3c4..ab23323603 100644
+--- a/tests/baselines/reference/tsbuild/watchMode/programUpdates/reportErrors/when-preserveWatchOutput-is-not-used.js
++++ b/tests/baselines/reference/tsbuild/watchMode/programUpdates/reportErrors/when-preserveWatchOutput-is-not-used.js
+@@ -440,7 +440,7 @@ Output::
+ [7m [0m [91m    ~[0m
+ 
+ 
+-[[90m12:01:19 AM[0m] Found 1 error. Watching for file changes.
++[[90m12:01:22 AM[0m] Found 1 error. Watching for file changes.
+ 
+ 
+ 
+@@ -481,6 +481,79 @@ FsWatchesRecursive::
+ 
+ exitCode:: ExitStatus.undefined
+ 
++//// [/user/username/projects/sample1/logic/tsconfig.tsbuildinfo]
++{
++  "program": {
++    "fileInfos": {
++      "../../../../../a/lib/lib.d.ts": {
++        "version": "-7698705165-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }",
++        "signature": "-7698705165-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }",
++        "affectsGlobalScope": true
++      },
++      "../core/index.d.ts": {
++        "version": "-9047123202-export declare const someString: string;\nexport declare function leftPad(s: string, n: number): string;\nexport declare function multiply(a: number, b: number): number;\n//# sourceMappingURL=index.d.ts.map",
++        "signature": "-9047123202-export declare const someString: string;\nexport declare function leftPad(s: string, n: number): string;\nexport declare function multiply(a: number, b: number): number;\n//# sourceMappingURL=index.d.ts.map",
++        "affectsGlobalScope": false
++      },
++      "../core/anothermodule.d.ts": {
++        "version": "-4454971016-export declare const World = \"hello\";\n//# sourceMappingURL=anotherModule.d.ts.map",
++        "signature": "-4454971016-export declare const World = \"hello\";\n//# sourceMappingURL=anotherModule.d.ts.map",
++        "affectsGlobalScope": false
++      },
++      "./index.ts": {
++        "version": "-5445152744-import * as c from '../core/index';\r\nexport function getSecondsInDay() {\r\n    return c.multiply(10, 15);\r\n}\r\nimport * as mod from '../core/anotherModule';\r\nexport const m = mod;\r\n\nlet y: string = 10;",
++        "signature": "-9659407152-export declare function getSecondsInDay(): number;\nimport * as mod from '../core/anotherModule';\nexport declare const m: typeof mod;\n",
++        "affectsGlobalScope": false
++      }
++    },
++    "options": {
++      "composite": true,
++      "declaration": true,
++      "sourceMap": true,
++      "forceConsistentCasingInFileNames": true,
++      "skipDefaultLibCheck": true,
++      "watch": true,
++      "configFilePath": "./tsconfig.json"
++    },
++    "referencedMap": {
++      "./index.ts": [
++        "../core/anothermodule.d.ts",
++        "../core/index.d.ts"
++      ]
++    },
++    "exportedModulesMap": {
++      "./index.ts": [
++        "../core/anothermodule.d.ts"
++      ]
++    },
++    "semanticDiagnosticsPerFile": [
++      "../../../../../a/lib/lib.d.ts",
++      "../core/anothermodule.d.ts",
++      "../core/index.d.ts",
++      [
++        "./index.ts",
++        [
++          {
++            "file": "./index.ts",
++            "start": 184,
++            "length": 1,
++            "code": 2322,
++            "category": 1,
++            "messageText": "Type 'number' is not assignable to type 'string'."
++          }
++        ]
++      ]
++    ],
++    "affectedFilesPendingEmit": [
++      [
++        "./index.ts",
++        1
++      ]
++    ]
++  },
++  "version": "FakeTSVersion"
++}
++
+ 
+ Change:: change core
+ 
+@@ -495,7 +568,7 @@ let x: string = 10;
+ 
+ Output::
+ >> Screen clear
+-[[90m12:01:23 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:01:26 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+ [96msample1/core/index.ts[0m:[93m5[0m:[93m5[0m - [91merror[0m[90m TS2322: [0mType 'number' is not assignable to type 'string'.
+@@ -510,7 +583,7 @@ Output::
+ [7m [0m [91m    ~[0m
+ 
+ 
+-[[90m12:01:24 AM[0m] Found 2 errors. Watching for file changes.
++[[90m12:01:30 AM[0m] Found 2 errors. Watching for file changes.
+ 
+ 
+ 
+@@ -550,3 +623,60 @@ FsWatchesRecursive::
+ 
+ exitCode:: ExitStatus.undefined
+ 
++//// [/user/username/projects/sample1/core/tsconfig.tsbuildinfo]
++{
++  "program": {
++    "fileInfos": {
++      "../../../../../a/lib/lib.d.ts": {
++        "version": "-7698705165-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }",
++        "signature": "-7698705165-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }",
++        "affectsGlobalScope": true
++      },
++      "./anothermodule.ts": {
++        "version": "-2676574883-export const World = \"hello\";\r\n",
++        "signature": "-4454971016-export declare const World = \"hello\";\n//# sourceMappingURL=anotherModule.d.ts.map",
++        "affectsGlobalScope": false
++      },
++      "./index.ts": {
++        "version": "-17094159457-export const someString: string = \"HELLO WORLD\";\r\nexport function leftPad(s: string, n: number) { return s + n; }\r\nexport function multiply(a: number, b: number) { return a * b; }\r\n\nlet x: string = 10;",
++        "signature": "-9047123202-export declare const someString: string;\nexport declare function leftPad(s: string, n: number): string;\nexport declare function multiply(a: number, b: number): number;\n//# sourceMappingURL=index.d.ts.map",
++        "affectsGlobalScope": false
++      }
++    },
++    "options": {
++      "composite": true,
++      "declaration": true,
++      "declarationMap": true,
++      "skipDefaultLibCheck": true,
++      "watch": true,
++      "configFilePath": "./tsconfig.json"
++    },
++    "referencedMap": {},
++    "exportedModulesMap": {},
++    "semanticDiagnosticsPerFile": [
++      "../../../../../a/lib/lib.d.ts",
++      "./anothermodule.ts",
++      [
++        "./index.ts",
++        [
++          {
++            "file": "./index.ts",
++            "start": 186,
++            "length": 1,
++            "code": 2322,
++            "category": 1,
++            "messageText": "Type 'number' is not assignable to type 'string'."
++          }
++        ]
++      ]
++    ],
++    "affectedFilesPendingEmit": [
++      [
++        "./index.ts",
++        1
++      ]
++    ]
++  },
++  "version": "FakeTSVersion"
++}
++
+diff --git a/tests/baselines/reference/tsbuild/watchMode/programUpdates/reportErrors/when-preserveWatchOutput-is-passed-on-command-line.js b/tests/baselines/reference/tsbuild/watchMode/programUpdates/reportErrors/when-preserveWatchOutput-is-passed-on-command-line.js
+index 093a9c384c..1cabdaa6df 100644
+--- a/tests/baselines/reference/tsbuild/watchMode/programUpdates/reportErrors/when-preserveWatchOutput-is-passed-on-command-line.js
++++ b/tests/baselines/reference/tsbuild/watchMode/programUpdates/reportErrors/when-preserveWatchOutput-is-passed-on-command-line.js
+@@ -441,7 +441,7 @@ Output::
+ [7m [0m [91m    ~[0m
+ 
+ 
+-[[90m12:01:19 AM[0m] Found 1 error. Watching for file changes.
++[[90m12:01:22 AM[0m] Found 1 error. Watching for file changes.
+ 
+ 
+ 
+@@ -482,6 +482,80 @@ FsWatchesRecursive::
+ 
+ exitCode:: ExitStatus.undefined
+ 
++//// [/user/username/projects/sample1/logic/tsconfig.tsbuildinfo]
++{
++  "program": {
++    "fileInfos": {
++      "../../../../../a/lib/lib.d.ts": {
++        "version": "-7698705165-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }",
++        "signature": "-7698705165-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }",
++        "affectsGlobalScope": true
++      },
++      "../core/index.d.ts": {
++        "version": "-9047123202-export declare const someString: string;\nexport declare function leftPad(s: string, n: number): string;\nexport declare function multiply(a: number, b: number): number;\n//# sourceMappingURL=index.d.ts.map",
++        "signature": "-9047123202-export declare const someString: string;\nexport declare function leftPad(s: string, n: number): string;\nexport declare function multiply(a: number, b: number): number;\n//# sourceMappingURL=index.d.ts.map",
++        "affectsGlobalScope": false
++      },
++      "../core/anothermodule.d.ts": {
++        "version": "-4454971016-export declare const World = \"hello\";\n//# sourceMappingURL=anotherModule.d.ts.map",
++        "signature": "-4454971016-export declare const World = \"hello\";\n//# sourceMappingURL=anotherModule.d.ts.map",
++        "affectsGlobalScope": false
++      },
++      "./index.ts": {
++        "version": "-5445152744-import * as c from '../core/index';\r\nexport function getSecondsInDay() {\r\n    return c.multiply(10, 15);\r\n}\r\nimport * as mod from '../core/anotherModule';\r\nexport const m = mod;\r\n\nlet y: string = 10;",
++        "signature": "-9659407152-export declare function getSecondsInDay(): number;\nimport * as mod from '../core/anotherModule';\nexport declare const m: typeof mod;\n",
++        "affectsGlobalScope": false
++      }
++    },
++    "options": {
++      "composite": true,
++      "declaration": true,
++      "sourceMap": true,
++      "forceConsistentCasingInFileNames": true,
++      "skipDefaultLibCheck": true,
++      "watch": true,
++      "preserveWatchOutput": true,
++      "configFilePath": "./tsconfig.json"
++    },
++    "referencedMap": {
++      "./index.ts": [
++        "../core/anothermodule.d.ts",
++        "../core/index.d.ts"
++      ]
++    },
++    "exportedModulesMap": {
++      "./index.ts": [
++        "../core/anothermodule.d.ts"
++      ]
++    },
++    "semanticDiagnosticsPerFile": [
++      "../../../../../a/lib/lib.d.ts",
++      "../core/anothermodule.d.ts",
++      "../core/index.d.ts",
++      [
++        "./index.ts",
++        [
++          {
++            "file": "./index.ts",
++            "start": 184,
++            "length": 1,
++            "code": 2322,
++            "category": 1,
++            "messageText": "Type 'number' is not assignable to type 'string'."
++          }
++        ]
++      ]
++    ],
++    "affectedFilesPendingEmit": [
++      [
++        "./index.ts",
++        1
++      ]
++    ]
++  },
++  "version": "FakeTSVersion"
++}
++
+ 
+ Change:: change core
+ 
+@@ -495,7 +569,7 @@ let x: string = 10;
+ 
+ 
+ Output::
+-[[90m12:01:23 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:01:26 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+ [96msample1/core/index.ts[0m:[93m5[0m:[93m5[0m - [91merror[0m[90m TS2322: [0mType 'number' is not assignable to type 'string'.
+@@ -510,7 +584,7 @@ Output::
+ [7m [0m [91m    ~[0m
+ 
+ 
+-[[90m12:01:24 AM[0m] Found 2 errors. Watching for file changes.
++[[90m12:01:30 AM[0m] Found 2 errors. Watching for file changes.
+ 
+ 
+ 
+@@ -550,3 +624,61 @@ FsWatchesRecursive::
+ 
+ exitCode:: ExitStatus.undefined
+ 
++//// [/user/username/projects/sample1/core/tsconfig.tsbuildinfo]
++{
++  "program": {
++    "fileInfos": {
++      "../../../../../a/lib/lib.d.ts": {
++        "version": "-7698705165-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }",
++        "signature": "-7698705165-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }",
++        "affectsGlobalScope": true
++      },
++      "./anothermodule.ts": {
++        "version": "-2676574883-export const World = \"hello\";\r\n",
++        "signature": "-4454971016-export declare const World = \"hello\";\n//# sourceMappingURL=anotherModule.d.ts.map",
++        "affectsGlobalScope": false
++      },
++      "./index.ts": {
++        "version": "-17094159457-export const someString: string = \"HELLO WORLD\";\r\nexport function leftPad(s: string, n: number) { return s + n; }\r\nexport function multiply(a: number, b: number) { return a * b; }\r\n\nlet x: string = 10;",
++        "signature": "-9047123202-export declare const someString: string;\nexport declare function leftPad(s: string, n: number): string;\nexport declare function multiply(a: number, b: number): number;\n//# sourceMappingURL=index.d.ts.map",
++        "affectsGlobalScope": false
++      }
++    },
++    "options": {
++      "composite": true,
++      "declaration": true,
++      "declarationMap": true,
++      "skipDefaultLibCheck": true,
++      "watch": true,
++      "preserveWatchOutput": true,
++      "configFilePath": "./tsconfig.json"
++    },
++    "referencedMap": {},
++    "exportedModulesMap": {},
++    "semanticDiagnosticsPerFile": [
++      "../../../../../a/lib/lib.d.ts",
++      "./anothermodule.ts",
++      [
++        "./index.ts",
++        [
++          {
++            "file": "./index.ts",
++            "start": 186,
++            "length": 1,
++            "code": 2322,
++            "category": 1,
++            "messageText": "Type 'number' is not assignable to type 'string'."
++          }
++        ]
++      ]
++    ],
++    "affectedFilesPendingEmit": [
++      [
++        "./index.ts",
++        1
++      ]
++    ]
++  },
++  "version": "FakeTSVersion"
++}
++
+diff --git a/tests/baselines/reference/tsc/incremental/initial-build/with-noEmitOnError-semantic-errors.js b/tests/baselines/reference/tsc/incremental/initial-build/with-noEmitOnError-semantic-errors.js
+index f9209ae7cc..22affa64ee 100644
+--- a/tests/baselines/reference/tsc/incremental/initial-build/with-noEmitOnError-semantic-errors.js
++++ b/tests/baselines/reference/tsc/incremental/initial-build/with-noEmitOnError-semantic-errors.js
+@@ -64,6 +64,80 @@ Semantic diagnostics in builder refreshed for::
+ /src/src/other.ts
+ 
+ 
++//// [/src/dev-build/tsconfig.tsbuildinfo]
++{
++  "program": {
++    "fileInfos": {
++      "../../lib/lib.d.ts": {
++        "version": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "signature": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "affectsGlobalScope": true
++      },
++      "../shared/types/db.ts": {
++        "version": "-9621097780-export interface A {\r\n    name: string;\r\n}",
++        "signature": "-6245214333-export interface A {\r\n    name: string;\r\n}\r\n",
++        "affectsGlobalScope": false
++      },
++      "../src/main.ts": {
++        "version": "-11111345725-import { A } from \"../shared/types/db\";\nconst a: string = 10;",
++        "signature": "-4882119183-export {};\r\n",
++        "affectsGlobalScope": false
++      },
++      "../src/other.ts": {
++        "version": "11373096570-console.log(\"hi\");\r\nexport { }",
++        "signature": "-4882119183-export {};\r\n",
++        "affectsGlobalScope": false
++      }
++    },
++    "options": {
++      "outDir": "./",
++      "noEmitOnError": true,
++      "incremental": true,
++      "project": "..",
++      "configFilePath": "../tsconfig.json"
++    },
++    "referencedMap": {
++      "../src/main.ts": [
++        "../shared/types/db.ts"
++      ]
++    },
++    "exportedModulesMap": {},
++    "semanticDiagnosticsPerFile": [
++      "../../lib/lib.d.ts",
++      "../shared/types/db.ts",
++      [
++        "../src/main.ts",
++        [
++          {
++            "file": "../src/main.ts",
++            "start": 46,
++            "length": 1,
++            "code": 2322,
++            "category": 1,
++            "messageText": "Type 'number' is not assignable to type 'string'."
++          }
++        ]
++      ],
++      "../src/other.ts"
++    ],
++    "affectedFilesPendingEmit": [
++      [
++        "../shared/types/db.ts",
++        1
++      ],
++      [
++        "../src/main.ts",
++        1
++      ],
++      [
++        "../src/other.ts",
++        1
++      ]
++    ]
++  },
++  "version": "FakeTSVersion"
++}
++
+ 
+ 
+ Change:: no-change-run
+@@ -90,10 +164,6 @@ Program files::
+ /src/src/other.ts
+ 
+ Semantic diagnostics in builder refreshed for::
+-/lib/lib.d.ts
+-/src/shared/types/db.ts
+-/src/src/main.ts
+-/src/src/other.ts
+ 
+ 
+ 
+@@ -118,10 +188,7 @@ Program files::
+ /src/src/other.ts
+ 
+ Semantic diagnostics in builder refreshed for::
+-/lib/lib.d.ts
+-/src/shared/types/db.ts
+ /src/src/main.ts
+-/src/src/other.ts
+ 
+ 
+ //// [/src/dev-build/shared/types/db.js]
+diff --git a/tests/baselines/reference/tsc/incremental/initial-build/with-noEmitOnError-syntax-errors.js b/tests/baselines/reference/tsc/incremental/initial-build/with-noEmitOnError-syntax-errors.js
+index bf88e9a634..4155f637fe 100644
+--- a/tests/baselines/reference/tsc/incremental/initial-build/with-noEmitOnError-syntax-errors.js
++++ b/tests/baselines/reference/tsc/incremental/initial-build/with-noEmitOnError-syntax-errors.js
+@@ -71,6 +71,68 @@ Semantic diagnostics in builder refreshed for::
+ /src/src/other.ts
+ 
+ 
++//// [/src/dev-build/tsconfig.tsbuildinfo]
++{
++  "program": {
++    "fileInfos": {
++      "../../lib/lib.d.ts": {
++        "version": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "signature": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "affectsGlobalScope": true
++      },
++      "../shared/types/db.ts": {
++        "version": "-9621097780-export interface A {\r\n    name: string;\r\n}",
++        "signature": "-6245214333-export interface A {\r\n    name: string;\r\n}\r\n",
++        "affectsGlobalScope": false
++      },
++      "../src/main.ts": {
++        "version": "2626879346-import { A } from \"../shared/types/db\";\r\nconst a = {\r\n    lastName: 'sdsd'\r\n;",
++        "signature": "-4882119183-export {};\r\n",
++        "affectsGlobalScope": false
++      },
++      "../src/other.ts": {
++        "version": "11373096570-console.log(\"hi\");\r\nexport { }",
++        "signature": "-4882119183-export {};\r\n",
++        "affectsGlobalScope": false
++      }
++    },
++    "options": {
++      "outDir": "./",
++      "noEmitOnError": true,
++      "incremental": true,
++      "project": "..",
++      "configFilePath": "../tsconfig.json"
++    },
++    "referencedMap": {
++      "../src/main.ts": [
++        "../shared/types/db.ts"
++      ]
++    },
++    "exportedModulesMap": {},
++    "semanticDiagnosticsPerFile": [
++      "../../lib/lib.d.ts",
++      "../shared/types/db.ts",
++      "../src/main.ts",
++      "../src/other.ts"
++    ],
++    "affectedFilesPendingEmit": [
++      [
++        "../shared/types/db.ts",
++        1
++      ],
++      [
++        "../src/main.ts",
++        1
++      ],
++      [
++        "../src/other.ts",
++        1
++      ]
++    ]
++  },
++  "version": "FakeTSVersion"
++}
++
+ 
+ 
+ Change:: no-change-run
+@@ -102,10 +164,6 @@ Program files::
+ /src/src/other.ts
+ 
+ Semantic diagnostics in builder refreshed for::
+-/lib/lib.d.ts
+-/src/shared/types/db.ts
+-/src/src/main.ts
+-/src/src/other.ts
+ 
+ 
+ 
+@@ -132,10 +190,7 @@ Program files::
+ /src/src/other.ts
+ 
+ Semantic diagnostics in builder refreshed for::
+-/lib/lib.d.ts
+-/src/shared/types/db.ts
+ /src/src/main.ts
+-/src/src/other.ts
+ 
+ 
+ //// [/src/dev-build/shared/types/db.js]
+diff --git a/tests/baselines/reference/tscWatch/emitAndErrorUpdates/assumeChangesOnlyAffectDirectDependencies/with-noEmitOnError-with-incremental.js b/tests/baselines/reference/tscWatch/emitAndErrorUpdates/assumeChangesOnlyAffectDirectDependencies/with-noEmitOnError-with-incremental.js
+index 573187027d..2211239b58 100644
+--- a/tests/baselines/reference/tscWatch/emitAndErrorUpdates/assumeChangesOnlyAffectDirectDependencies/with-noEmitOnError-with-incremental.js
++++ b/tests/baselines/reference/tscWatch/emitAndErrorUpdates/assumeChangesOnlyAffectDirectDependencies/with-noEmitOnError-with-incremental.js
+@@ -50,7 +50,7 @@ Output::
+     The parser expected to find a '}' to match the '{' token here.
+ 
+ 
+-[[90m12:00:32 AM[0m] Found 1 error. Watching for file changes.
++[[90m12:00:37 AM[0m] Found 1 error. Watching for file changes.
+ 
+ 
+ 
+@@ -90,6 +90,69 @@ FsWatchesRecursive::
+ 
+ exitCode:: ExitStatus.undefined
+ 
++//// [/user/username/projects/noEmitOnError/dev-build/tsconfig.tsbuildinfo]
++{
++  "program": {
++    "fileInfos": {
++      "../../../../../a/lib/lib.d.ts": {
++        "version": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "signature": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "affectsGlobalScope": true
++      },
++      "../shared/types/db.ts": {
++        "version": "-9621097780-export interface A {\r\n    name: string;\r\n}",
++        "signature": "-5014788164-export interface A {\n    name: string;\n}\n",
++        "affectsGlobalScope": false
++      },
++      "../src/main.ts": {
++        "version": "2626879346-import { A } from \"../shared/types/db\";\r\nconst a = {\r\n    lastName: 'sdsd'\r\n;",
++        "signature": "-3531856636-export {};\n",
++        "affectsGlobalScope": false
++      },
++      "../src/other.ts": {
++        "version": "11373096570-console.log(\"hi\");\r\nexport { }",
++        "signature": "-3531856636-export {};\n",
++        "affectsGlobalScope": false
++      }
++    },
++    "options": {
++      "outDir": "./",
++      "noEmitOnError": true,
++      "assumeChangesOnlyAffectDirectDependencies": true,
++      "watch": true,
++      "incremental": true,
++      "configFilePath": "../tsconfig.json"
++    },
++    "referencedMap": {
++      "../src/main.ts": [
++        "../shared/types/db.ts"
++      ]
++    },
++    "exportedModulesMap": {},
++    "semanticDiagnosticsPerFile": [
++      "../../../../../a/lib/lib.d.ts",
++      "../shared/types/db.ts",
++      "../src/main.ts",
++      "../src/other.ts"
++    ],
++    "affectedFilesPendingEmit": [
++      [
++        "../shared/types/db.ts",
++        1
++      ],
++      [
++        "../src/main.ts",
++        1
++      ],
++      [
++        "../src/other.ts",
++        1
++      ]
++    ]
++  },
++  "version": "FakeTSVersion"
++}
++
+ 
+ Change:: No change
+ 
+@@ -98,7 +161,7 @@ Input::
+ 
+ Output::
+ >> Screen clear
+-[[90m12:00:36 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:00:41 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+ [96msrc/main.ts[0m:[93m4[0m:[93m1[0m - [91merror[0m[90m TS1005: [0m',' expected.
+@@ -112,7 +175,7 @@ Output::
+     The parser expected to find a '}' to match the '{' token here.
+ 
+ 
+-[[90m12:00:37 AM[0m] Found 1 error. Watching for file changes.
++[[90m12:00:42 AM[0m] Found 1 error. Watching for file changes.
+ 
+ 
+ 
+@@ -161,10 +224,10 @@ const a = {
+ 
+ Output::
+ >> Screen clear
+-[[90m12:00:41 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:00:46 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+-[[90m12:01:00 AM[0m] Found 0 errors. Watching for file changes.
++[[90m12:01:04 AM[0m] Found 0 errors. Watching for file changes.
+ 
+ 
+ 
+@@ -201,25 +264,6 @@ FsWatchesRecursive::
+ 
+ exitCode:: ExitStatus.undefined
+ 
+-//// [/user/username/projects/noEmitOnError/dev-build/shared/types/db.js]
+-"use strict";
+-exports.__esModule = true;
+-
+-
+-//// [/user/username/projects/noEmitOnError/dev-build/src/main.js]
+-"use strict";
+-exports.__esModule = true;
+-var a = {
+-    lastName: 'sdsd'
+-};
+-
+-
+-//// [/user/username/projects/noEmitOnError/dev-build/src/other.js]
+-"use strict";
+-exports.__esModule = true;
+-console.log("hi");
+-
+-
+ //// [/user/username/projects/noEmitOnError/dev-build/tsconfig.tsbuildinfo]
+ {
+   "program": {
+@@ -269,6 +313,25 @@ console.log("hi");
+   "version": "FakeTSVersion"
+ }
+ 
++//// [/user/username/projects/noEmitOnError/dev-build/shared/types/db.js]
++"use strict";
++exports.__esModule = true;
++
++
++//// [/user/username/projects/noEmitOnError/dev-build/src/main.js]
++"use strict";
++exports.__esModule = true;
++var a = {
++    lastName: 'sdsd'
++};
++
++
++//// [/user/username/projects/noEmitOnError/dev-build/src/other.js]
++"use strict";
++exports.__esModule = true;
++console.log("hi");
++
++
+ 
+ Change:: Semantic Error
+ 
+@@ -280,7 +343,7 @@ const a: string = 10;
+ 
+ Output::
+ >> Screen clear
+-[[90m12:01:04 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:01:08 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+ [96msrc/main.ts[0m:[93m2[0m:[93m7[0m - [91merror[0m[90m TS2322: [0mType 'number' is not assignable to type 'string'.
+@@ -289,7 +352,7 @@ Output::
+ [7m [0m [91m      ~[0m
+ 
+ 
+-[[90m12:01:05 AM[0m] Found 1 error. Watching for file changes.
++[[90m12:01:12 AM[0m] Found 1 error. Watching for file changes.
+ 
+ 
+ 
+@@ -326,6 +389,73 @@ FsWatchesRecursive::
+ 
+ exitCode:: ExitStatus.undefined
+ 
++//// [/user/username/projects/noEmitOnError/dev-build/tsconfig.tsbuildinfo]
++{
++  "program": {
++    "fileInfos": {
++      "../../../../../a/lib/lib.d.ts": {
++        "version": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "signature": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "affectsGlobalScope": true
++      },
++      "../shared/types/db.ts": {
++        "version": "-9621097780-export interface A {\r\n    name: string;\r\n}",
++        "signature": "-5014788164-export interface A {\n    name: string;\n}\n",
++        "affectsGlobalScope": false
++      },
++      "../src/main.ts": {
++        "version": "-11111345725-import { A } from \"../shared/types/db\";\nconst a: string = 10;",
++        "signature": "-3531856636-export {};\n",
++        "affectsGlobalScope": false
++      },
++      "../src/other.ts": {
++        "version": "11373096570-console.log(\"hi\");\r\nexport { }",
++        "signature": "-3531856636-export {};\n",
++        "affectsGlobalScope": false
++      }
++    },
++    "options": {
++      "outDir": "./",
++      "noEmitOnError": true,
++      "assumeChangesOnlyAffectDirectDependencies": true,
++      "watch": true,
++      "incremental": true,
++      "configFilePath": "../tsconfig.json"
++    },
++    "referencedMap": {
++      "../src/main.ts": [
++        "../shared/types/db.ts"
++      ]
++    },
++    "exportedModulesMap": {},
++    "semanticDiagnosticsPerFile": [
++      "../../../../../a/lib/lib.d.ts",
++      "../shared/types/db.ts",
++      [
++        "../src/main.ts",
++        [
++          {
++            "file": "../src/main.ts",
++            "start": 46,
++            "length": 1,
++            "code": 2322,
++            "category": 1,
++            "messageText": "Type 'number' is not assignable to type 'string'."
++          }
++        ]
++      ],
++      "../src/other.ts"
++    ],
++    "affectedFilesPendingEmit": [
++      [
++        "../src/main.ts",
++        1
++      ]
++    ]
++  },
++  "version": "FakeTSVersion"
++}
++
+ 
+ Change:: No change
+ 
+@@ -334,7 +464,7 @@ Input::
+ 
+ Output::
+ >> Screen clear
+-[[90m12:01:09 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:01:16 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+ [96msrc/main.ts[0m:[93m2[0m:[93m7[0m - [91merror[0m[90m TS2322: [0mType 'number' is not assignable to type 'string'.
+@@ -343,7 +473,7 @@ Output::
+ [7m [0m [91m      ~[0m
+ 
+ 
+-[[90m12:01:10 AM[0m] Found 1 error. Watching for file changes.
++[[90m12:01:17 AM[0m] Found 1 error. Watching for file changes.
+ 
+ 
+ 
+@@ -390,10 +520,10 @@ const a: string = "hello";
+ 
+ Output::
+ >> Screen clear
+-[[90m12:01:14 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:01:21 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+-[[90m12:01:21 AM[0m] Found 0 errors. Watching for file changes.
++[[90m12:01:28 AM[0m] Found 0 errors. Watching for file changes.
+ 
+ 
+ 
+@@ -430,12 +560,6 @@ FsWatchesRecursive::
+ 
+ exitCode:: ExitStatus.undefined
+ 
+-//// [/user/username/projects/noEmitOnError/dev-build/src/main.js]
+-"use strict";
+-exports.__esModule = true;
+-var a = "hello";
+-
+-
+ //// [/user/username/projects/noEmitOnError/dev-build/tsconfig.tsbuildinfo]
+ {
+   "program": {
+@@ -485,6 +609,12 @@ var a = "hello";
+   "version": "FakeTSVersion"
+ }
+ 
++//// [/user/username/projects/noEmitOnError/dev-build/src/main.js]
++"use strict";
++exports.__esModule = true;
++var a = "hello";
++
++
+ 
+ Change:: No change
+ 
+@@ -493,10 +623,10 @@ Input::
+ 
+ Output::
+ >> Screen clear
+-[[90m12:01:25 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:01:32 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+-[[90m12:01:26 AM[0m] Found 0 errors. Watching for file changes.
++[[90m12:01:33 AM[0m] Found 0 errors. Watching for file changes.
+ 
+ 
+ 
+diff --git a/tests/baselines/reference/tscWatch/emitAndErrorUpdates/assumeChangesOnlyAffectDirectDependenciesAndD/with-noEmitOnError-with-incremental.js b/tests/baselines/reference/tscWatch/emitAndErrorUpdates/assumeChangesOnlyAffectDirectDependenciesAndD/with-noEmitOnError-with-incremental.js
+index 7366de158e..3645a89dca 100644
+--- a/tests/baselines/reference/tscWatch/emitAndErrorUpdates/assumeChangesOnlyAffectDirectDependenciesAndD/with-noEmitOnError-with-incremental.js
++++ b/tests/baselines/reference/tscWatch/emitAndErrorUpdates/assumeChangesOnlyAffectDirectDependenciesAndD/with-noEmitOnError-with-incremental.js
+@@ -50,7 +50,7 @@ Output::
+     The parser expected to find a '}' to match the '{' token here.
+ 
+ 
+-[[90m12:00:32 AM[0m] Found 1 error. Watching for file changes.
++[[90m12:00:37 AM[0m] Found 1 error. Watching for file changes.
+ 
+ 
+ 
+@@ -90,6 +90,70 @@ FsWatchesRecursive::
+ 
+ exitCode:: ExitStatus.undefined
+ 
++//// [/user/username/projects/noEmitOnError/dev-build/tsconfig.tsbuildinfo]
++{
++  "program": {
++    "fileInfos": {
++      "../../../../../a/lib/lib.d.ts": {
++        "version": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "signature": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "affectsGlobalScope": true
++      },
++      "../shared/types/db.ts": {
++        "version": "-9621097780-export interface A {\r\n    name: string;\r\n}",
++        "signature": "-5014788164-export interface A {\n    name: string;\n}\n",
++        "affectsGlobalScope": false
++      },
++      "../src/main.ts": {
++        "version": "2626879346-import { A } from \"../shared/types/db\";\r\nconst a = {\r\n    lastName: 'sdsd'\r\n;",
++        "signature": "-3531856636-export {};\n",
++        "affectsGlobalScope": false
++      },
++      "../src/other.ts": {
++        "version": "11373096570-console.log(\"hi\");\r\nexport { }",
++        "signature": "-3531856636-export {};\n",
++        "affectsGlobalScope": false
++      }
++    },
++    "options": {
++      "outDir": "./",
++      "noEmitOnError": true,
++      "assumeChangesOnlyAffectDirectDependencies": true,
++      "declaration": true,
++      "watch": true,
++      "incremental": true,
++      "configFilePath": "../tsconfig.json"
++    },
++    "referencedMap": {
++      "../src/main.ts": [
++        "../shared/types/db.ts"
++      ]
++    },
++    "exportedModulesMap": {},
++    "semanticDiagnosticsPerFile": [
++      "../../../../../a/lib/lib.d.ts",
++      "../shared/types/db.ts",
++      "../src/main.ts",
++      "../src/other.ts"
++    ],
++    "affectedFilesPendingEmit": [
++      [
++        "../shared/types/db.ts",
++        1
++      ],
++      [
++        "../src/main.ts",
++        1
++      ],
++      [
++        "../src/other.ts",
++        1
++      ]
++    ]
++  },
++  "version": "FakeTSVersion"
++}
++
+ 
+ Change:: No change
+ 
+@@ -98,7 +162,7 @@ Input::
+ 
+ Output::
+ >> Screen clear
+-[[90m12:00:36 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:00:41 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+ [96msrc/main.ts[0m:[93m4[0m:[93m1[0m - [91merror[0m[90m TS1005: [0m',' expected.
+@@ -112,7 +176,7 @@ Output::
+     The parser expected to find a '}' to match the '{' token here.
+ 
+ 
+-[[90m12:00:37 AM[0m] Found 1 error. Watching for file changes.
++[[90m12:00:42 AM[0m] Found 1 error. Watching for file changes.
+ 
+ 
+ 
+@@ -161,10 +225,10 @@ const a = {
+ 
+ Output::
+ >> Screen clear
+-[[90m12:00:41 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:00:46 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+-[[90m12:01:06 AM[0m] Found 0 errors. Watching for file changes.
++[[90m12:01:10 AM[0m] Found 0 errors. Watching for file changes.
+ 
+ 
+ 
+@@ -201,39 +265,6 @@ FsWatchesRecursive::
+ 
+ exitCode:: ExitStatus.undefined
+ 
+-//// [/user/username/projects/noEmitOnError/dev-build/shared/types/db.js]
+-"use strict";
+-exports.__esModule = true;
+-
+-
+-//// [/user/username/projects/noEmitOnError/dev-build/shared/types/db.d.ts]
+-export interface A {
+-    name: string;
+-}
+-
+-
+-//// [/user/username/projects/noEmitOnError/dev-build/src/main.js]
+-"use strict";
+-exports.__esModule = true;
+-var a = {
+-    lastName: 'sdsd'
+-};
+-
+-
+-//// [/user/username/projects/noEmitOnError/dev-build/src/main.d.ts]
+-export {};
+-
+-
+-//// [/user/username/projects/noEmitOnError/dev-build/src/other.js]
+-"use strict";
+-exports.__esModule = true;
+-console.log("hi");
+-
+-
+-//// [/user/username/projects/noEmitOnError/dev-build/src/other.d.ts]
+-export {};
+-
+-
+ //// [/user/username/projects/noEmitOnError/dev-build/tsconfig.tsbuildinfo]
+ {
+   "program": {
+@@ -284,6 +315,39 @@ export {};
+   "version": "FakeTSVersion"
+ }
+ 
++//// [/user/username/projects/noEmitOnError/dev-build/shared/types/db.js]
++"use strict";
++exports.__esModule = true;
++
++
++//// [/user/username/projects/noEmitOnError/dev-build/shared/types/db.d.ts]
++export interface A {
++    name: string;
++}
++
++
++//// [/user/username/projects/noEmitOnError/dev-build/src/main.js]
++"use strict";
++exports.__esModule = true;
++var a = {
++    lastName: 'sdsd'
++};
++
++
++//// [/user/username/projects/noEmitOnError/dev-build/src/main.d.ts]
++export {};
++
++
++//// [/user/username/projects/noEmitOnError/dev-build/src/other.js]
++"use strict";
++exports.__esModule = true;
++console.log("hi");
++
++
++//// [/user/username/projects/noEmitOnError/dev-build/src/other.d.ts]
++export {};
++
++
+ 
+ Change:: Semantic Error
+ 
+@@ -295,7 +359,7 @@ const a: string = 10;
+ 
+ Output::
+ >> Screen clear
+-[[90m12:01:10 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:01:14 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+ [96msrc/main.ts[0m:[93m2[0m:[93m7[0m - [91merror[0m[90m TS2322: [0mType 'number' is not assignable to type 'string'.
+@@ -304,7 +368,7 @@ Output::
+ [7m [0m [91m      ~[0m
+ 
+ 
+-[[90m12:01:11 AM[0m] Found 1 error. Watching for file changes.
++[[90m12:01:18 AM[0m] Found 1 error. Watching for file changes.
+ 
+ 
+ 
+@@ -341,6 +405,74 @@ FsWatchesRecursive::
+ 
+ exitCode:: ExitStatus.undefined
+ 
++//// [/user/username/projects/noEmitOnError/dev-build/tsconfig.tsbuildinfo]
++{
++  "program": {
++    "fileInfos": {
++      "../../../../../a/lib/lib.d.ts": {
++        "version": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "signature": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "affectsGlobalScope": true
++      },
++      "../shared/types/db.ts": {
++        "version": "-9621097780-export interface A {\r\n    name: string;\r\n}",
++        "signature": "-5014788164-export interface A {\n    name: string;\n}\n",
++        "affectsGlobalScope": false
++      },
++      "../src/main.ts": {
++        "version": "-11111345725-import { A } from \"../shared/types/db\";\nconst a: string = 10;",
++        "signature": "-3531856636-export {};\n",
++        "affectsGlobalScope": false
++      },
++      "../src/other.ts": {
++        "version": "11373096570-console.log(\"hi\");\r\nexport { }",
++        "signature": "-3531856636-export {};\n",
++        "affectsGlobalScope": false
++      }
++    },
++    "options": {
++      "outDir": "./",
++      "noEmitOnError": true,
++      "assumeChangesOnlyAffectDirectDependencies": true,
++      "declaration": true,
++      "watch": true,
++      "incremental": true,
++      "configFilePath": "../tsconfig.json"
++    },
++    "referencedMap": {
++      "../src/main.ts": [
++        "../shared/types/db.ts"
++      ]
++    },
++    "exportedModulesMap": {},
++    "semanticDiagnosticsPerFile": [
++      "../../../../../a/lib/lib.d.ts",
++      "../shared/types/db.ts",
++      [
++        "../src/main.ts",
++        [
++          {
++            "file": "../src/main.ts",
++            "start": 46,
++            "length": 1,
++            "code": 2322,
++            "category": 1,
++            "messageText": "Type 'number' is not assignable to type 'string'."
++          }
++        ]
++      ],
++      "../src/other.ts"
++    ],
++    "affectedFilesPendingEmit": [
++      [
++        "../src/main.ts",
++        1
++      ]
++    ]
++  },
++  "version": "FakeTSVersion"
++}
++
+ 
+ Change:: No change
+ 
+@@ -349,7 +481,7 @@ Input::
+ 
+ Output::
+ >> Screen clear
+-[[90m12:01:15 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:01:22 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+ [96msrc/main.ts[0m:[93m2[0m:[93m7[0m - [91merror[0m[90m TS2322: [0mType 'number' is not assignable to type 'string'.
+@@ -358,7 +490,7 @@ Output::
+ [7m [0m [91m      ~[0m
+ 
+ 
+-[[90m12:01:16 AM[0m] Found 1 error. Watching for file changes.
++[[90m12:01:23 AM[0m] Found 1 error. Watching for file changes.
+ 
+ 
+ 
+@@ -405,10 +537,10 @@ const a: string = "hello";
+ 
+ Output::
+ >> Screen clear
+-[[90m12:01:20 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:01:27 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+-[[90m12:01:30 AM[0m] Found 0 errors. Watching for file changes.
++[[90m12:01:37 AM[0m] Found 0 errors. Watching for file changes.
+ 
+ 
+ 
+@@ -445,13 +577,6 @@ FsWatchesRecursive::
+ 
+ exitCode:: ExitStatus.undefined
+ 
+-//// [/user/username/projects/noEmitOnError/dev-build/src/main.js]
+-"use strict";
+-exports.__esModule = true;
+-var a = "hello";
+-
+-
+-//// [/user/username/projects/noEmitOnError/dev-build/src/main.d.ts] file written with same contents
+ //// [/user/username/projects/noEmitOnError/dev-build/tsconfig.tsbuildinfo]
+ {
+   "program": {
+@@ -502,6 +627,13 @@ var a = "hello";
+   "version": "FakeTSVersion"
+ }
+ 
++//// [/user/username/projects/noEmitOnError/dev-build/src/main.js]
++"use strict";
++exports.__esModule = true;
++var a = "hello";
++
++
++//// [/user/username/projects/noEmitOnError/dev-build/src/main.d.ts] file written with same contents
+ 
+ Change:: No change
+ 
+@@ -510,10 +642,10 @@ Input::
+ 
+ Output::
+ >> Screen clear
+-[[90m12:01:34 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:01:41 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+-[[90m12:01:35 AM[0m] Found 0 errors. Watching for file changes.
++[[90m12:01:42 AM[0m] Found 0 errors. Watching for file changes.
+ 
+ 
+ 
+diff --git a/tests/baselines/reference/tscWatch/emitAndErrorUpdates/default/with-noEmitOnError-with-incremental.js b/tests/baselines/reference/tscWatch/emitAndErrorUpdates/default/with-noEmitOnError-with-incremental.js
+index 4c54f4a3dc..0b10e3cc74 100644
+--- a/tests/baselines/reference/tscWatch/emitAndErrorUpdates/default/with-noEmitOnError-with-incremental.js
++++ b/tests/baselines/reference/tscWatch/emitAndErrorUpdates/default/with-noEmitOnError-with-incremental.js
+@@ -56,7 +56,7 @@ Output::
+     The parser expected to find a '}' to match the '{' token here.
+ 
+ 
+-[[90m12:00:32 AM[0m] Found 1 error. Watching for file changes.
++[[90m12:00:37 AM[0m] Found 1 error. Watching for file changes.
+ 
+ 
+ 
+@@ -96,6 +96,68 @@ FsWatchesRecursive::
+ 
+ exitCode:: ExitStatus.undefined
+ 
++//// [/user/username/projects/noEmitOnError/dev-build/tsconfig.tsbuildinfo]
++{
++  "program": {
++    "fileInfos": {
++      "../../../../../a/lib/lib.d.ts": {
++        "version": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "signature": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "affectsGlobalScope": true
++      },
++      "../shared/types/db.ts": {
++        "version": "-9621097780-export interface A {\r\n    name: string;\r\n}",
++        "signature": "-5014788164-export interface A {\n    name: string;\n}\n",
++        "affectsGlobalScope": false
++      },
++      "../src/main.ts": {
++        "version": "2626879346-import { A } from \"../shared/types/db\";\r\nconst a = {\r\n    lastName: 'sdsd'\r\n;",
++        "signature": "-3531856636-export {};\n",
++        "affectsGlobalScope": false
++      },
++      "../src/other.ts": {
++        "version": "11373096570-console.log(\"hi\");\r\nexport { }",
++        "signature": "-3531856636-export {};\n",
++        "affectsGlobalScope": false
++      }
++    },
++    "options": {
++      "outDir": "./",
++      "noEmitOnError": true,
++      "watch": true,
++      "incremental": true,
++      "configFilePath": "../tsconfig.json"
++    },
++    "referencedMap": {
++      "../src/main.ts": [
++        "../shared/types/db.ts"
++      ]
++    },
++    "exportedModulesMap": {},
++    "semanticDiagnosticsPerFile": [
++      "../../../../../a/lib/lib.d.ts",
++      "../shared/types/db.ts",
++      "../src/main.ts",
++      "../src/other.ts"
++    ],
++    "affectedFilesPendingEmit": [
++      [
++        "../shared/types/db.ts",
++        1
++      ],
++      [
++        "../src/main.ts",
++        1
++      ],
++      [
++        "../src/other.ts",
++        1
++      ]
++    ]
++  },
++  "version": "FakeTSVersion"
++}
++
+ 
+ Change:: No change
+ 
+@@ -104,7 +166,7 @@ Input::
+ 
+ Output::
+ >> Screen clear
+-[[90m12:00:36 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:00:41 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+ [96msrc/main.ts[0m:[93m4[0m:[93m1[0m - [91merror[0m[90m TS1005: [0m',' expected.
+@@ -118,7 +180,7 @@ Output::
+     The parser expected to find a '}' to match the '{' token here.
+ 
+ 
+-[[90m12:00:37 AM[0m] Found 1 error. Watching for file changes.
++[[90m12:00:42 AM[0m] Found 1 error. Watching for file changes.
+ 
+ 
+ 
+@@ -167,10 +229,10 @@ const a = {
+ 
+ Output::
+ >> Screen clear
+-[[90m12:00:41 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:00:46 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+-[[90m12:01:00 AM[0m] Found 0 errors. Watching for file changes.
++[[90m12:01:04 AM[0m] Found 0 errors. Watching for file changes.
+ 
+ 
+ 
+@@ -207,25 +269,6 @@ FsWatchesRecursive::
+ 
+ exitCode:: ExitStatus.undefined
+ 
+-//// [/user/username/projects/noEmitOnError/dev-build/shared/types/db.js]
+-"use strict";
+-exports.__esModule = true;
+-
+-
+-//// [/user/username/projects/noEmitOnError/dev-build/src/main.js]
+-"use strict";
+-exports.__esModule = true;
+-var a = {
+-    lastName: 'sdsd'
+-};
+-
+-
+-//// [/user/username/projects/noEmitOnError/dev-build/src/other.js]
+-"use strict";
+-exports.__esModule = true;
+-console.log("hi");
+-
+-
+ //// [/user/username/projects/noEmitOnError/dev-build/tsconfig.tsbuildinfo]
+ {
+   "program": {
+@@ -274,6 +317,25 @@ console.log("hi");
+   "version": "FakeTSVersion"
+ }
+ 
++//// [/user/username/projects/noEmitOnError/dev-build/shared/types/db.js]
++"use strict";
++exports.__esModule = true;
++
++
++//// [/user/username/projects/noEmitOnError/dev-build/src/main.js]
++"use strict";
++exports.__esModule = true;
++var a = {
++    lastName: 'sdsd'
++};
++
++
++//// [/user/username/projects/noEmitOnError/dev-build/src/other.js]
++"use strict";
++exports.__esModule = true;
++console.log("hi");
++
++
+ 
+ Change:: Semantic Error
+ 
+@@ -285,7 +347,7 @@ const a: string = 10;
+ 
+ Output::
+ >> Screen clear
+-[[90m12:01:04 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:01:08 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+ [96msrc/main.ts[0m:[93m2[0m:[93m7[0m - [91merror[0m[90m TS2322: [0mType 'number' is not assignable to type 'string'.
+@@ -294,7 +356,7 @@ Output::
+ [7m [0m [91m      ~[0m
+ 
+ 
+-[[90m12:01:05 AM[0m] Found 1 error. Watching for file changes.
++[[90m12:01:12 AM[0m] Found 1 error. Watching for file changes.
+ 
+ 
+ 
+@@ -331,6 +393,72 @@ FsWatchesRecursive::
+ 
+ exitCode:: ExitStatus.undefined
+ 
++//// [/user/username/projects/noEmitOnError/dev-build/tsconfig.tsbuildinfo]
++{
++  "program": {
++    "fileInfos": {
++      "../../../../../a/lib/lib.d.ts": {
++        "version": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "signature": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "affectsGlobalScope": true
++      },
++      "../shared/types/db.ts": {
++        "version": "-9621097780-export interface A {\r\n    name: string;\r\n}",
++        "signature": "-5014788164-export interface A {\n    name: string;\n}\n",
++        "affectsGlobalScope": false
++      },
++      "../src/main.ts": {
++        "version": "-11111345725-import { A } from \"../shared/types/db\";\nconst a: string = 10;",
++        "signature": "-3531856636-export {};\n",
++        "affectsGlobalScope": false
++      },
++      "../src/other.ts": {
++        "version": "11373096570-console.log(\"hi\");\r\nexport { }",
++        "signature": "-3531856636-export {};\n",
++        "affectsGlobalScope": false
++      }
++    },
++    "options": {
++      "outDir": "./",
++      "noEmitOnError": true,
++      "watch": true,
++      "incremental": true,
++      "configFilePath": "../tsconfig.json"
++    },
++    "referencedMap": {
++      "../src/main.ts": [
++        "../shared/types/db.ts"
++      ]
++    },
++    "exportedModulesMap": {},
++    "semanticDiagnosticsPerFile": [
++      "../../../../../a/lib/lib.d.ts",
++      "../shared/types/db.ts",
++      [
++        "../src/main.ts",
++        [
++          {
++            "file": "../src/main.ts",
++            "start": 46,
++            "length": 1,
++            "code": 2322,
++            "category": 1,
++            "messageText": "Type 'number' is not assignable to type 'string'."
++          }
++        ]
++      ],
++      "../src/other.ts"
++    ],
++    "affectedFilesPendingEmit": [
++      [
++        "../src/main.ts",
++        1
++      ]
++    ]
++  },
++  "version": "FakeTSVersion"
++}
++
+ 
+ Change:: No change
+ 
+@@ -339,7 +467,7 @@ Input::
+ 
+ Output::
+ >> Screen clear
+-[[90m12:01:09 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:01:16 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+ [96msrc/main.ts[0m:[93m2[0m:[93m7[0m - [91merror[0m[90m TS2322: [0mType 'number' is not assignable to type 'string'.
+@@ -348,7 +476,7 @@ Output::
+ [7m [0m [91m      ~[0m
+ 
+ 
+-[[90m12:01:10 AM[0m] Found 1 error. Watching for file changes.
++[[90m12:01:17 AM[0m] Found 1 error. Watching for file changes.
+ 
+ 
+ 
+@@ -395,10 +523,10 @@ const a: string = "hello";
+ 
+ Output::
+ >> Screen clear
+-[[90m12:01:14 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:01:21 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+-[[90m12:01:21 AM[0m] Found 0 errors. Watching for file changes.
++[[90m12:01:28 AM[0m] Found 0 errors. Watching for file changes.
+ 
+ 
+ 
+@@ -435,12 +563,6 @@ FsWatchesRecursive::
+ 
+ exitCode:: ExitStatus.undefined
+ 
+-//// [/user/username/projects/noEmitOnError/dev-build/src/main.js]
+-"use strict";
+-exports.__esModule = true;
+-var a = "hello";
+-
+-
+ //// [/user/username/projects/noEmitOnError/dev-build/tsconfig.tsbuildinfo]
+ {
+   "program": {
+@@ -489,6 +611,12 @@ var a = "hello";
+   "version": "FakeTSVersion"
+ }
+ 
++//// [/user/username/projects/noEmitOnError/dev-build/src/main.js]
++"use strict";
++exports.__esModule = true;
++var a = "hello";
++
++
+ 
+ Change:: No change
+ 
+@@ -497,10 +625,10 @@ Input::
+ 
+ Output::
+ >> Screen clear
+-[[90m12:01:25 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:01:32 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+-[[90m12:01:26 AM[0m] Found 0 errors. Watching for file changes.
++[[90m12:01:33 AM[0m] Found 0 errors. Watching for file changes.
+ 
+ 
+ 
+diff --git a/tests/baselines/reference/tscWatch/emitAndErrorUpdates/defaultAndD/with-noEmitOnError-with-incremental.js b/tests/baselines/reference/tscWatch/emitAndErrorUpdates/defaultAndD/with-noEmitOnError-with-incremental.js
+index c39991c7ec..53f2428366 100644
+--- a/tests/baselines/reference/tscWatch/emitAndErrorUpdates/defaultAndD/with-noEmitOnError-with-incremental.js
++++ b/tests/baselines/reference/tscWatch/emitAndErrorUpdates/defaultAndD/with-noEmitOnError-with-incremental.js
+@@ -50,7 +50,7 @@ Output::
+     The parser expected to find a '}' to match the '{' token here.
+ 
+ 
+-[[90m12:00:32 AM[0m] Found 1 error. Watching for file changes.
++[[90m12:00:37 AM[0m] Found 1 error. Watching for file changes.
+ 
+ 
+ 
+@@ -90,6 +90,69 @@ FsWatchesRecursive::
+ 
+ exitCode:: ExitStatus.undefined
+ 
++//// [/user/username/projects/noEmitOnError/dev-build/tsconfig.tsbuildinfo]
++{
++  "program": {
++    "fileInfos": {
++      "../../../../../a/lib/lib.d.ts": {
++        "version": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "signature": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "affectsGlobalScope": true
++      },
++      "../shared/types/db.ts": {
++        "version": "-9621097780-export interface A {\r\n    name: string;\r\n}",
++        "signature": "-5014788164-export interface A {\n    name: string;\n}\n",
++        "affectsGlobalScope": false
++      },
++      "../src/main.ts": {
++        "version": "2626879346-import { A } from \"../shared/types/db\";\r\nconst a = {\r\n    lastName: 'sdsd'\r\n;",
++        "signature": "-3531856636-export {};\n",
++        "affectsGlobalScope": false
++      },
++      "../src/other.ts": {
++        "version": "11373096570-console.log(\"hi\");\r\nexport { }",
++        "signature": "-3531856636-export {};\n",
++        "affectsGlobalScope": false
++      }
++    },
++    "options": {
++      "outDir": "./",
++      "noEmitOnError": true,
++      "declaration": true,
++      "watch": true,
++      "incremental": true,
++      "configFilePath": "../tsconfig.json"
++    },
++    "referencedMap": {
++      "../src/main.ts": [
++        "../shared/types/db.ts"
++      ]
++    },
++    "exportedModulesMap": {},
++    "semanticDiagnosticsPerFile": [
++      "../../../../../a/lib/lib.d.ts",
++      "../shared/types/db.ts",
++      "../src/main.ts",
++      "../src/other.ts"
++    ],
++    "affectedFilesPendingEmit": [
++      [
++        "../shared/types/db.ts",
++        1
++      ],
++      [
++        "../src/main.ts",
++        1
++      ],
++      [
++        "../src/other.ts",
++        1
++      ]
++    ]
++  },
++  "version": "FakeTSVersion"
++}
++
+ 
+ Change:: No change
+ 
+@@ -98,7 +161,7 @@ Input::
+ 
+ Output::
+ >> Screen clear
+-[[90m12:00:36 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:00:41 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+ [96msrc/main.ts[0m:[93m4[0m:[93m1[0m - [91merror[0m[90m TS1005: [0m',' expected.
+@@ -112,7 +175,7 @@ Output::
+     The parser expected to find a '}' to match the '{' token here.
+ 
+ 
+-[[90m12:00:37 AM[0m] Found 1 error. Watching for file changes.
++[[90m12:00:42 AM[0m] Found 1 error. Watching for file changes.
+ 
+ 
+ 
+@@ -161,10 +224,10 @@ const a = {
+ 
+ Output::
+ >> Screen clear
+-[[90m12:00:41 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:00:46 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+-[[90m12:01:06 AM[0m] Found 0 errors. Watching for file changes.
++[[90m12:01:10 AM[0m] Found 0 errors. Watching for file changes.
+ 
+ 
+ 
+@@ -201,39 +264,6 @@ FsWatchesRecursive::
+ 
+ exitCode:: ExitStatus.undefined
+ 
+-//// [/user/username/projects/noEmitOnError/dev-build/shared/types/db.js]
+-"use strict";
+-exports.__esModule = true;
+-
+-
+-//// [/user/username/projects/noEmitOnError/dev-build/shared/types/db.d.ts]
+-export interface A {
+-    name: string;
+-}
+-
+-
+-//// [/user/username/projects/noEmitOnError/dev-build/src/main.js]
+-"use strict";
+-exports.__esModule = true;
+-var a = {
+-    lastName: 'sdsd'
+-};
+-
+-
+-//// [/user/username/projects/noEmitOnError/dev-build/src/main.d.ts]
+-export {};
+-
+-
+-//// [/user/username/projects/noEmitOnError/dev-build/src/other.js]
+-"use strict";
+-exports.__esModule = true;
+-console.log("hi");
+-
+-
+-//// [/user/username/projects/noEmitOnError/dev-build/src/other.d.ts]
+-export {};
+-
+-
+ //// [/user/username/projects/noEmitOnError/dev-build/tsconfig.tsbuildinfo]
+ {
+   "program": {
+@@ -283,6 +313,39 @@ export {};
+   "version": "FakeTSVersion"
+ }
+ 
++//// [/user/username/projects/noEmitOnError/dev-build/shared/types/db.js]
++"use strict";
++exports.__esModule = true;
++
++
++//// [/user/username/projects/noEmitOnError/dev-build/shared/types/db.d.ts]
++export interface A {
++    name: string;
++}
++
++
++//// [/user/username/projects/noEmitOnError/dev-build/src/main.js]
++"use strict";
++exports.__esModule = true;
++var a = {
++    lastName: 'sdsd'
++};
++
++
++//// [/user/username/projects/noEmitOnError/dev-build/src/main.d.ts]
++export {};
++
++
++//// [/user/username/projects/noEmitOnError/dev-build/src/other.js]
++"use strict";
++exports.__esModule = true;
++console.log("hi");
++
++
++//// [/user/username/projects/noEmitOnError/dev-build/src/other.d.ts]
++export {};
++
++
+ 
+ Change:: Semantic Error
+ 
+@@ -294,7 +357,7 @@ const a: string = 10;
+ 
+ Output::
+ >> Screen clear
+-[[90m12:01:10 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:01:14 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+ [96msrc/main.ts[0m:[93m2[0m:[93m7[0m - [91merror[0m[90m TS2322: [0mType 'number' is not assignable to type 'string'.
+@@ -303,7 +366,7 @@ Output::
+ [7m [0m [91m      ~[0m
+ 
+ 
+-[[90m12:01:11 AM[0m] Found 1 error. Watching for file changes.
++[[90m12:01:18 AM[0m] Found 1 error. Watching for file changes.
+ 
+ 
+ 
+@@ -340,6 +403,73 @@ FsWatchesRecursive::
+ 
+ exitCode:: ExitStatus.undefined
+ 
++//// [/user/username/projects/noEmitOnError/dev-build/tsconfig.tsbuildinfo]
++{
++  "program": {
++    "fileInfos": {
++      "../../../../../a/lib/lib.d.ts": {
++        "version": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "signature": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "affectsGlobalScope": true
++      },
++      "../shared/types/db.ts": {
++        "version": "-9621097780-export interface A {\r\n    name: string;\r\n}",
++        "signature": "-5014788164-export interface A {\n    name: string;\n}\n",
++        "affectsGlobalScope": false
++      },
++      "../src/main.ts": {
++        "version": "-11111345725-import { A } from \"../shared/types/db\";\nconst a: string = 10;",
++        "signature": "-3531856636-export {};\n",
++        "affectsGlobalScope": false
++      },
++      "../src/other.ts": {
++        "version": "11373096570-console.log(\"hi\");\r\nexport { }",
++        "signature": "-3531856636-export {};\n",
++        "affectsGlobalScope": false
++      }
++    },
++    "options": {
++      "outDir": "./",
++      "noEmitOnError": true,
++      "declaration": true,
++      "watch": true,
++      "incremental": true,
++      "configFilePath": "../tsconfig.json"
++    },
++    "referencedMap": {
++      "../src/main.ts": [
++        "../shared/types/db.ts"
++      ]
++    },
++    "exportedModulesMap": {},
++    "semanticDiagnosticsPerFile": [
++      "../../../../../a/lib/lib.d.ts",
++      "../shared/types/db.ts",
++      [
++        "../src/main.ts",
++        [
++          {
++            "file": "../src/main.ts",
++            "start": 46,
++            "length": 1,
++            "code": 2322,
++            "category": 1,
++            "messageText": "Type 'number' is not assignable to type 'string'."
++          }
++        ]
++      ],
++      "../src/other.ts"
++    ],
++    "affectedFilesPendingEmit": [
++      [
++        "../src/main.ts",
++        1
++      ]
++    ]
++  },
++  "version": "FakeTSVersion"
++}
++
+ 
+ Change:: No change
+ 
+@@ -348,7 +478,7 @@ Input::
+ 
+ Output::
+ >> Screen clear
+-[[90m12:01:15 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:01:22 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+ [96msrc/main.ts[0m:[93m2[0m:[93m7[0m - [91merror[0m[90m TS2322: [0mType 'number' is not assignable to type 'string'.
+@@ -357,7 +487,7 @@ Output::
+ [7m [0m [91m      ~[0m
+ 
+ 
+-[[90m12:01:16 AM[0m] Found 1 error. Watching for file changes.
++[[90m12:01:23 AM[0m] Found 1 error. Watching for file changes.
+ 
+ 
+ 
+@@ -404,10 +534,10 @@ const a: string = "hello";
+ 
+ Output::
+ >> Screen clear
+-[[90m12:01:20 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:01:27 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+-[[90m12:01:30 AM[0m] Found 0 errors. Watching for file changes.
++[[90m12:01:37 AM[0m] Found 0 errors. Watching for file changes.
+ 
+ 
+ 
+@@ -444,13 +574,6 @@ FsWatchesRecursive::
+ 
+ exitCode:: ExitStatus.undefined
+ 
+-//// [/user/username/projects/noEmitOnError/dev-build/src/main.js]
+-"use strict";
+-exports.__esModule = true;
+-var a = "hello";
+-
+-
+-//// [/user/username/projects/noEmitOnError/dev-build/src/main.d.ts] file written with same contents
+ //// [/user/username/projects/noEmitOnError/dev-build/tsconfig.tsbuildinfo]
+ {
+   "program": {
+@@ -500,6 +623,13 @@ var a = "hello";
+   "version": "FakeTSVersion"
+ }
+ 
++//// [/user/username/projects/noEmitOnError/dev-build/src/main.js]
++"use strict";
++exports.__esModule = true;
++var a = "hello";
++
++
++//// [/user/username/projects/noEmitOnError/dev-build/src/main.d.ts] file written with same contents
+ 
+ Change:: No change
+ 
+@@ -508,10 +638,10 @@ Input::
+ 
+ Output::
+ >> Screen clear
+-[[90m12:01:34 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:01:41 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+-[[90m12:01:35 AM[0m] Found 0 errors. Watching for file changes.
++[[90m12:01:42 AM[0m] Found 0 errors. Watching for file changes.
+ 
+ 
+ 
+diff --git a/tests/baselines/reference/tscWatch/emitAndErrorUpdates/isolatedModules/with-noEmitOnError-with-incremental.js b/tests/baselines/reference/tscWatch/emitAndErrorUpdates/isolatedModules/with-noEmitOnError-with-incremental.js
+index fae85fec53..f37e12c72a 100644
+--- a/tests/baselines/reference/tscWatch/emitAndErrorUpdates/isolatedModules/with-noEmitOnError-with-incremental.js
++++ b/tests/baselines/reference/tscWatch/emitAndErrorUpdates/isolatedModules/with-noEmitOnError-with-incremental.js
+@@ -50,7 +50,7 @@ Output::
+     The parser expected to find a '}' to match the '{' token here.
+ 
+ 
+-[[90m12:00:32 AM[0m] Found 1 error. Watching for file changes.
++[[90m12:00:37 AM[0m] Found 1 error. Watching for file changes.
+ 
+ 
+ 
+@@ -90,6 +90,69 @@ FsWatchesRecursive::
+ 
+ exitCode:: ExitStatus.undefined
+ 
++//// [/user/username/projects/noEmitOnError/dev-build/tsconfig.tsbuildinfo]
++{
++  "program": {
++    "fileInfos": {
++      "../../../../../a/lib/lib.d.ts": {
++        "version": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "signature": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "affectsGlobalScope": true
++      },
++      "../shared/types/db.ts": {
++        "version": "-9621097780-export interface A {\r\n    name: string;\r\n}",
++        "signature": "-5014788164-export interface A {\n    name: string;\n}\n",
++        "affectsGlobalScope": false
++      },
++      "../src/main.ts": {
++        "version": "2626879346-import { A } from \"../shared/types/db\";\r\nconst a = {\r\n    lastName: 'sdsd'\r\n;",
++        "signature": "-3531856636-export {};\n",
++        "affectsGlobalScope": false
++      },
++      "../src/other.ts": {
++        "version": "11373096570-console.log(\"hi\");\r\nexport { }",
++        "signature": "-3531856636-export {};\n",
++        "affectsGlobalScope": false
++      }
++    },
++    "options": {
++      "outDir": "./",
++      "noEmitOnError": true,
++      "isolatedModules": true,
++      "watch": true,
++      "incremental": true,
++      "configFilePath": "../tsconfig.json"
++    },
++    "referencedMap": {
++      "../src/main.ts": [
++        "../shared/types/db.ts"
++      ]
++    },
++    "exportedModulesMap": {},
++    "semanticDiagnosticsPerFile": [
++      "../../../../../a/lib/lib.d.ts",
++      "../shared/types/db.ts",
++      "../src/main.ts",
++      "../src/other.ts"
++    ],
++    "affectedFilesPendingEmit": [
++      [
++        "../shared/types/db.ts",
++        1
++      ],
++      [
++        "../src/main.ts",
++        1
++      ],
++      [
++        "../src/other.ts",
++        1
++      ]
++    ]
++  },
++  "version": "FakeTSVersion"
++}
++
+ 
+ Change:: No change
+ 
+@@ -98,7 +161,7 @@ Input::
+ 
+ Output::
+ >> Screen clear
+-[[90m12:00:36 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:00:41 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+ [96msrc/main.ts[0m:[93m4[0m:[93m1[0m - [91merror[0m[90m TS1005: [0m',' expected.
+@@ -112,7 +175,7 @@ Output::
+     The parser expected to find a '}' to match the '{' token here.
+ 
+ 
+-[[90m12:00:37 AM[0m] Found 1 error. Watching for file changes.
++[[90m12:00:42 AM[0m] Found 1 error. Watching for file changes.
+ 
+ 
+ 
+@@ -161,10 +224,10 @@ const a = {
+ 
+ Output::
+ >> Screen clear
+-[[90m12:00:41 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:00:46 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+-[[90m12:01:00 AM[0m] Found 0 errors. Watching for file changes.
++[[90m12:01:04 AM[0m] Found 0 errors. Watching for file changes.
+ 
+ 
+ 
+@@ -201,25 +264,6 @@ FsWatchesRecursive::
+ 
+ exitCode:: ExitStatus.undefined
+ 
+-//// [/user/username/projects/noEmitOnError/dev-build/shared/types/db.js]
+-"use strict";
+-exports.__esModule = true;
+-
+-
+-//// [/user/username/projects/noEmitOnError/dev-build/src/main.js]
+-"use strict";
+-exports.__esModule = true;
+-var a = {
+-    lastName: 'sdsd'
+-};
+-
+-
+-//// [/user/username/projects/noEmitOnError/dev-build/src/other.js]
+-"use strict";
+-exports.__esModule = true;
+-console.log("hi");
+-
+-
+ //// [/user/username/projects/noEmitOnError/dev-build/tsconfig.tsbuildinfo]
+ {
+   "program": {
+@@ -269,6 +313,25 @@ console.log("hi");
+   "version": "FakeTSVersion"
+ }
+ 
++//// [/user/username/projects/noEmitOnError/dev-build/shared/types/db.js]
++"use strict";
++exports.__esModule = true;
++
++
++//// [/user/username/projects/noEmitOnError/dev-build/src/main.js]
++"use strict";
++exports.__esModule = true;
++var a = {
++    lastName: 'sdsd'
++};
++
++
++//// [/user/username/projects/noEmitOnError/dev-build/src/other.js]
++"use strict";
++exports.__esModule = true;
++console.log("hi");
++
++
+ 
+ Change:: Semantic Error
+ 
+@@ -280,7 +343,7 @@ const a: string = 10;
+ 
+ Output::
+ >> Screen clear
+-[[90m12:01:04 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:01:08 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+ [96msrc/main.ts[0m:[93m2[0m:[93m7[0m - [91merror[0m[90m TS2322: [0mType 'number' is not assignable to type 'string'.
+@@ -289,7 +352,7 @@ Output::
+ [7m [0m [91m      ~[0m
+ 
+ 
+-[[90m12:01:05 AM[0m] Found 1 error. Watching for file changes.
++[[90m12:01:12 AM[0m] Found 1 error. Watching for file changes.
+ 
+ 
+ 
+@@ -326,6 +389,73 @@ FsWatchesRecursive::
+ 
+ exitCode:: ExitStatus.undefined
+ 
++//// [/user/username/projects/noEmitOnError/dev-build/tsconfig.tsbuildinfo]
++{
++  "program": {
++    "fileInfos": {
++      "../../../../../a/lib/lib.d.ts": {
++        "version": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "signature": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "affectsGlobalScope": true
++      },
++      "../shared/types/db.ts": {
++        "version": "-9621097780-export interface A {\r\n    name: string;\r\n}",
++        "signature": "-5014788164-export interface A {\n    name: string;\n}\n",
++        "affectsGlobalScope": false
++      },
++      "../src/main.ts": {
++        "version": "-11111345725-import { A } from \"../shared/types/db\";\nconst a: string = 10;",
++        "signature": "-3531856636-export {};\n",
++        "affectsGlobalScope": false
++      },
++      "../src/other.ts": {
++        "version": "11373096570-console.log(\"hi\");\r\nexport { }",
++        "signature": "-3531856636-export {};\n",
++        "affectsGlobalScope": false
++      }
++    },
++    "options": {
++      "outDir": "./",
++      "noEmitOnError": true,
++      "isolatedModules": true,
++      "watch": true,
++      "incremental": true,
++      "configFilePath": "../tsconfig.json"
++    },
++    "referencedMap": {
++      "../src/main.ts": [
++        "../shared/types/db.ts"
++      ]
++    },
++    "exportedModulesMap": {},
++    "semanticDiagnosticsPerFile": [
++      "../../../../../a/lib/lib.d.ts",
++      "../shared/types/db.ts",
++      [
++        "../src/main.ts",
++        [
++          {
++            "file": "../src/main.ts",
++            "start": 46,
++            "length": 1,
++            "code": 2322,
++            "category": 1,
++            "messageText": "Type 'number' is not assignable to type 'string'."
++          }
++        ]
++      ],
++      "../src/other.ts"
++    ],
++    "affectedFilesPendingEmit": [
++      [
++        "../src/main.ts",
++        1
++      ]
++    ]
++  },
++  "version": "FakeTSVersion"
++}
++
+ 
+ Change:: No change
+ 
+@@ -334,7 +464,7 @@ Input::
+ 
+ Output::
+ >> Screen clear
+-[[90m12:01:09 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:01:16 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+ [96msrc/main.ts[0m:[93m2[0m:[93m7[0m - [91merror[0m[90m TS2322: [0mType 'number' is not assignable to type 'string'.
+@@ -343,7 +473,7 @@ Output::
+ [7m [0m [91m      ~[0m
+ 
+ 
+-[[90m12:01:10 AM[0m] Found 1 error. Watching for file changes.
++[[90m12:01:17 AM[0m] Found 1 error. Watching for file changes.
+ 
+ 
+ 
+@@ -390,10 +520,10 @@ const a: string = "hello";
+ 
+ Output::
+ >> Screen clear
+-[[90m12:01:14 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:01:21 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+-[[90m12:01:21 AM[0m] Found 0 errors. Watching for file changes.
++[[90m12:01:28 AM[0m] Found 0 errors. Watching for file changes.
+ 
+ 
+ 
+@@ -430,12 +560,6 @@ FsWatchesRecursive::
+ 
+ exitCode:: ExitStatus.undefined
+ 
+-//// [/user/username/projects/noEmitOnError/dev-build/src/main.js]
+-"use strict";
+-exports.__esModule = true;
+-var a = "hello";
+-
+-
+ //// [/user/username/projects/noEmitOnError/dev-build/tsconfig.tsbuildinfo]
+ {
+   "program": {
+@@ -485,6 +609,12 @@ var a = "hello";
+   "version": "FakeTSVersion"
+ }
+ 
++//// [/user/username/projects/noEmitOnError/dev-build/src/main.js]
++"use strict";
++exports.__esModule = true;
++var a = "hello";
++
++
+ 
+ Change:: No change
+ 
+@@ -493,10 +623,10 @@ Input::
+ 
+ Output::
+ >> Screen clear
+-[[90m12:01:25 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:01:32 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+-[[90m12:01:26 AM[0m] Found 0 errors. Watching for file changes.
++[[90m12:01:33 AM[0m] Found 0 errors. Watching for file changes.
+ 
+ 
+ 
+diff --git a/tests/baselines/reference/tscWatch/emitAndErrorUpdates/isolatedModulesAndD/with-noEmitOnError-with-incremental.js b/tests/baselines/reference/tscWatch/emitAndErrorUpdates/isolatedModulesAndD/with-noEmitOnError-with-incremental.js
+index ff43939b2d..49f1078e3f 100644
+--- a/tests/baselines/reference/tscWatch/emitAndErrorUpdates/isolatedModulesAndD/with-noEmitOnError-with-incremental.js
++++ b/tests/baselines/reference/tscWatch/emitAndErrorUpdates/isolatedModulesAndD/with-noEmitOnError-with-incremental.js
+@@ -50,7 +50,7 @@ Output::
+     The parser expected to find a '}' to match the '{' token here.
+ 
+ 
+-[[90m12:00:32 AM[0m] Found 1 error. Watching for file changes.
++[[90m12:00:37 AM[0m] Found 1 error. Watching for file changes.
+ 
+ 
+ 
+@@ -90,6 +90,70 @@ FsWatchesRecursive::
+ 
+ exitCode:: ExitStatus.undefined
+ 
++//// [/user/username/projects/noEmitOnError/dev-build/tsconfig.tsbuildinfo]
++{
++  "program": {
++    "fileInfos": {
++      "../../../../../a/lib/lib.d.ts": {
++        "version": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "signature": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "affectsGlobalScope": true
++      },
++      "../shared/types/db.ts": {
++        "version": "-9621097780-export interface A {\r\n    name: string;\r\n}",
++        "signature": "-5014788164-export interface A {\n    name: string;\n}\n",
++        "affectsGlobalScope": false
++      },
++      "../src/main.ts": {
++        "version": "2626879346-import { A } from \"../shared/types/db\";\r\nconst a = {\r\n    lastName: 'sdsd'\r\n;",
++        "signature": "-3531856636-export {};\n",
++        "affectsGlobalScope": false
++      },
++      "../src/other.ts": {
++        "version": "11373096570-console.log(\"hi\");\r\nexport { }",
++        "signature": "-3531856636-export {};\n",
++        "affectsGlobalScope": false
++      }
++    },
++    "options": {
++      "outDir": "./",
++      "noEmitOnError": true,
++      "isolatedModules": true,
++      "declaration": true,
++      "watch": true,
++      "incremental": true,
++      "configFilePath": "../tsconfig.json"
++    },
++    "referencedMap": {
++      "../src/main.ts": [
++        "../shared/types/db.ts"
++      ]
++    },
++    "exportedModulesMap": {},
++    "semanticDiagnosticsPerFile": [
++      "../../../../../a/lib/lib.d.ts",
++      "../shared/types/db.ts",
++      "../src/main.ts",
++      "../src/other.ts"
++    ],
++    "affectedFilesPendingEmit": [
++      [
++        "../shared/types/db.ts",
++        1
++      ],
++      [
++        "../src/main.ts",
++        1
++      ],
++      [
++        "../src/other.ts",
++        1
++      ]
++    ]
++  },
++  "version": "FakeTSVersion"
++}
++
+ 
+ Change:: No change
+ 
+@@ -98,7 +162,7 @@ Input::
+ 
+ Output::
+ >> Screen clear
+-[[90m12:00:36 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:00:41 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+ [96msrc/main.ts[0m:[93m4[0m:[93m1[0m - [91merror[0m[90m TS1005: [0m',' expected.
+@@ -112,7 +176,7 @@ Output::
+     The parser expected to find a '}' to match the '{' token here.
+ 
+ 
+-[[90m12:00:37 AM[0m] Found 1 error. Watching for file changes.
++[[90m12:00:42 AM[0m] Found 1 error. Watching for file changes.
+ 
+ 
+ 
+@@ -161,10 +225,10 @@ const a = {
+ 
+ Output::
+ >> Screen clear
+-[[90m12:00:41 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:00:46 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+-[[90m12:01:06 AM[0m] Found 0 errors. Watching for file changes.
++[[90m12:01:10 AM[0m] Found 0 errors. Watching for file changes.
+ 
+ 
+ 
+@@ -201,39 +265,6 @@ FsWatchesRecursive::
+ 
+ exitCode:: ExitStatus.undefined
+ 
+-//// [/user/username/projects/noEmitOnError/dev-build/shared/types/db.js]
+-"use strict";
+-exports.__esModule = true;
+-
+-
+-//// [/user/username/projects/noEmitOnError/dev-build/shared/types/db.d.ts]
+-export interface A {
+-    name: string;
+-}
+-
+-
+-//// [/user/username/projects/noEmitOnError/dev-build/src/main.js]
+-"use strict";
+-exports.__esModule = true;
+-var a = {
+-    lastName: 'sdsd'
+-};
+-
+-
+-//// [/user/username/projects/noEmitOnError/dev-build/src/main.d.ts]
+-export {};
+-
+-
+-//// [/user/username/projects/noEmitOnError/dev-build/src/other.js]
+-"use strict";
+-exports.__esModule = true;
+-console.log("hi");
+-
+-
+-//// [/user/username/projects/noEmitOnError/dev-build/src/other.d.ts]
+-export {};
+-
+-
+ //// [/user/username/projects/noEmitOnError/dev-build/tsconfig.tsbuildinfo]
+ {
+   "program": {
+@@ -284,6 +315,39 @@ export {};
+   "version": "FakeTSVersion"
+ }
+ 
++//// [/user/username/projects/noEmitOnError/dev-build/shared/types/db.js]
++"use strict";
++exports.__esModule = true;
++
++
++//// [/user/username/projects/noEmitOnError/dev-build/shared/types/db.d.ts]
++export interface A {
++    name: string;
++}
++
++
++//// [/user/username/projects/noEmitOnError/dev-build/src/main.js]
++"use strict";
++exports.__esModule = true;
++var a = {
++    lastName: 'sdsd'
++};
++
++
++//// [/user/username/projects/noEmitOnError/dev-build/src/main.d.ts]
++export {};
++
++
++//// [/user/username/projects/noEmitOnError/dev-build/src/other.js]
++"use strict";
++exports.__esModule = true;
++console.log("hi");
++
++
++//// [/user/username/projects/noEmitOnError/dev-build/src/other.d.ts]
++export {};
++
++
+ 
+ Change:: Semantic Error
+ 
+@@ -295,7 +359,7 @@ const a: string = 10;
+ 
+ Output::
+ >> Screen clear
+-[[90m12:01:10 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:01:14 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+ [96msrc/main.ts[0m:[93m2[0m:[93m7[0m - [91merror[0m[90m TS2322: [0mType 'number' is not assignable to type 'string'.
+@@ -304,7 +368,7 @@ Output::
+ [7m [0m [91m      ~[0m
+ 
+ 
+-[[90m12:01:11 AM[0m] Found 1 error. Watching for file changes.
++[[90m12:01:18 AM[0m] Found 1 error. Watching for file changes.
+ 
+ 
+ 
+@@ -341,6 +405,74 @@ FsWatchesRecursive::
+ 
+ exitCode:: ExitStatus.undefined
+ 
++//// [/user/username/projects/noEmitOnError/dev-build/tsconfig.tsbuildinfo]
++{
++  "program": {
++    "fileInfos": {
++      "../../../../../a/lib/lib.d.ts": {
++        "version": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "signature": "3858781397-/// <reference no-default-lib=\"true\"/>\ninterface Boolean {}\ninterface Function {}\ninterface CallableFunction {}\ninterface NewableFunction {}\ninterface IArguments {}\ninterface Number { toExponential: any; }\ninterface Object {}\ninterface RegExp {}\ninterface String { charAt: any; }\ninterface Array<T> { length: number; [n: number]: T; }\ninterface ReadonlyArray<T> {}\ndeclare const console: { log(msg: any): void; };",
++        "affectsGlobalScope": true
++      },
++      "../shared/types/db.ts": {
++        "version": "-9621097780-export interface A {\r\n    name: string;\r\n}",
++        "signature": "-5014788164-export interface A {\n    name: string;\n}\n",
++        "affectsGlobalScope": false
++      },
++      "../src/main.ts": {
++        "version": "-11111345725-import { A } from \"../shared/types/db\";\nconst a: string = 10;",
++        "signature": "-3531856636-export {};\n",
++        "affectsGlobalScope": false
++      },
++      "../src/other.ts": {
++        "version": "11373096570-console.log(\"hi\");\r\nexport { }",
++        "signature": "-3531856636-export {};\n",
++        "affectsGlobalScope": false
++      }
++    },
++    "options": {
++      "outDir": "./",
++      "noEmitOnError": true,
++      "isolatedModules": true,
++      "declaration": true,
++      "watch": true,
++      "incremental": true,
++      "configFilePath": "../tsconfig.json"
++    },
++    "referencedMap": {
++      "../src/main.ts": [
++        "../shared/types/db.ts"
++      ]
++    },
++    "exportedModulesMap": {},
++    "semanticDiagnosticsPerFile": [
++      "../../../../../a/lib/lib.d.ts",
++      "../shared/types/db.ts",
++      [
++        "../src/main.ts",
++        [
++          {
++            "file": "../src/main.ts",
++            "start": 46,
++            "length": 1,
++            "code": 2322,
++            "category": 1,
++            "messageText": "Type 'number' is not assignable to type 'string'."
++          }
++        ]
++      ],
++      "../src/other.ts"
++    ],
++    "affectedFilesPendingEmit": [
++      [
++        "../src/main.ts",
++        1
++      ]
++    ]
++  },
++  "version": "FakeTSVersion"
++}
++
+ 
+ Change:: No change
+ 
+@@ -349,7 +481,7 @@ Input::
+ 
+ Output::
+ >> Screen clear
+-[[90m12:01:15 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:01:22 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+ [96msrc/main.ts[0m:[93m2[0m:[93m7[0m - [91merror[0m[90m TS2322: [0mType 'number' is not assignable to type 'string'.
+@@ -358,7 +490,7 @@ Output::
+ [7m [0m [91m      ~[0m
+ 
+ 
+-[[90m12:01:16 AM[0m] Found 1 error. Watching for file changes.
++[[90m12:01:23 AM[0m] Found 1 error. Watching for file changes.
+ 
+ 
+ 
+@@ -405,10 +537,10 @@ const a: string = "hello";
+ 
+ Output::
+ >> Screen clear
+-[[90m12:01:20 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:01:27 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+-[[90m12:01:30 AM[0m] Found 0 errors. Watching for file changes.
++[[90m12:01:37 AM[0m] Found 0 errors. Watching for file changes.
+ 
+ 
+ 
+@@ -445,13 +577,6 @@ FsWatchesRecursive::
+ 
+ exitCode:: ExitStatus.undefined
+ 
+-//// [/user/username/projects/noEmitOnError/dev-build/src/main.js]
+-"use strict";
+-exports.__esModule = true;
+-var a = "hello";
+-
+-
+-//// [/user/username/projects/noEmitOnError/dev-build/src/main.d.ts] file written with same contents
+ //// [/user/username/projects/noEmitOnError/dev-build/tsconfig.tsbuildinfo]
+ {
+   "program": {
+@@ -502,6 +627,13 @@ var a = "hello";
+   "version": "FakeTSVersion"
+ }
+ 
++//// [/user/username/projects/noEmitOnError/dev-build/src/main.js]
++"use strict";
++exports.__esModule = true;
++var a = "hello";
++
++
++//// [/user/username/projects/noEmitOnError/dev-build/src/main.d.ts] file written with same contents
+ 
+ Change:: No change
+ 
+@@ -510,10 +642,10 @@ Input::
+ 
+ Output::
+ >> Screen clear
+-[[90m12:01:34 AM[0m] File change detected. Starting incremental compilation...
++[[90m12:01:41 AM[0m] File change detected. Starting incremental compilation...
+ 
+ 
+-[[90m12:01:35 AM[0m] Found 0 errors. Watching for file changes.
++[[90m12:01:42 AM[0m] Found 0 errors. Watching for file changes.
+ 
+ 
+ 
