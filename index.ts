@@ -2,6 +2,8 @@ import * as fs from 'fs';
 import * as assert from 'assert';
 import * as process from 'process';
 import * as stream from 'stream';
+import termSize from 'term-size';
+import ansiRegex from 'ansi-regex';
 
 async function* iterateReadableLinesAsync(readable: stream.Readable) {
     let prevLine: string | undefined = undefined;
@@ -25,20 +27,7 @@ async function* iterateReadableLinesAsync(readable: stream.Readable) {
     }
 }
 
-// Modified from https://github.com/so-fancy/diff-so-fancy/
-const regexWithComments = (str: TemplateStringsArray, ...comments: string[]) =>
-    new RegExp(str.raw[0].replace(/\s/gm, ''), 'g');
-
-const ANSI_COLOR_CODE_REGEX = regexWithComments`
-    (
-        (\e|\x1B)\[
-        (
-            [0-9]{1,3}
-            (;[0-9]{1,3}){0,10}
-        )?
-        [mK]
-    )
-`;
+const ANSI_COLOR_CODE_REGEX = ansiRegex();
 
 async function* iterateLinesWithoutAnsiColors(lines: AsyncIterable<string>) {
     for await (const line of lines) {
@@ -48,12 +37,12 @@ async function* iterateLinesWithoutAnsiColors(lines: AsyncIterable<string>) {
 
 type State = 'commit' | 'diff' | 'hunk';
 
-async function* iterateParser(lines: AsyncIterable<string>) {
+/**
+ * Converts streaming git diff output to unified diff format
+ */
+async function* iterateUnifiedDiff(lines: AsyncIterable<string>) {
     let state: State = 'commit';
 
-    // Diff metadata
-    let fileNameA: string;
-    let fileNameB: string;
     // Hunk metadata
     let startA: number = -1;
     let deltaA: number = -1;
@@ -62,9 +51,18 @@ async function* iterateParser(lines: AsyncIterable<string>) {
     let hunkStartLine: string;
     let hunkLines: string[] = [];
 
-    // TODO: line wrapping
-    const maxLineLength = 80;
+    // Each line in a diff is rendered as follows:
+    // [  lineNoA] [        lineA] [  lineNoB] [       lineB]
+    const { columns: screenWidth } = termSize();
+    const lineNumberWidth = 4;
+    const maxLineLength = Math.max(
+        Math.floor((screenWidth - 2 * lineNumberWidth - 3) / 2),
+        8
+    );
 
+    console.error({ screenWidth, lineNumberWidth, maxLineLength });
+
+    // TODO: line wrapping
     function formatLine(
         lineNoA: number,
         lineA: string,
@@ -72,9 +70,9 @@ async function* iterateParser(lines: AsyncIterable<string>) {
         lineB: string
     ) {
         return [
-            lineNoA.toString().padStart(4),
+            lineNoA.toString().padStart(lineNumberWidth),
             lineA.slice(0, maxLineLength).padEnd(maxLineLength),
-            lineNoB.toString().padStart(4),
+            lineNoB.toString().padStart(lineNumberWidth),
             lineB.slice(0, maxLineLength).padEnd(maxLineLength),
         ].join(' ');
     }
@@ -171,7 +169,7 @@ async function* iterateParser(lines: AsyncIterable<string>) {
 }
 
 async function test() {
-    for await (const line of iterateParser(
+    for await (const line of iterateUnifiedDiff(
         iterateLinesWithoutAnsiColors(iterateReadableLinesAsync(process.stdin))
     )) {
         fs.writeSync(process.stdout.fd, line + '\n');
