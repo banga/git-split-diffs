@@ -5,7 +5,7 @@
 -   [x] Add colors
 -   [x] Fix EAGAIN errors when paging
 -   [x] Handle file addition/deletion properly
--   [ ] Fix incorrect line positions when a hunk has discontinuous inserts and/or deletes
+-   [x] Fix incorrect line positions when a hunk has discontinuous inserts and/or deletes
 -   [ ] Handle moves and renames without diffs
 -   [ ] Highlight changes in lines
 -   [x] Colorize commit messages

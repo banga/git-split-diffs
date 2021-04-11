@@ -8,15 +8,18 @@ import termSize from 'term-size';
 
 /*
     Each line in a hunk is rendered as follows:
-    <lineNo[maxLineNoWidth]> <linePrefix[1]> <lineWithoutPrefix[LINE_WIDTH]><lineNo[maxLineNoWidth]> <linePrefix[1]> <lineWithoutPrefix[LINE_WIDTH]>
+    <lineNo> <linePrefix[1]> <lineWithoutPrefix><lineNo> <linePrefix> <lineWithoutPrefix>
 
-    So (maxLineNoWidth + 1 + 1 + 1 + LINE_WIDTH) * 2 = SCREEN_WIDTH
+    So (LINE_NUMBER_WIDTH + 1 + LINE_PREFIX_WIDTH + 1 + LINE_WIDTH) * 2 = SCREEN_WIDTH
 */
 const { columns: SCREEN_WIDTH } = termSize();
 const LINE_NUMBER_WIDTH = 5;
+const LINE_PREFIX_WIDTH = 5;
 const MIN_LINE_WIDTH = 8;
 const LINE_WIDTH = Math.max(
-    Math.floor(SCREEN_WIDTH / 2 - 3 - LINE_NUMBER_WIDTH),
+    Math.floor(
+        SCREEN_WIDTH / 2 - 1 - LINE_PREFIX_WIDTH - 1 - LINE_NUMBER_WIDTH
+    ),
     MIN_LINE_WIDTH
 );
 
@@ -29,6 +32,10 @@ const HUNK_HEADER_COLOR = chalk.white.dim;
 const DELETED_LINE_COLOR = chalk.redBright;
 const INSERTED_LINE_COLOR = chalk.greenBright;
 const UNMODIFIED_LINE_COLOR = chalk.white;
+
+const FORMATTED_MISSING_LINE = ''.padStart(
+    LINE_NUMBER_WIDTH + 1 + LINE_PREFIX_WIDTH + 1 + LINE_WIDTH
+);
 
 const ANSI_COLOR_CODE_REGEX = ansiRegex();
 const NEWLINE_REGEX = /\r\n|\n/;
@@ -83,19 +90,16 @@ async function* iterSideBySideDiff(lines: AsyncIterable<string>) {
 
     // Hunk metadata
     let startA: number = -1;
-    let deltaA: number = -1;
     let startB: number = -1;
-    let deltaB: number = -1;
     let hunkHeaderLine: string = '';
     let hunkLines: string[] = [];
     function* yieldHunk() {
+        // console.error('yieldHunk', { hunkHeaderLine, hunkLines });
         yield* formatHunkSideBySide(
             hunkHeaderLine,
             hunkLines,
             startA,
-            deltaA,
             startB,
-            deltaB,
             fileNameA,
             fileNameB
         );
@@ -134,16 +138,14 @@ async function* iterSideBySideDiff(lines: AsyncIterable<string>) {
             hunkHeaderLine = line;
 
             const [aHeader, bHeader] = hunkHeader.split(' ');
-            const [startAString, deltaAString] = aHeader.split(',');
-            const [startBString, deltaBString] = bHeader.split(',');
+            const [startAString] = aHeader.split(',');
+            const [startBString] = bHeader.split(',');
 
             assert.ok(startAString.startsWith('-'));
             startA = parseInt(startAString.slice(1), 10);
-            deltaA = parseInt(deltaAString, 10);
 
             assert.ok(startBString.startsWith('+'));
             startB = parseInt(startBString.slice(1), 10);
-            deltaB = parseInt(deltaBString, 10);
 
             state = 'hunk';
             hunkLines = [];
@@ -223,6 +225,10 @@ function formatFileName(fileNameA: string, fileNameB: string) {
 }
 
 function formatHunkLine(lineNo: number, line: string, fileName: string) {
+    if (!fileName) {
+        return FORMATTED_MISSING_LINE;
+    }
+
     let lineColor;
     switch (line[0]) {
         case '-':
@@ -234,11 +240,8 @@ function formatHunkLine(lineNo: number, line: string, fileName: string) {
         default:
             lineColor = UNMODIFIED_LINE_COLOR;
     }
-    // Don't show line numbers for missing files
-    const lineNoString = (fileName ? lineNo.toString() : '').padStart(
-        LINE_NUMBER_WIDTH
-    );
-    const linePrefix = line.slice(0, 1).padStart(1);
+    const lineNoString = lineNo.toString().padStart(LINE_NUMBER_WIDTH);
+    const linePrefix = line.slice(0, 1).padStart(LINE_PREFIX_WIDTH);
     const lineWithoutPrefix = line.slice(1, LINE_WIDTH + 1).padEnd(LINE_WIDTH);
     return `${lineColor.dim(lineNoString)} ${lineColor(
         `${linePrefix} ${lineWithoutPrefix}`
@@ -248,47 +251,67 @@ function formatHunkLine(lineNo: number, line: string, fileName: string) {
 function formatHunkSideBySide(
     hunkHeaderLine: string,
     hunkLines: string[],
-    startA: number,
-    deltaA: number,
-    startB: number,
-    deltaB: number,
+    lineNoA: number,
+    lineNoB: number,
     fileNameA: string,
     fileNameB: string
 ) {
-    const formattedLines = [
-        HUNK_HEADER_COLOR(hunkHeaderLine.padEnd(SCREEN_WIDTH)),
-    ];
+    const formattedLines = [];
+    formattedLines.push(HUNK_HEADER_COLOR(hunkHeaderLine.padEnd(SCREEN_WIDTH)));
 
-    const linesA = [];
-    const linesB = [];
+    let linesA: string[] = [];
+    let linesB: string[] = [];
+
+    // Each contiguous sequence of removals and additions represents a change
+    // operation starting at the same line on both sides (since it has to occur
+    // in the originl file). So we can render a side-by-side diff by rendering
+    // the deletions and inserts in parallel, leaving out room if there are more
+    // lines on one side than the other.
+    function flushHunkChange() {
+        let indexA = 0;
+        let indexB = 0;
+
+        while (indexA < linesA.length && indexB < linesB.length) {
+            formattedLines.push(
+                formatHunkLine(lineNoA, linesA[indexA], fileNameA) +
+                    formatHunkLine(lineNoB, linesB[indexB], fileNameB)
+            );
+            lineNoA++;
+            lineNoB++;
+            indexA++;
+            indexB++;
+        }
+        while (indexA < linesA.length) {
+            formattedLines.push(
+                formatHunkLine(lineNoA, linesA[indexA], fileNameA) +
+                    FORMATTED_MISSING_LINE
+            );
+            lineNoA++;
+            indexA++;
+        }
+        while (indexB < linesB.length) {
+            formattedLines.push(
+                FORMATTED_MISSING_LINE +
+                    formatHunkLine(lineNoB, linesB[indexB], fileNameB)
+            );
+            lineNoB++;
+            indexB++;
+        }
+    }
+
     for (const line of hunkLines) {
         if (line.startsWith('-')) {
             linesA.push(line);
         } else if (line.startsWith('+')) {
             linesB.push(line);
         } else {
-            linesA.push(line);
-            linesB.push(line);
+            flushHunkChange();
+            linesA = [line];
+            linesB = [line];
         }
     }
 
-    let offset = 0;
-    let lineNoA = startA;
-    let lineNoB = startB;
-    while (offset < deltaA || offset < deltaB) {
-        let formattedLineA = '';
-        let formattedLineB = '';
-        if (offset < deltaA) {
-            formattedLineA = formatHunkLine(lineNoA, linesA[offset], fileNameA);
-            lineNoA++;
-        }
-        if (offset < deltaB) {
-            formattedLineB = formatHunkLine(lineNoB, linesB[offset], fileNameB);
-            lineNoB++;
-        }
-        formattedLines.push(formattedLineA + formattedLineB);
-        offset++;
-    }
+    flushHunkChange();
 
     return formattedLines;
 }
