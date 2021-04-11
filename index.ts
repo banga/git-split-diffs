@@ -72,7 +72,9 @@ async function* iterSideBySideDiff(lines: AsyncIterable<string>) {
     let fileNameA: string = '';
     let fileNameB: string = '';
     function* yieldFileName() {
+        yield '';
         yield formatFileName(fileNameA, fileNameB);
+        yield '';
     }
 
     // Hunk metadata
@@ -98,7 +100,7 @@ async function* iterSideBySideDiff(lines: AsyncIterable<string>) {
     for await (const line of lines) {
         // Handle state transitions
         if (line.startsWith('diff ')) {
-            if (state == 'hunk') {
+            if (state === 'hunk') {
                 yield* yieldHunk();
             }
 
@@ -106,9 +108,9 @@ async function* iterSideBySideDiff(lines: AsyncIterable<string>) {
             fileNameA = '';
             fileNameB = '';
         } else if (line.startsWith('@@')) {
-            if (state == 'diff') {
+            if (state === 'diff') {
                 yield* yieldFileName();
-            } else if (state == 'hunk') {
+            } else if (state === 'hunk') {
                 yield* yieldHunk();
             }
 
@@ -165,17 +167,25 @@ async function* iterSideBySideDiff(lines: AsyncIterable<string>) {
 function formatFileName(fileNameA: string, fileNameB: string) {
     let line: string;
     if (!fileNameA) {
-        line = `${FILE_NAME_COLOR(fileNameB)} was added`;
+        line = `${FILE_NAME_COLOR(fileNameB)}`;
     } else if (!fileNameB) {
-        line = `${FILE_NAME_COLOR(fileNameA)} was removed`;
+        line = `${FILE_NAME_COLOR(fileNameA)}`;
     } else if (fileNameA === fileNameB) {
         line = FILE_NAME_COLOR(fileNameA);
     } else {
-        line = `${FILE_NAME_COLOR(fileNameA)} moved to ${FILE_NAME_COLOR(
-            fileNameB
-        )}`;
+        line = `${FILE_NAME_COLOR(fileNameA)} -> ${FILE_NAME_COLOR(fileNameB)}`;
     }
-    return line.padEnd(SCREEN_WIDTH);
+
+    const lineLength = line.replace(ANSI_COLOR_CODE_REGEX, '').length;
+    const paddingLength = SCREEN_WIDTH - lineLength - 2;
+    const leftPadding = FILE_NAME_COLOR.dim(
+        ''.padStart(paddingLength / 2, '-')
+    );
+    const rightPadding = FILE_NAME_COLOR.dim(
+        ''.padStart(paddingLength - paddingLength / 2, '-')
+    );
+
+    return `${leftPadding} ${line} ${rightPadding}`;
 }
 
 function formatHunkLine(lineNo: number, line: string, fileName: string) {
