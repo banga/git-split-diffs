@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import chalk from 'chalk';
 import termSize from 'term-size';
-import { ANSI_COLOR_CODE_REGEX } from './iterLinesWithoutAnsiColors.js';
+import { ANSI_COLOR_CODE_REGEX } from './iterLinesWithoutAnsiColors';
 
 /*
     Each line in a hunk is rendered as follows:

@@ -1,5 +1,4 @@
 {
-    "type": "module",
     "dependencies": {
         "@types/node": "^14.14.37",
         "ansi-regex": "^5.0.0",
@@ -9,8 +8,9 @@
     },
     "scripts": {
         "clean": "rimraf ./build",
-        "build": "yarn clean && tsc --build",
-        "start": "yarn build && node ./build/index.js"
+        "build": "yarn clean && yarn tsc --build",
+        "start": "yarn build && node ./build",
+        "test": "jest"
     },
     "devDependencies": {
         "@types/jest": "^26.0.22",

@@ -1,9 +1,9 @@
 import * as process from 'process';
-import { iterlinesFromReadableAsync } from './iterLinesFromReadable.js';
-import { iterLinesWithoutAnsiColors } from './iterLinesWithoutAnsiColors.js';
-import { iterSideBySideDiff } from './iterSideBySideDiffs.js';
-import { iterWithNewlines } from './iterWithNewlines.js';
-import { transformStreamWithIterables } from './transformStreamWithIterables.js';
+import { iterlinesFromReadableAsync } from './iterLinesFromReadable';
+import { iterLinesWithoutAnsiColors } from './iterLinesWithoutAnsiColors';
+import { iterSideBySideDiff } from './iterSideBySideDiffs';
+import { iterWithNewlines } from './iterWithNewlines';
+import { transformStreamWithIterables } from './transformStreamWithIterables';
 
 function main() {
     transformStreamWithIterables(
