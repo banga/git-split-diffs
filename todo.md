@@ -11,3 +11,4 @@
 -   [x] Colorize commit messages
 -   [ ] Read colors from git config
 -   [ ] Support line wrapping
+-   [ ] Test on very large diffs
