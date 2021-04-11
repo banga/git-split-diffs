@@ -7,6 +7,7 @@
 -   [x] Handle file addition/deletion properly
 -   [x] Fix incorrect line positions when a hunk has discontinuous inserts and/or deletes
 -   [x] Organize code
+-   [x] Move visual config to theme
 -   [ ] Handle empty diffs
 -   [ ] Handle moves and renames without diffs
 -   [ ] Highlight changes in lines
