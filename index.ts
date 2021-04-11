@@ -20,8 +20,12 @@ const LINE_WIDTH = Math.max(
     MIN_LINE_WIDTH
 );
 
-const FILE_NAME_COLOR = chalk.yellow;
-const HUNK_HEADER_COLOR = chalk.dim;
+const COMMIT_SHA_COLOR = chalk.cyan;
+const COMMIT_AUTHOR_COLOR = chalk.greenBright;
+const COMMIT_DATE_COLOR = chalk.white;
+
+const FILE_NAME_COLOR = chalk.yellowBright;
+const HUNK_HEADER_COLOR = chalk.white.dim;
 const DELETED_LINE_COLOR = chalk.redBright;
 const INSERTED_LINE_COLOR = chalk.greenBright;
 const UNMODIFIED_LINE_COLOR = chalk.white;
@@ -99,7 +103,15 @@ async function* iterSideBySideDiff(lines: AsyncIterable<string>) {
 
     for await (const line of lines) {
         // Handle state transitions
-        if (line.startsWith('diff ')) {
+        if (line.startsWith('commit ')) {
+            if (state === 'diff') {
+                yield* yieldFileName();
+            } else if (state === 'hunk') {
+                yield* yieldHunk();
+            }
+
+            state = 'commit';
+        } else if (line.startsWith('diff ')) {
             if (state === 'hunk') {
                 yield* yieldHunk();
             }
@@ -142,9 +154,10 @@ async function* iterSideBySideDiff(lines: AsyncIterable<string>) {
 
         // Handle state
         switch (state) {
-            case 'commit':
-                yield line;
+            case 'commit': {
+                yield formatCommitLine(line);
                 break;
+            }
             case 'diff':
                 {
                     if (line.startsWith('--- a/')) {
@@ -162,6 +175,27 @@ async function* iterSideBySideDiff(lines: AsyncIterable<string>) {
     }
 
     yield* yieldHunk();
+}
+
+function formatCommitLine(line: string) {
+    const [label] = line.split(' ', 1);
+
+    let labelColor;
+    switch (label) {
+        case 'commit':
+            labelColor = COMMIT_SHA_COLOR;
+            break;
+        case 'Author:':
+            labelColor = COMMIT_AUTHOR_COLOR;
+            break;
+        case 'Date:':
+            labelColor = COMMIT_DATE_COLOR;
+            break;
+        default:
+            return line;
+    }
+
+    return `${label}${labelColor(line.slice(label.length))}`;
 }
 
 function formatFileName(fileNameA: string, fileNameB: string) {
@@ -242,21 +276,18 @@ function formatHunkSideBySide(
     let lineNoA = startA;
     let lineNoB = startB;
     while (offset < deltaA || offset < deltaB) {
-        let lineA = '';
-        let lineB = '';
+        let formattedLineA = '';
+        let formattedLineB = '';
         if (offset < deltaA) {
-            lineA = linesA[offset];
+            formattedLineA = formatHunkLine(lineNoA, linesA[offset], fileNameA);
             lineNoA++;
         }
         if (offset < deltaB) {
-            lineB = linesB[offset];
+            formattedLineB = formatHunkLine(lineNoB, linesB[offset], fileNameB);
             lineNoB++;
         }
+        formattedLines.push(formattedLineA + formattedLineB);
         offset++;
-        formattedLines.push(
-            formatHunkLine(lineNoA, lineA, fileNameA) +
-                formatHunkLine(lineNoB, lineB, fileNameB)
-        );
     }
 
     return formattedLines;

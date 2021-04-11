@@ -5,8 +5,9 @@
 -   [x] Add colors
 -   [x] Fix EAGAIN errors when paging
 -   [x] Handle file addition/deletion properly
+-   [ ] Fix incorrect line positions when a hunk has discontinuous inserts and/or deletes
 -   [ ] Handle moves and renames without diffs
 -   [ ] Highlight changes in lines
--   [ ] Colorize commit messages
+-   [x] Colorize commit messages
 -   [ ] Read colors from git config
 -   [ ] Support line wrapping
