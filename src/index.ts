@@ -1,5 +1,6 @@
 import chalk from 'chalk';
 import * as process from 'process';
+import stream from 'stream';
 import terminalSize from 'term-size';
 import { iterlinesFromReadableAsync } from './iterLinesFromReadable';
 import { iterLinesWithoutAnsiColors } from './iterLinesWithoutAnsiColors';
@@ -12,15 +13,16 @@ function main() {
     const screenWidth = terminalSize().columns;
     const theme = defaultTheme(chalk, screenWidth);
 
-    transformStreamWithIterables(
-        process.stdin,
-        [
+    stream.pipeline(
+        transformStreamWithIterables(
+            process.stdin,
             iterlinesFromReadableAsync,
             iterLinesWithoutAnsiColors,
             iterSideBySideDiff(theme),
-            iterWithNewlines,
-        ],
-        process.stdout
+            iterWithNewlines
+        ),
+        process.stdout,
+        console.error
     );
 }
 

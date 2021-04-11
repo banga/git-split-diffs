@@ -1,4 +1,4 @@
-import * as stream from 'stream';
+import { Readable } from 'stream';
 
 /**
  * Convenience function for transforming a readable stream, `input`, via a
@@ -6,18 +6,15 @@ import * as stream from 'stream';
  * stream, `output`.
  */
 export function transformStreamWithIterables(
-    input: stream.Readable,
-    [firstTransformer, ...restTransformers]: [
-        (input: stream.Readable) => AsyncIterable<string>,
-        ...((iterable: AsyncIterable<string>) => AsyncIterable<string>)[]
-    ],
-    output: stream.Writable
-) {
+    input: Readable,
+    firstTransformer: (input: Readable) => AsyncIterable<string>,
+    ...restTransformers: ((
+        iterable: AsyncIterable<string>
+    ) => AsyncIterable<string>)[]
+): Readable {
     let i = firstTransformer(input);
     for (const transformer of restTransformers) {
         i = transformer(i);
     }
-    stream.pipeline(stream.Readable.from(i), output, (err) =>
-        console.error(err)
-    );
+    return Readable.from(i);
 }
