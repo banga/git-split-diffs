@@ -4,6 +4,28 @@ import * as process from 'process';
 import * as stream from 'stream';
 import termSize from 'term-size';
 import ansiRegex from 'ansi-regex';
+import chalk from 'chalk';
+
+/*
+    Each line in a hunk is rendered as follows:
+    <lineNo[maxLineNoWidth]> <linePrefix[1]> <lineWithoutPrefix[LINE_WIDTH]> <lineNo[maxLineNoWidth]> <linePrefix[1]> <lineWithoutPrefix[LINE_WIDTH]>
+
+    So (maxLineNoWidth + 1 + 1 + 1 + LINE_WIDTH) * 2 + 1 = SCREEN_WIDTH
+*/
+const { columns: SCREEN_WIDTH } = termSize();
+const LINE_NUMBER_WIDTH = 5;
+const MIN_LINE_WIDTH = 8;
+const LINE_WIDTH = Math.max(
+    Math.floor((SCREEN_WIDTH - 1) / 2 - 3 - LINE_NUMBER_WIDTH),
+    MIN_LINE_WIDTH
+);
+
+const ANSI_COLOR_CODE_REGEX = ansiRegex();
+async function* iterateLinesWithoutAnsiColors(lines: AsyncIterable<string>) {
+    for await (const line of lines) {
+        yield line.replace(ANSI_COLOR_CODE_REGEX, '');
+    }
+}
 
 async function* iterateReadableLinesAsync(readable: stream.Readable) {
     let prevLine: string | undefined = undefined;
@@ -27,12 +49,29 @@ async function* iterateReadableLinesAsync(readable: stream.Readable) {
     }
 }
 
-const ANSI_COLOR_CODE_REGEX = ansiRegex();
+const deletedLineColor = chalk.red;
+const insertedLineColor = chalk.green;
+const normalColor = chalk.white;
 
-async function* iterateLinesWithoutAnsiColors(lines: AsyncIterable<string>) {
-    for await (const line of lines) {
-        yield line.replace(ANSI_COLOR_CODE_REGEX, '');
+function formatHunkLine(lineNo: number, line: string) {
+    const linePrefix = line.slice(0, 1);
+    const lineWithoutPrefix = line.slice(1);
+    let lineColor;
+    switch (linePrefix) {
+        case '-':
+            lineColor = deletedLineColor;
+            break;
+        case '+':
+            lineColor = insertedLineColor;
+            break;
+        default:
+            lineColor = normalColor;
     }
+    return [
+        lineColor(lineNo.toString().padStart(LINE_NUMBER_WIDTH)),
+        lineColor(linePrefix.padStart(1)),
+        lineColor(lineWithoutPrefix.slice(0, LINE_WIDTH).padEnd(LINE_WIDTH)),
+    ].join(' ');
 }
 
 type State = 'commit' | 'diff' | 'hunk';
@@ -50,32 +89,6 @@ async function* iterateUnifiedDiff(lines: AsyncIterable<string>) {
     let deltaB: number = -1;
     let hunkStartLine: string;
     let hunkLines: string[] = [];
-
-    // Each line in a diff is rendered as follows:
-    // [  lineNoA] [        lineA] [  lineNoB] [       lineB]
-    const { columns: screenWidth } = termSize();
-    const lineNumberWidth = 4;
-    const maxLineLength = Math.max(
-        Math.floor((screenWidth - 2 * lineNumberWidth - 3) / 2),
-        8
-    );
-
-    console.error({ screenWidth, lineNumberWidth, maxLineLength });
-
-    // TODO: line wrapping
-    function formatLine(
-        lineNoA: number,
-        lineA: string,
-        lineNoB: number,
-        lineB: string
-    ) {
-        return [
-            lineNoA.toString().padStart(lineNumberWidth),
-            lineA.slice(0, maxLineLength).padEnd(maxLineLength),
-            lineNoB.toString().padStart(lineNumberWidth),
-            lineB.slice(0, maxLineLength).padEnd(maxLineLength),
-        ].join(' ');
-    }
 
     function* yieldHunkIfNeeded() {
         if (hunkLines.length === 0) {
@@ -110,7 +123,10 @@ async function* iterateUnifiedDiff(lines: AsyncIterable<string>) {
                 lineNoB++;
             }
             offset++;
-            yield formatLine(lineNoA, lineA, lineNoB, lineB);
+            yield `${formatHunkLine(lineNoA, lineA)} ${formatHunkLine(
+                lineNoB,
+                lineB
+            )}`;
         }
         hunkLines = [];
     }
@@ -153,9 +169,7 @@ async function* iterateUnifiedDiff(lines: AsyncIterable<string>) {
                 break;
             case 'diff':
                 if (line.startsWith('---')) {
-                    yield ''.padStart(maxLineLength * 2, '*');
                     yield line.slice(6);
-                    yield ''.padStart(maxLineLength * 2, '*');
                 }
                 break;
             case 'hunk': {
