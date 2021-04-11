@@ -1,10 +1,10 @@
-import * as fs from 'fs';
+import ansiRegex from 'ansi-regex';
 import * as assert from 'assert';
+import chalk from 'chalk';
+import * as os from 'os';
 import * as process from 'process';
 import * as stream from 'stream';
 import termSize from 'term-size';
-import ansiRegex from 'ansi-regex';
-import chalk from 'chalk';
 
 /*
     Each line in a hunk is rendered as follows:
@@ -27,16 +27,16 @@ const INSERTED_LINE_COLOR = chalk.greenBright;
 const UNMODIFIED_LINE_COLOR = chalk.white;
 
 const ANSI_COLOR_CODE_REGEX = ansiRegex();
-async function* iterateLinesWithoutAnsiColors(lines: AsyncIterable<string>) {
-    for await (const line of lines) {
-        yield line.replace(ANSI_COLOR_CODE_REGEX, '');
-    }
-}
+const NEWLINE_REGEX = /\r\n|\n/;
 
-async function* iterateReadableLinesAsync(readable: stream.Readable) {
+/**
+ * Converts a readable stream to an iterator that yields the stream's contents
+ * line-by-line.
+ */
+async function* iterlinesFromReadableAsync(readable: stream.Readable) {
     let prevLine: string | undefined = undefined;
     for await (const chunk of readable) {
-        const lines: string[] = chunk.toString().split(/\r\n|\n/);
+        const lines: string[] = chunk.toString().split(NEWLINE_REGEX);
         for (let i = 0; i < lines.length; i++) {
             let line = lines[i];
             if (i === 0 && prevLine) {
@@ -55,101 +55,25 @@ async function* iterateReadableLinesAsync(readable: stream.Readable) {
     }
 }
 
-function* iterFileName(fileNameA: string, fileNameB: string) {
-    let line: string;
-    if (!fileNameA) {
-        line = `${FILE_NAME_COLOR(fileNameB)} was added`;
-    } else if (!fileNameB) {
-        line = `${FILE_NAME_COLOR(fileNameA)} was removed`;
-    } else if (fileNameA === fileNameB) {
-        line = FILE_NAME_COLOR(fileNameA);
-    } else {
-        line = `${FILE_NAME_COLOR(fileNameA)} moved to ${FILE_NAME_COLOR(
-            fileNameB
-        )}`;
-    }
-    yield line.padEnd(SCREEN_WIDTH);
-}
-
-function formatHunkLine(lineNo: number, line: string, fileName: string) {
-    let lineColor;
-    switch (line[0]) {
-        case '-':
-            lineColor = DELETED_LINE_COLOR;
-            break;
-        case '+':
-            lineColor = INSERTED_LINE_COLOR;
-            break;
-        default:
-            lineColor = UNMODIFIED_LINE_COLOR;
-    }
-    // Don't show line numbers for missing files
-    const lineNoString = (fileName ? lineNo.toString() : '').padStart(
-        LINE_NUMBER_WIDTH
-    );
-    const linePrefix = line.slice(0, 1).padStart(1);
-    const lineWithoutPrefix = line.slice(1, LINE_WIDTH + 1).padEnd(LINE_WIDTH);
-    return `${lineColor.dim(lineNoString)} ${lineColor(
-        `${linePrefix} ${lineWithoutPrefix}`
-    )}`;
-}
-
-function* iterHunkLines(
-    hunkHeaderLine: string,
-    hunkLines: string[],
-    startA: number,
-    deltaA: number,
-    startB: number,
-    deltaB: number,
-    fileNameA: string,
-    fileNameB: string
-) {
-    yield HUNK_HEADER_COLOR(hunkHeaderLine.padEnd(SCREEN_WIDTH));
-
-    const linesA = [];
-    const linesB = [];
-    for (const line of hunkLines) {
-        if (line.startsWith('-')) {
-            linesA.push(line);
-        } else if (line.startsWith('+')) {
-            linesB.push(line);
-        } else {
-            linesA.push(line);
-            linesB.push(line);
-        }
-    }
-    let offset = 0;
-    let lineNoA = startA;
-    let lineNoB = startB;
-    while (offset < deltaA || offset < deltaB) {
-        let lineA = '';
-        let lineB = '';
-        if (offset < deltaA) {
-            lineA = linesA[offset];
-            lineNoA++;
-        }
-        if (offset < deltaB) {
-            lineB = linesB[offset];
-            lineNoB++;
-        }
-        offset++;
-        yield `${formatHunkLine(lineNoA, lineA, fileNameA)}${formatHunkLine(
-            lineNoB,
-            lineB,
-            fileNameB
-        )}`;
+/**
+ * Strips out ANSI color escape codes, which may be present in diff output if
+ * --color is used.
+ */
+async function* iterateLinesWithoutAnsiColors(lines: AsyncIterable<string>) {
+    for await (const line of lines) {
+        yield line.replace(ANSI_COLOR_CODE_REGEX, '');
     }
 }
 
-type State = 'commit' | 'diff' | 'hunk';
-
-async function* iterateUnifiedDiff(lines: AsyncIterable<string>) {
-    let state: State = 'commit';
+async function* iterSideBySideDiff(lines: AsyncIterable<string>) {
+    let state: 'commit' | 'diff' | 'hunk' = 'commit';
 
     // File metadata
     let fileNameA: string = '';
     let fileNameB: string = '';
-    const yieldFileName = () => iterFileName(fileNameA, fileNameB);
+    function* yieldFileName() {
+        yield formatFileName(fileNameA, fileNameB);
+    }
 
     // Hunk metadata
     let startA: number = -1;
@@ -158,8 +82,8 @@ async function* iterateUnifiedDiff(lines: AsyncIterable<string>) {
     let deltaB: number = -1;
     let hunkHeaderLine: string = '';
     let hunkLines: string[] = [];
-    const yieldHunk = () =>
-        iterHunkLines(
+    function* yieldHunk() {
+        yield* formatHunkSideBySide(
             hunkHeaderLine,
             hunkLines,
             startA,
@@ -169,6 +93,7 @@ async function* iterateUnifiedDiff(lines: AsyncIterable<string>) {
             fileNameA,
             fileNameB
         );
+    }
 
     for await (const line of lines) {
         // Handle state transitions
@@ -237,12 +162,128 @@ async function* iterateUnifiedDiff(lines: AsyncIterable<string>) {
     yield* yieldHunk();
 }
 
-async function test() {
-    for await (const line of iterateUnifiedDiff(
-        iterateLinesWithoutAnsiColors(iterateReadableLinesAsync(process.stdin))
-    )) {
-        fs.writeSync(process.stdout.fd, line + '\n');
+function formatFileName(fileNameA: string, fileNameB: string) {
+    let line: string;
+    if (!fileNameA) {
+        line = `${FILE_NAME_COLOR(fileNameB)} was added`;
+    } else if (!fileNameB) {
+        line = `${FILE_NAME_COLOR(fileNameA)} was removed`;
+    } else if (fileNameA === fileNameB) {
+        line = FILE_NAME_COLOR(fileNameA);
+    } else {
+        line = `${FILE_NAME_COLOR(fileNameA)} moved to ${FILE_NAME_COLOR(
+            fileNameB
+        )}`;
+    }
+    return line.padEnd(SCREEN_WIDTH);
+}
+
+function formatHunkLine(lineNo: number, line: string, fileName: string) {
+    let lineColor;
+    switch (line[0]) {
+        case '-':
+            lineColor = DELETED_LINE_COLOR;
+            break;
+        case '+':
+            lineColor = INSERTED_LINE_COLOR;
+            break;
+        default:
+            lineColor = UNMODIFIED_LINE_COLOR;
+    }
+    // Don't show line numbers for missing files
+    const lineNoString = (fileName ? lineNo.toString() : '').padStart(
+        LINE_NUMBER_WIDTH
+    );
+    const linePrefix = line.slice(0, 1).padStart(1);
+    const lineWithoutPrefix = line.slice(1, LINE_WIDTH + 1).padEnd(LINE_WIDTH);
+    return `${lineColor.dim(lineNoString)} ${lineColor(
+        `${linePrefix} ${lineWithoutPrefix}`
+    )}`;
+}
+
+function formatHunkSideBySide(
+    hunkHeaderLine: string,
+    hunkLines: string[],
+    startA: number,
+    deltaA: number,
+    startB: number,
+    deltaB: number,
+    fileNameA: string,
+    fileNameB: string
+) {
+    const formattedLines = [
+        HUNK_HEADER_COLOR(hunkHeaderLine.padEnd(SCREEN_WIDTH)),
+    ];
+
+    const linesA = [];
+    const linesB = [];
+    for (const line of hunkLines) {
+        if (line.startsWith('-')) {
+            linesA.push(line);
+        } else if (line.startsWith('+')) {
+            linesB.push(line);
+        } else {
+            linesA.push(line);
+            linesB.push(line);
+        }
+    }
+
+    let offset = 0;
+    let lineNoA = startA;
+    let lineNoB = startB;
+    while (offset < deltaA || offset < deltaB) {
+        let lineA = '';
+        let lineB = '';
+        if (offset < deltaA) {
+            lineA = linesA[offset];
+            lineNoA++;
+        }
+        if (offset < deltaB) {
+            lineB = linesB[offset];
+            lineNoB++;
+        }
+        offset++;
+        formattedLines.push(
+            formatHunkLine(lineNoA, lineA, fileNameA) +
+                formatHunkLine(lineNoB, lineB, fileNameB)
+        );
+    }
+
+    return formattedLines;
+}
+
+async function* iterWithNewlines(lines: AsyncIterable<string>) {
+    for await (const line of lines) {
+        yield line + os.EOL;
     }
 }
 
-test().catch(console.error);
+function transformWithIterables(
+    input: stream.Readable,
+    [firstTransformer, ...restTransformers]: [
+        (input: stream.Readable) => AsyncIterable<string>,
+        ...((iterable: AsyncIterable<string>) => AsyncIterable<string>)[]
+    ],
+    output: stream.Writable
+) {
+    let i = firstTransformer(input);
+    for (const transformer of restTransformers) {
+        i = transformer(i);
+    }
+    stream.pipeline(stream.Readable.from(i), output, (err) => console.error);
+}
+
+function main() {
+    transformWithIterables(
+        process.stdin,
+        [
+            iterlinesFromReadableAsync,
+            iterateLinesWithoutAnsiColors,
+            iterSideBySideDiff,
+            iterWithNewlines,
+        ],
+        process.stdout
+    );
+}
+
+main();
