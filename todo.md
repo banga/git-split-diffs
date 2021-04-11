@@ -12,3 +12,6 @@
 -   [ ] Read colors from git config
 -   [ ] Support line wrapping
 -   [ ] Test on very large diffs
+-   [ ] Write tests
+-   [ ] Publish to npm
+-         [ ] Compatibility with old node versions
