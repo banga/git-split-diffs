@@ -7,19 +7,34 @@ export function coloredTextLength(text: string) {
     return text.replace(ANSI_COLOR_CODE_REGEX, '').length;
 }
 
-export function centerColoredText(
+export function padColoredText(
     text: string,
     width: number,
-    character: string = ' ',
-    characterColor: chalk.Chalk = chalk.white
+    align: 'left' | 'right' | 'center',
+    character: string = ' '
 ) {
     const lineLength = coloredTextLength(text);
-    const paddingLength = width - lineLength - 2;
-    const leftPadding = characterColor(
-        ''.padStart(paddingLength / 2, character)
-    );
-    const rightPadding = characterColor(
-        ''.padStart(paddingLength - paddingLength / 2, character)
-    );
-    return `${leftPadding} ${text} ${rightPadding}`;
+    if (lineLength >= width) {
+        return text;
+    }
+
+    const paddingLength = width - lineLength;
+    let leftPaddingLength = 0;
+    let rightPaddingLength = 0;
+    switch (align) {
+        case 'left':
+            rightPaddingLength = paddingLength;
+            break;
+        case 'right':
+            leftPaddingLength = paddingLength;
+            break;
+        case 'center':
+            leftPaddingLength = Math.floor(paddingLength / 2);
+            rightPaddingLength = Math.ceil(paddingLength - paddingLength / 2);
+            break;
+    }
+
+    const leftPadding = new Array(leftPaddingLength).fill(character).join('');
+    const rightPadding = new Array(rightPaddingLength).fill(character).join('');
+    return leftPadding + text + rightPadding;
 }

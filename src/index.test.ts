@@ -63,10 +63,11 @@ Date:   Sun Apr 11 15:25:34 2021 -0700
 
             Add theme support
 
-        ─────────────────────────────────────────────────────── todo.md ───────────────────────────────────────────────────────
+        ─────────────────────────────────────────────────────── todo.md ────────────────────────────────────────────────────────
         @@ -7,6 +7,7 @@                                                                                                         
             7       -   [x] Handle file addition/deletion properly      7       -   [x] Handle file addition/deletion properly  
             8       -   [x] Fix incorrect line positions when a hunk    8       -   [x] Fix incorrect line positions when a hunk
+                     has discontinuous inserts and/or deletes                    has discontinuous inserts and/or deletes       
             9       -   [x] Organize code                               9       -   [x] Organize code                           
                                                                        10     + -   [x] Move visual config to theme             
            10       -   [ ] Handle empty diffs                         11       -   [ ] Handle empty diffs                      
@@ -149,7 +150,7 @@ index 9f14e96..eaf3730 100644
 
             Add theme support
 
-        ─────────────────────────────────────────────────────── todo.md ───────────────────────────────────────────────────────
+        ─────────────────────────────────────────────────────── todo.md ────────────────────────────────────────────────────────
         @@ -9,2 +9,3 @@                                                                                                         
             9       -   [x] Organize code                               9       -   [x] Organize code                           
                                                                        10     + -   [x] Move visual config to theme             
@@ -387,11 +388,14 @@ index 149981d..fb507a4 100644
             2       import * as process from 'process';                 2       import * as process from 'process';             
                                                                         3     + import stream from 'stream';                    
             3       import terminalSize from 'term-size';               4       import terminalSize from 'term-size';           
-            4       import { iterlinesFromReadableAsync } from './it    5       import { iterlinesFromReadableAsync } from './it
-            5       import { iterLinesWithoutAnsiColors } from './it    6       import { iterLinesWithoutAnsiColors } from './it
+            4       import { iterlinesFromReadableAsync } from          5       import { iterlinesFromReadableAsync } from      
+                    './iterLinesFromReadable';                                  './iterLinesFromReadable';                      
+            5       import { iterLinesWithoutAnsiColors } from          6       import { iterLinesWithoutAnsiColors } from      
+                    './iterLinesWithoutAnsiColors';                             './iterLinesWithoutAnsiColors';                 
         @@ -12,15 +13,16 @@ function main() {                                                                                   
            12           const screenWidth = terminalSize().columns;    13           const screenWidth = terminalSize().columns; 
-           13           const theme = defaultTheme(chalk, screenWidt   14           const theme = defaultTheme(chalk, screenWidt
+           13           const theme = defaultTheme(chalk,              14           const theme = defaultTheme(chalk,           
+                    screenWidth);                                               screenWidth);                                   
            14                                                          15                                                       
            15     -     transformStreamWithIterables(                  16     +     stream.pipeline(                            
            16     -         process.stdin,                             17     +         transformStreamWithIterables(           

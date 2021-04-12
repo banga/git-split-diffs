@@ -15,7 +15,7 @@
 -   [ ] Highlight changes in lines
 -   [ ] Read colors from git config
 -   [ ] Colorize "stat"s
--   [ ] Support line wrapping
+-   [x] Support line wrapping
 -   [ ] Test on very large diffs
 -   [ ] Publish to npm
 -   [ ] Test compatibility with node versions

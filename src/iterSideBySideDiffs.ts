@@ -1,6 +1,8 @@
 import * as assert from 'assert';
-import { centerColoredText } from './color-utils';
+import { padColoredText } from './color-utils';
 import { Theme } from './theme';
+import wrapAnsi from 'wrap-ansi';
+import { Chalk } from 'chalk';
 
 export function iterSideBySideDiff({
     SCREEN_WIDTH,
@@ -23,12 +25,11 @@ export function iterSideBySideDiff({
         So (LINE_NUMBER_WIDTH + 1 + LINE_PREFIX_WIDTH + 1 + LINE_TEXT_WIDTH) * 2
         = SCREEN_WIDTH
     */
+    const LINE_WIDTH = Math.max(Math.floor(SCREEN_WIDTH / 2), MIN_LINE_WIDTH);
     const LINE_TEXT_WIDTH = Math.max(
-        Math.floor(
-            SCREEN_WIDTH / 2 - 1 - LINE_PREFIX_WIDTH - 1 - LINE_NUMBER_WIDTH
-        ),
-        MIN_LINE_WIDTH
+        LINE_WIDTH - 1 - LINE_PREFIX_WIDTH - 1 - LINE_NUMBER_WIDTH
     );
+    const BLANK_LINE = ''.padStart(LINE_WIDTH);
 
     function formatCommitLine(line: string) {
         const [label] = line.split(' ', 1);
@@ -64,20 +65,26 @@ export function iterSideBySideDiff({
                 fileNameB
             )}`;
         }
-        return centerColoredText(line, SCREEN_WIDTH, '─', FILE_NAME_COLOR.dim);
+        return padColoredText(
+            ` ${line} `,
+            SCREEN_WIDTH,
+            'center',
+            FILE_NAME_COLOR.dim('─')
+        );
     }
 
-    type HunkLine = {
-        number: number;
+    type HunkLineHalf = {
+        number: string;
+        prefix: string;
         text: string;
     } | null /* if line is missing */;
 
-    function formatHunkLine(line: HunkLine) {
-        const lineNo = line?.number?.toString() ?? '';
-        const linePrefix = line?.text?.slice(0, 1) ?? '';
-        const lineText = line?.text?.slice(1) ?? '';
+    function formatHunkLineHalf(lineHalf: HunkLineHalf) {
+        const lineNo = lineHalf?.number ?? '';
+        const linePrefix = lineHalf?.prefix ?? '';
+        const lineText = lineHalf?.text ?? '';
 
-        let lineColor;
+        let lineColor: Chalk;
         switch (linePrefix) {
             case '-':
                 lineColor = DELETED_LINE_COLOR;
@@ -89,15 +96,56 @@ export function iterSideBySideDiff({
                 lineColor = UNMODIFIED_LINE_COLOR;
         }
 
-        return [
-            lineColor.dim(
-                lineNo.slice(0, LINE_NUMBER_WIDTH).padStart(LINE_NUMBER_WIDTH)
-            ),
-            lineColor(linePrefix.padStart(LINE_PREFIX_WIDTH)),
-            lineColor(
-                lineText.slice(0, LINE_TEXT_WIDTH).padEnd(LINE_TEXT_WIDTH)
-            ),
-        ].join(' ');
+        const formattedLineNo = lineColor.dim(
+            lineNo.padStart(LINE_NUMBER_WIDTH)
+        );
+        const formattedLinePrefix = lineColor(
+            linePrefix.padStart(LINE_PREFIX_WIDTH)
+        );
+        const formattedLine = lineColor(lineText);
+
+        const wrappedLines = wrapAnsi(formattedLine, LINE_TEXT_WIDTH, {
+            hard: true,
+            trim: false,
+        }).split('\n');
+        return wrappedLines.map((wrappedLine, index) => {
+            if (index === 0) {
+                return [
+                    formattedLineNo,
+                    formattedLinePrefix,
+                    padColoredText(wrappedLine, LINE_TEXT_WIDTH, 'left'),
+                ].join(' ');
+            } else {
+                return padColoredText(
+                    padColoredText(wrappedLine, LINE_TEXT_WIDTH, 'left'),
+                    LINE_WIDTH,
+                    'right'
+                );
+            }
+        });
+    }
+
+    function formatHunkLine(lineHalfA: HunkLineHalf, lineHalfB: HunkLineHalf) {
+        const formattedLinesA = formatHunkLineHalf(lineHalfA);
+        const formattedLinesB = formatHunkLineHalf(lineHalfB);
+        const formattedHunkLines = [];
+        for (
+            let indexA = 0, indexB = 0;
+            indexA < formattedLinesA.length || indexB < formattedLinesB.length;
+            indexA++, indexB++
+        ) {
+            const formattedLineA =
+                indexA < formattedLinesA.length
+                    ? formattedLinesA[indexA]
+                    : BLANK_LINE;
+            const formattedLineB =
+                indexB < formattedLinesB.length
+                    ? formattedLinesB[indexB]
+                    : BLANK_LINE;
+            formattedHunkLines.push(formattedLineA + formattedLineB);
+        }
+
+        return formattedHunkLines;
     }
 
     function formatHunkSideBySide(
@@ -108,7 +156,7 @@ export function iterSideBySideDiff({
         fileNameA: string,
         fileNameB: string
     ) {
-        const formattedLines = [];
+        const formattedLines: string[] = [];
         formattedLines.push(
             HUNK_HEADER_COLOR(hunkHeaderLine.padEnd(SCREEN_WIDTH))
         );
@@ -126,27 +174,29 @@ export function iterSideBySideDiff({
             let indexB = 0;
 
             while (indexA < linesA.length || indexB < linesB.length) {
-                let lineA: HunkLine = null;
-                let lineB: HunkLine = null;
+                let lineA: HunkLineHalf = null;
+                let lineB: HunkLineHalf = null;
                 if (indexA < linesA.length) {
                     lineA = {
-                        number: lineNoA,
-                        text: linesA[indexA],
+                        number: lineNoA.toString(),
+                        prefix: linesA[indexA].slice(0, 1),
+                        // truncate lines
+                        text: linesA[indexA].slice(1),
                     };
                     lineNoA++;
                     indexA++;
                 }
                 if (indexB < linesB.length) {
                     lineB = {
-                        number: lineNoB,
-                        text: linesB[indexB],
+                        number: lineNoB.toString(),
+                        prefix: linesB[indexB].slice(0, 1),
+                        // truncate lines
+                        text: linesB[indexB].slice(1),
                     };
                     lineNoB++;
                     indexB++;
                 }
-                formattedLines.push(
-                    formatHunkLine(lineA) + formatHunkLine(lineB)
-                );
+                formattedLines.push(...formatHunkLine(lineA, lineB));
             }
         }
 
