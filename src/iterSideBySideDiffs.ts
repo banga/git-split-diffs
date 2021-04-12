@@ -13,10 +13,12 @@ export function iterSideBySideDiff({
     COMMIT_AUTHOR_COLOR,
     COMMIT_DATE_COLOR,
     FILE_NAME_COLOR,
+    FILE_NAME_BORDER_COLOR,
     HUNK_HEADER_COLOR,
     DELETED_LINE_COLOR,
     INSERTED_LINE_COLOR,
     UNMODIFIED_LINE_COLOR,
+    MISSING_LINE_COLOR,
 }: Theme) {
     /*
         Each line in a hunk is rendered as follows: <lineNo> <linePrefix[1]>
@@ -55,22 +57,17 @@ export function iterSideBySideDiff({
     function formatFileName(fileNameA: string, fileNameB: string) {
         let line: string;
         if (!fileNameA) {
-            line = `${FILE_NAME_COLOR(fileNameB)}`;
+            line = ` + ${FILE_NAME_COLOR(fileNameB)}`;
         } else if (!fileNameB) {
-            line = `${FILE_NAME_COLOR(fileNameA)}`;
+            line = ` - ${FILE_NAME_COLOR(fileNameA)}`;
         } else if (fileNameA === fileNameB) {
-            line = FILE_NAME_COLOR(fileNameA);
+            line = `   ${FILE_NAME_COLOR(fileNameA)}`;
         } else {
             line = `${FILE_NAME_COLOR(fileNameA)} -> ${FILE_NAME_COLOR(
                 fileNameB
             )}`;
         }
-        return padColoredText(
-            ` ${line} `,
-            SCREEN_WIDTH,
-            'center',
-            FILE_NAME_COLOR.dim('─')
-        );
+        return padColoredText(`${line} `, SCREEN_WIDTH, 'left');
     }
 
     type HunkLineHalf = {
@@ -79,55 +76,56 @@ export function iterSideBySideDiff({
         text: string;
     } | null /* if line is missing */;
 
-    function formatHunkLineHalf(lineHalf: HunkLineHalf) {
+    function formatHunkLineHalf(lineHalf: HunkLineHalf, lineColor: Chalk) {
         const lineNo = lineHalf?.number ?? '';
         const linePrefix = lineHalf?.prefix ?? '';
         const lineText = lineHalf?.text ?? '';
 
-        let lineColor: Chalk;
-        switch (linePrefix) {
-            case '-':
-                lineColor = DELETED_LINE_COLOR;
-                break;
-            case '+':
-                lineColor = INSERTED_LINE_COLOR;
-                break;
-            default:
-                lineColor = UNMODIFIED_LINE_COLOR;
-        }
-
-        const formattedLineNo = lineColor.dim(
-            lineNo.padStart(LINE_NUMBER_WIDTH)
-        );
-        const formattedLinePrefix = lineColor(
-            linePrefix.padStart(LINE_PREFIX_WIDTH)
-        );
-        const formattedLine = lineColor(lineText);
-
-        const wrappedLines = wrapAnsi(formattedLine, LINE_TEXT_WIDTH, {
+        const wrappedLines = wrapAnsi(lineText, LINE_TEXT_WIDTH, {
             hard: true,
             trim: false,
         }).split('\n');
         return wrappedLines.map((wrappedLine, index) => {
             if (index === 0) {
                 return [
-                    formattedLineNo,
-                    formattedLinePrefix,
-                    padColoredText(wrappedLine, LINE_TEXT_WIDTH, 'left'),
-                ].join(' ');
+                    lineColor.dim(lineNo.padStart(LINE_NUMBER_WIDTH)),
+                    lineColor(' ' + linePrefix.padStart(LINE_PREFIX_WIDTH)),
+                    lineColor(
+                        ' ' +
+                            padColoredText(wrappedLine, LINE_TEXT_WIDTH, 'left')
+                    ),
+                ].join('');
             } else {
-                return padColoredText(
-                    padColoredText(wrappedLine, LINE_TEXT_WIDTH, 'left'),
-                    LINE_WIDTH,
-                    'right'
+                return lineColor(
+                    padColoredText(
+                        padColoredText(wrappedLine, LINE_TEXT_WIDTH, 'left'),
+                        LINE_WIDTH,
+                        'right'
+                    )
                 );
             }
         });
     }
 
+    function lineColorForLineHalf(lineHalf: HunkLineHalf) {
+        if (!lineHalf) {
+            return MISSING_LINE_COLOR;
+        }
+        switch (lineHalf?.prefix) {
+            case '-':
+                return DELETED_LINE_COLOR;
+            case '+':
+                return INSERTED_LINE_COLOR;
+            default:
+                return UNMODIFIED_LINE_COLOR;
+        }
+    }
+
     function formatHunkLine(lineHalfA: HunkLineHalf, lineHalfB: HunkLineHalf) {
-        const formattedLinesA = formatHunkLineHalf(lineHalfA);
-        const formattedLinesB = formatHunkLineHalf(lineHalfB);
+        const lineColorA = lineColorForLineHalf(lineHalfA);
+        const lineColorB = lineColorForLineHalf(lineHalfB);
+        const formattedLinesA = formatHunkLineHalf(lineHalfA, lineColorA);
+        const formattedLinesB = formatHunkLineHalf(lineHalfB, lineColorB);
         const formattedHunkLines = [];
         for (
             let indexA = 0, indexB = 0;
@@ -137,11 +135,11 @@ export function iterSideBySideDiff({
             const formattedLineA =
                 indexA < formattedLinesA.length
                     ? formattedLinesA[indexA]
-                    : BLANK_LINE;
+                    : lineColorA(BLANK_LINE);
             const formattedLineB =
                 indexB < formattedLinesB.length
                     ? formattedLinesB[indexB]
-                    : BLANK_LINE;
+                    : lineColorB(BLANK_LINE);
             formattedHunkLines.push(formattedLineA + formattedLineB);
         }
 
@@ -224,7 +222,9 @@ export function iterSideBySideDiff({
         let fileNameA: string = '';
         let fileNameB: string = '';
         function* yieldFileName() {
-            yield formatFileName(fileNameA, fileNameB);
+            yield FILE_NAME_BORDER_COLOR(''.padStart(SCREEN_WIDTH, '─'));
+            yield FILE_NAME_BORDER_COLOR(formatFileName(fileNameA, fileNameB));
+            yield FILE_NAME_BORDER_COLOR(''.padStart(SCREEN_WIDTH, '─'));
         }
 
         // Hunk metadata
