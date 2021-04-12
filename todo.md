@@ -10,7 +10,7 @@
 -   [x] Move visual config to theme
 -   [x] Colorize commit messages
 -   [x] Write tests
--   [ ] Handle moves and renames without diffs
+-   [x] Handle moves and renames without diffs
 -   [ ] Highlight changes in lines
 -   [ ] Read colors from git config
 -   [ ] Colorize "stat"s

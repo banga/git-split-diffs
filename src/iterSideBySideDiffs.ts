@@ -1,4 +1,5 @@
 import * as assert from 'assert';
+import { centerColoredText } from './color-utils';
 import { ANSI_COLOR_CODE_REGEX } from './iterLinesWithoutAnsiColors';
 import { Theme } from './theme';
 
@@ -67,18 +68,7 @@ export function iterSideBySideDiff({
                 fileNameB
             )}`;
         }
-
-        // TODO: move to a util function
-        const lineLength = line.replace(ANSI_COLOR_CODE_REGEX, '').length;
-        const paddingLength = SCREEN_WIDTH - lineLength - 2;
-        const leftPadding = FILE_NAME_COLOR.dim(
-            ''.padStart(paddingLength / 2, '-')
-        );
-        const rightPadding = FILE_NAME_COLOR.dim(
-            ''.padStart(paddingLength - paddingLength / 2, '-')
-        );
-
-        return `${leftPadding} ${line} ${rightPadding}`;
+        return centerColoredText(line, SCREEN_WIDTH, '─', FILE_NAME_COLOR.dim);
     }
 
     function formatHunkLine(lineNo: number, line: string, fileName: string) {
@@ -184,9 +174,7 @@ export function iterSideBySideDiff({
         let fileNameA: string = '';
         let fileNameB: string = '';
         function* yieldFileName() {
-            yield '';
             yield formatFileName(fileNameA, fileNameB);
-            yield '';
         }
 
         // Hunk metadata
@@ -203,6 +191,7 @@ export function iterSideBySideDiff({
                 fileNameA,
                 fileNameB
             );
+            hunkLines = [];
         }
 
         for await (const line of lines) {
@@ -216,7 +205,9 @@ export function iterSideBySideDiff({
 
                 state = 'commit';
             } else if (line.startsWith('diff ')) {
-                if (state === 'hunk') {
+                if (state === 'diff') {
+                    yield* yieldFileName();
+                } else if (state === 'hunk') {
                     yield* yieldHunk();
                 }
 
@@ -251,7 +242,6 @@ export function iterSideBySideDiff({
                 startB = parseInt(startBString.slice(1), 10);
 
                 state = 'hunk';
-                hunkLines = [];
 
                 // Don't add the first line to hunkLines
                 continue;
@@ -266,9 +256,13 @@ export function iterSideBySideDiff({
                 case 'diff':
                     {
                         if (line.startsWith('--- a/')) {
-                            fileNameA = line.slice(6);
+                            fileNameA = line.slice('--- a/'.length);
                         } else if (line.startsWith('+++ b/')) {
-                            fileNameB = line.slice(6);
+                            fileNameB = line.slice('+++ b/'.length);
+                        } else if (line.startsWith('rename from ')) {
+                            fileNameA = line.slice('rename from '.length);
+                        } else if (line.startsWith('rename to ')) {
+                            fileNameB = line.slice('rename to '.length);
                         }
                     }
                     break;
@@ -279,7 +273,9 @@ export function iterSideBySideDiff({
             }
         }
 
-        if (hunkLines.length) {
+        if (state === 'diff') {
+            yield* yieldFileName();
+        } else if (state === 'hunk') {
             yield* yieldHunk();
         }
     };

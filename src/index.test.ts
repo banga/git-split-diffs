@@ -63,9 +63,7 @@ Date:   Sun Apr 11 15:25:34 2021 -0700
 
             Add theme support
 
-
-        ------------------------------------------------------- todo.md -------------------------------------------------------
-
+        ─────────────────────────────────────────────────────── todo.md ───────────────────────────────────────────────────────
         @@ -7,6 +7,7 @@                                                                                                         
             7       -   [x] Handle file addition/deletion properly      7       -   [x] Handle file addition/deletion properly  
             8       -   [x] Fix incorrect line positions when a hunk    8       -   [x] Fix incorrect line positions when a hunk
@@ -151,9 +149,7 @@ index 9f14e96..eaf3730 100644
 
             Add theme support
 
-
-        ------------------------------------------------------- todo.md -------------------------------------------------------
-
+        ─────────────────────────────────────────────────────── todo.md ───────────────────────────────────────────────────────
         @@ -9,2 +9,3 @@                                                                                                         
             9       -   [x] Organize code                               9       -   [x] Organize code                           
                                                                        10     + -   [x] Move visual config to theme             
@@ -261,9 +257,7 @@ index 26b77f3..371b5f0 100644
 
             sonos to brew
 
-
-        ------------------------------------------------------- Brewfile -------------------------------------------------------
-
+        ─────────────────────────────────────────────────────── Brewfile ───────────────────────────────────────────────────────
         @@ -19,2 +19,3 @@ brew 'python3'                                                                                        
            19       brew 'socat'                                       19       brew 'socat'                                    
                                                                        20     + brew 'sonos'                                    
@@ -279,9 +273,7 @@ index 26b77f3..371b5f0 100644
 
             java
 
-
-        ------------------------------------------------------- Brewfile -------------------------------------------------------
-
+        ─────────────────────────────────────────────────────── Brewfile ───────────────────────────────────────────────────────
         @@ -37,2 +37,3 @@ cask 'google-chrome'                                                                                  
            37       cask 'iterm2'                                      37       cask 'iterm2'                                   
                                                                        38     + cask 'java'                                     
@@ -293,9 +285,7 @@ index 26b77f3..371b5f0 100644
 
             tldr
 
-
-        ------------------------------------------------------- Brewfile -------------------------------------------------------
-
+        ─────────────────────────────────────────────────────── Brewfile ───────────────────────────────────────────────────────
         @@ -20,2 +20,3 @@ brew 'socat'                                                                                          
            20       brew 'terminal-notifier'                           20       brew 'terminal-notifier'                        
                                                                        21     + brew 'tldr'                                     
@@ -332,9 +322,7 @@ index 0000000..6499edf
 
             wip
 
-
-        ------------------------------------------------------ .gitignore ------------------------------------------------------
-
+        ────────────────────────────────────────────────────── .gitignore ──────────────────────────────────────────────────────
         @@ -0,0 +1,2 @@                                                                                                         
                                                                         1     + node_modules/**                                 
                                                                         2     + build/**                                        
@@ -395,9 +383,7 @@ index 149981d..fb507a4 100644
 
             Small refactor to allow testing end-to-end
 
-
-        ----------------------------------------------------- src/index.ts -----------------------------------------------------
-
+        ───────────────────────────────────────────────────── src/index.ts ─────────────────────────────────────────────────────
         @@ -1,5 +1,6 @@                                                                                                         
             1       import chalk from 'chalk';                          1       import chalk from 'chalk';                      
             2       import * as process from 'process';                 2       import * as process from 'process';             
@@ -426,7 +412,7 @@ index 149981d..fb507a4 100644
     `);
 });
 
-test.skip('commit with a file move', async function () {
+test('commit with a file move', async function () {
     expect(
         await transform(`
 commit 1c76ed4bb05429741fd4a48896bb84b11bc661f5
@@ -440,5 +426,15 @@ similarity index 100%
 rename from colors.diff
 rename to test-data/colors.diff
     `)
-    ).toMatchInlineSnapshot(`TODO`);
+    ).toMatchInlineSnapshot(`
+        "
+        commit 1c76ed4bb05429741fd4a48896bb84b11bc661f5
+        Author: Shrey Banga <banga.shrey@gmail.com>
+        Date:   Sat Apr 10 22:26:15 2021 -0700
+
+            Move sample diff files
+
+        ───────────────────────────────────────── colors.diff -> test-data/colors.diff ─────────────────────────────────────────
+        "
+    `);
 });
