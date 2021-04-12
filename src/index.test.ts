@@ -312,8 +312,7 @@ index 0000000..6499edf
 @@ -0,0 +1,2 @@
 +node_modules/**
 +build/**
-\ No newline at end of file
-    `)
+\ No newline at end of file`)
     ).toMatchInlineSnapshot(`
         "
         commit e4951eee3b9a8fa471d01dd64075c5fd44879a26
@@ -327,7 +326,6 @@ index 0000000..6499edf
                                                                         1     + node_modules/**                                 
                                                                         2     + build/**                                        
                                                                         3       No newline at end of file                       
-                                                                        4                                                       
         "
     `);
 });

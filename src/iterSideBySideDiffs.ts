@@ -1,6 +1,5 @@
 import * as assert from 'assert';
 import { centerColoredText } from './color-utils';
-import { ANSI_COLOR_CODE_REGEX } from './iterLinesWithoutAnsiColors';
 import { Theme } from './theme';
 
 export function iterSideBySideDiff({
@@ -29,9 +28,6 @@ export function iterSideBySideDiff({
             SCREEN_WIDTH / 2 - 1 - LINE_PREFIX_WIDTH - 1 - LINE_NUMBER_WIDTH
         ),
         MIN_LINE_WIDTH
-    );
-    const FORMATTED_MISSING_LINE = ''.padStart(
-        LINE_NUMBER_WIDTH + 1 + LINE_PREFIX_WIDTH + 1 + LINE_TEXT_WIDTH
     );
 
     function formatCommitLine(line: string) {
@@ -71,13 +67,18 @@ export function iterSideBySideDiff({
         return centerColoredText(line, SCREEN_WIDTH, '─', FILE_NAME_COLOR.dim);
     }
 
-    function formatHunkLine(lineNo: number, line: string, fileName: string) {
-        if (!fileName) {
-            return FORMATTED_MISSING_LINE;
-        }
+    type HunkLine = {
+        number: number;
+        text: string;
+    } | null /* if line is missing */;
+
+    function formatHunkLine(line: HunkLine) {
+        const lineNo = line?.number?.toString() ?? '';
+        const linePrefix = line?.text?.slice(0, 1) ?? '';
+        const lineText = line?.text?.slice(1) ?? '';
 
         let lineColor;
-        switch (line[0]) {
+        switch (linePrefix) {
             case '-':
                 lineColor = DELETED_LINE_COLOR;
                 break;
@@ -87,14 +88,16 @@ export function iterSideBySideDiff({
             default:
                 lineColor = UNMODIFIED_LINE_COLOR;
         }
-        const lineNoString = lineNo.toString().padStart(LINE_NUMBER_WIDTH);
-        const linePrefix = line.slice(0, 1).padStart(LINE_PREFIX_WIDTH);
-        const lineWithoutPrefix = line
-            .slice(1, LINE_TEXT_WIDTH + 1)
-            .padEnd(LINE_TEXT_WIDTH);
-        return `${lineColor.dim(lineNoString)} ${lineColor(
-            `${linePrefix} ${lineWithoutPrefix}`
-        )}`;
+
+        return [
+            lineColor.dim(
+                lineNo.slice(0, LINE_NUMBER_WIDTH).padStart(LINE_NUMBER_WIDTH)
+            ),
+            lineColor(linePrefix.padStart(LINE_PREFIX_WIDTH)),
+            lineColor(
+                lineText.slice(0, LINE_TEXT_WIDTH).padEnd(LINE_TEXT_WIDTH)
+            ),
+        ].join(' ');
     }
 
     function formatHunkSideBySide(
@@ -122,31 +125,28 @@ export function iterSideBySideDiff({
             let indexA = 0;
             let indexB = 0;
 
-            while (indexA < linesA.length && indexB < linesB.length) {
+            while (indexA < linesA.length || indexB < linesB.length) {
+                let lineA: HunkLine = null;
+                let lineB: HunkLine = null;
+                if (indexA < linesA.length) {
+                    lineA = {
+                        number: lineNoA,
+                        text: linesA[indexA],
+                    };
+                    lineNoA++;
+                    indexA++;
+                }
+                if (indexB < linesB.length) {
+                    lineB = {
+                        number: lineNoB,
+                        text: linesB[indexB],
+                    };
+                    lineNoB++;
+                    indexB++;
+                }
                 formattedLines.push(
-                    formatHunkLine(lineNoA, linesA[indexA], fileNameA) +
-                        formatHunkLine(lineNoB, linesB[indexB], fileNameB)
+                    formatHunkLine(lineA) + formatHunkLine(lineB)
                 );
-                lineNoA++;
-                lineNoB++;
-                indexA++;
-                indexB++;
-            }
-            while (indexA < linesA.length) {
-                formattedLines.push(
-                    formatHunkLine(lineNoA, linesA[indexA], fileNameA) +
-                        FORMATTED_MISSING_LINE
-                );
-                lineNoA++;
-                indexA++;
-            }
-            while (indexB < linesB.length) {
-                formattedLines.push(
-                    FORMATTED_MISSING_LINE +
-                        formatHunkLine(lineNoB, linesB[indexB], fileNameB)
-                );
-                lineNoB++;
-                indexB++;
             }
         }
 
@@ -157,8 +157,8 @@ export function iterSideBySideDiff({
                 linesB.push(line);
             } else {
                 flushHunkChange();
-                linesA = [line];
-                linesB = [line];
+                linesA = fileNameA ? [line] : [];
+                linesB = fileNameB ? [line] : [];
             }
         }
 
