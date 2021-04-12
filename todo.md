@@ -8,13 +8,13 @@
 -   [x] Fix incorrect line positions when a hunk has discontinuous inserts and/or deletes
 -   [x] Organize code
 -   [x] Move visual config to theme
--   [ ] Handle empty diffs
+-   [x] Colorize commit messages
+-   [x] Write tests
 -   [ ] Handle moves and renames without diffs
 -   [ ] Highlight changes in lines
--   [x] Colorize commit messages
 -   [ ] Read colors from git config
+-   [ ] Colorize "stat"s
 -   [ ] Support line wrapping
 -   [ ] Test on very large diffs
--   [ ] Write tests
 -   [ ] Publish to npm
 -   [ ] Test compatibility with node versions

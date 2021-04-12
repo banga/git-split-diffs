@@ -195,7 +195,6 @@ export function iterSideBySideDiff({
         let hunkHeaderLine: string = '';
         let hunkLines: string[] = [];
         function* yieldHunk() {
-            // console.error('yieldHunk', { hunkHeaderLine, hunkLines });
             yield* formatHunkSideBySide(
                 hunkHeaderLine,
                 hunkLines,
@@ -280,6 +279,8 @@ export function iterSideBySideDiff({
             }
         }
 
-        yield* yieldHunk();
+        if (hunkLines.length) {
+            yield* yieldHunk();
+        }
     };
 }
