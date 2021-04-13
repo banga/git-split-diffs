@@ -13,6 +13,6 @@ export type Config = {
 
 export const CONFIG_DEFAULTS = {
     LINE_NUMBER_WIDTH: 5,
-    LINE_PREFIX_WIDTH: 5,
+    LINE_PREFIX_WIDTH: 1,
     MIN_LINE_WIDTH: 8,
 };

@@ -93,13 +93,13 @@ Date:   Sun Apr 11 15:25:34 2021 -0700
            todo.md                                                                                                              
         ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
         @@ -7,6 +7,7 @@                                                                                                         
-            7       -   [x] Handle file addition/deletion properly      7       -   [x] Handle file addition/deletion properly  
-            8       -   [x] Fix incorrect line positions when a hunk    8       -   [x] Fix incorrect line positions when a hunk
-            9       -   [x] Organize code                               9       -   [x] Organize code                           
-                                                                       10     + -   [x] Move visual config to theme             
-           10       -   [ ] Handle empty diffs                         11       -   [ ] Handle empty diffs                      
-           11       -   [ ] Handle moves and renames without diffs     12       -   [ ] Handle moves and renames without diffs  
-           12       -   [ ] Highlight changes in lines                 13       -   [ ] Highlight changes in lines              
+            7   -   [x] Handle file addition/deletion properly          7   -   [x] Handle file addition/deletion properly      
+            8   -   [x] Fix incorrect line positions when a hunk has    8   -   [x] Fix incorrect line positions when a hunk has
+            9   -   [x] Organize code                                   9   -   [x] Organize code                               
+                                                                       10 + -   [x] Move visual config to theme                 
+           10   -   [ ] Handle empty diffs                             11   -   [ ] Handle empty diffs                          
+           11   -   [ ] Handle moves and renames without diffs         12   -   [ ] Handle moves and renames without diffs      
+           12   -   [ ] Highlight changes in lines                     13   -   [ ] Highlight changes in lines                  
            13                                                          14                                                       
            14                                                          15                                                       
         ",
@@ -185,9 +185,9 @@ index 9f14e96..eaf3730 100644
            todo.md                                                                                                              
         ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
         @@ -9,2 +9,3 @@                                                                                                         
-            9       -   [x] Organize code                               9       -   [x] Organize code                           
-                                                                       10     + -   [x] Move visual config to theme             
-           10       -   [ ] Handle empty diffs                         11       -   [ ] Handle empty diffs                      
+            9   -   [x] Organize code                                   9   -   [x] Organize code                               
+                                                                       10 + -   [x] Move visual config to theme                 
+           10   -   [ ] Handle empty diffs                             11   -   [ ] Handle empty diffs                          
            11                                                          12                                                       
         ",
         ]
@@ -297,13 +297,13 @@ index 26b77f3..371b5f0 100644
            Brewfile                                                                                                             
         ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
         @@ -19,2 +19,3 @@ brew 'python3'                                                                                        
-           19       brew 'socat'                                       19       brew 'socat'                                    
-                                                                       20     + brew 'sonos'                                    
-           20       brew 'terminal-notifier'                           21       brew 'terminal-notifier'                        
+           19   brew 'socat'                                           19   brew 'socat'                                        
+                                                                       20 + brew 'sonos'                                        
+           20   brew 'terminal-notifier'                               21   brew 'terminal-notifier'                            
         @@ -42,3 +43,2 @@ cask 'rescuetime'                                                                                     
-           42       cask 'slate'                                       43       cask 'slate'                                    
-           43     - cask 'sonos'                                                                                                
-           44       cask 'spotify'                                     44       cask 'spotify'                                  
+           42   cask 'slate'                                           43   cask 'slate'                                        
+           43 - cask 'sonos'                                                                                                    
+           44   cask 'spotify'                                         44   cask 'spotify'                                      
            45                                                          45                                                       
         commit 0efea05a16425b355210c2f1e0d11ed692350d49
         Author: Shrey Banga <banga.shrey@gmail.com>
@@ -315,9 +315,9 @@ index 26b77f3..371b5f0 100644
            Brewfile                                                                                                             
         ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
         @@ -37,2 +37,3 @@ cask 'google-chrome'                                                                                  
-           37       cask 'iterm2'                                      37       cask 'iterm2'                                   
-                                                                       38     + cask 'java'                                     
-           38       cask 'ngrok'                                       39       cask 'ngrok'                                    
+           37   cask 'iterm2'                                          37   cask 'iterm2'                                       
+                                                                       38 + cask 'java'                                         
+           38   cask 'ngrok'                                           39   cask 'ngrok'                                        
            39                                                          40                                                       
         commit 0de4eb9a05b52362d8ff02aba14e389cc76a6f91
         Author: Shrey Banga <shrey@quip.com>
@@ -329,9 +329,9 @@ index 26b77f3..371b5f0 100644
            Brewfile                                                                                                             
         ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
         @@ -20,2 +20,3 @@ brew 'socat'                                                                                          
-           20       brew 'terminal-notifier'                           20       brew 'terminal-notifier'                        
-                                                                       21     + brew 'tldr'                                     
-           21       brew 'tree'                                        22       brew 'tree'                                     
+           20   brew 'terminal-notifier'                               20   brew 'terminal-notifier'                            
+                                                                       21 + brew 'tldr'                                         
+           21   brew 'tree'                                            22   brew 'tree'                                         
            22                                                          23                                                       
         ",
         ]
@@ -369,9 +369,9 @@ index 0000000..6499edf
          + .gitignore                                                                                                           
         ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
         @@ -0,0 +1,2 @@                                                                                                         
-                                                                        1     + node_modules/**                                 
-                                                                        2     + build/**                                        
-                                                                        3       No newline at end of file                       
+                                                                        1 + node_modules/**                                     
+                                                                        2 + build/**                                            
+                                                                        3   No newline at end of file                           
         ",
         ]
     `);
@@ -433,28 +433,28 @@ index 149981d..fb507a4 100644
            src/index.ts                                                                                                         
         ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
         @@ -1,5 +1,6 @@                                                                                                         
-            1       import chalk from 'chalk';                          1       import chalk from 'chalk';                      
-            2       import * as process from 'process';                 2       import * as process from 'process';             
-                                                                        3     + import stream from 'stream';                    
-            3       import terminalSize from 'term-size';               4       import terminalSize from 'term-size';           
-            4       import { iterlinesFromReadableAsync } from './it    5       import { iterlinesFromReadableAsync } from './it
-            5       import { iterLinesWithoutAnsiColors } from './it    6       import { iterLinesWithoutAnsiColors } from './it
+            1   import chalk from 'chalk';                              1   import chalk from 'chalk';                          
+            2   import * as process from 'process';                     2   import * as process from 'process';                 
+                                                                        3 + import stream from 'stream';                        
+            3   import terminalSize from 'term-size';                   4   import terminalSize from 'term-size';               
+            4   import { iterlinesFromReadableAsync } from './iterLi    5   import { iterlinesFromReadableAsync } from './iterLi
+            5   import { iterLinesWithoutAnsiColors } from './iterLi    6   import { iterLinesWithoutAnsiColors } from './iterLi
         @@ -12,15 +13,16 @@ function main() {                                                                                   
-           12           const screenWidth = terminalSize().columns;    13           const screenWidth = terminalSize().columns; 
-           13           const theme = defaultTheme(chalk, screenWidt   14           const theme = defaultTheme(chalk, screenWidt
+           12       const screenWidth = terminalSize().columns;        13       const screenWidth = terminalSize().columns;     
+           13       const theme = defaultTheme(chalk, screenWidth);    14       const theme = defaultTheme(chalk, screenWidth); 
            14                                                          15                                                       
-           15     -     transformStreamWithIterables(                  16     +     stream.pipeline(                            
-           16     -         process.stdin,                             17     +         transformStreamWithIterables(           
-           17     -         [                                          18     +             process.stdin,                      
-           18                   iterlinesFromReadableAsync,            19                   iterlinesFromReadableAsync,         
-           19                   iterLinesWithoutAnsiColors,            20                   iterLinesWithoutAnsiColors,         
-           20                   iterSideBySideDiff(theme),             21                   iterSideBySideDiff(theme),          
-           21     -             iterWithNewlines,                      22     +             iterWithNewlines                    
-           22     -         ],                                         23     +         ),                                      
-           23     -         process.stdout                             24     +         process.stdout,                         
-                                                                       25     +         console.error                           
-           24           );                                             26           );                                          
-           25       }                                                  27       }                                               
+           15 -     transformStreamWithIterables(                      16 +     stream.pipeline(                                
+           16 -         process.stdin,                                 17 +         transformStreamWithIterables(               
+           17 -         [                                              18 +             process.stdin,                          
+           18               iterlinesFromReadableAsync,                19               iterlinesFromReadableAsync,             
+           19               iterLinesWithoutAnsiColors,                20               iterLinesWithoutAnsiColors,             
+           20               iterSideBySideDiff(theme),                 21               iterSideBySideDiff(theme),              
+           21 -             iterWithNewlines,                          22 +             iterWithNewlines                        
+           22 -         ],                                             23 +         ),                                          
+           23 -         process.stdout                                 24 +         process.stdout,                             
+                                                                       25 +         console.error                               
+           24       );                                                 26       );                                              
+           25   }                                                      27   }                                                   
            26                                                          28                                                       
         ",
         ]
