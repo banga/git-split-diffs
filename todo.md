@@ -12,12 +12,13 @@
 -   [x] Write tests
 -   [x] Handle moves and renames without diffs
 -   [x] Look into EPIPE errors when used with git log
+-   [x] Support line wrapping
+-   [x] Ensure compatibility to node12
+-   [x] Publish to npm
+-   [ ] Improv line wrap perf
 -   [ ] Highlight changes in lines
 -   [ ] Read colors from git config
 -   [ ] Colorize "stat"s
--   [x] Support line wrapping
 -   [ ] Test on very large diffs
--   [ ] Publish to npm
--   [x] Test compatibility with node versions (works up to v12)
 -   [ ] Add README
 -   [ ] See why `less` occasionally goes into search mode
