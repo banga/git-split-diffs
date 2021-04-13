@@ -18,4 +18,6 @@
 -   [x] Support line wrapping
 -   [ ] Test on very large diffs
 -   [ ] Publish to npm
--   [ ] Test compatibility with node versions
+-   [x] Test compatibility with node versions (works up to v12)
+-   [ ] Add README
+-   [ ] See why `less` occasionally goes into search mode
