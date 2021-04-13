@@ -1,13 +1,13 @@
 {
     "name": "git-split-diffs",
-    "version": "0.1.0",
+    "version": "0.1.2",
     "description": "Split diffs, now in your terminal",
     "homepage": "https://github.com/banga/git-split-diffs",
     "repository": "github:banga/git-split-diffs",
     "bin": "./bin/git-split-diffs",
     "files": [
         "./bin/*",
-        "./build/*"
+        "./build/**/*"
     ],
     "license": "MIT",
     "engines": {
