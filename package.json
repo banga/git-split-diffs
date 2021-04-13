@@ -24,19 +24,18 @@
         "@types/node": "12.12.6",
         "ansi-regex": "^5.0.0",
         "chalk": "^4.1.0",
-        "term-size": "^2.2.1",
-        "wrap-ansi": "^7.0.0"
+        "term-size": "^2.2.1"
     },
     "scripts": {
         "test": "tsc && jest",
         "clean": "rimraf ./build",
-        "build": "yarn clean && yarn esbuild src/index.ts --platform=node --target=node12 --outdir=build --bundle --minify",
+        "build": "yarn clean && yarn esbuild src/index.ts --platform=node --target=node12 --outdir=build --bundle",
+        "build:publish": "yarn build --minify",
         "start": "yarn build && node ./build",
-        "prepublishOnly": "yarn test && yarn build"
+        "prepublishOnly": "yarn test && yarn build:publish"
     },
     "devDependencies": {
         "@types/jest": "^26.0.22",
-        "@types/wrap-ansi": "^3.0.0",
         "esbuild": "^0.11.9",
         "jest": "^26.6.3",
         "prettier": "^2.2.1",

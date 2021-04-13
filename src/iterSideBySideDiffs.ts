@@ -1,8 +1,8 @@
 import * as assert from 'assert';
 import { Theme } from './theme';
-import wrapAnsi from 'wrap-ansi';
 import { Chalk } from 'chalk';
 import { Config } from './config';
+import { wrapLineByWord } from './wrapLineByWord';
 
 export function iterSideBySideDiff(
     {
@@ -101,10 +101,7 @@ export function iterSideBySideDiff(
     function fitHunkLineToWidth(lineHalf: HunkLineHalf): string[] {
         const lineText = lineHalf?.text ?? '';
         return WRAP_LINES
-            ? wrapAnsi(lineText, LINE_TEXT_WIDTH, {
-                  hard: true,
-                  trim: false,
-              }).split('\n')
+            ? wrapLineByWord(lineText, LINE_TEXT_WIDTH)
             : [lineText.slice(0, LINE_TEXT_WIDTH)];
     }
 

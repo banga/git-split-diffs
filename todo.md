@@ -15,7 +15,7 @@
 -   [x] Support line wrapping
 -   [x] Ensure compatibility to node12
 -   [x] Publish to npm
--   [ ] Improv line wrap perf
+-   [x] Improv line wrap perf
 -   [ ] Highlight changes in lines
 -   [ ] Read colors from git config
 -   [ ] Colorize "stat"s
