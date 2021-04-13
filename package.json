@@ -1,24 +1,46 @@
 {
+    "name": "git-split-diffs",
+    "version": "0.1.0",
+    "description": "Split diffs, now in your terminal",
+    "homepage": "https://github.com/banga/git-split-diffs",
+    "repository": "github:banga/git-split-diffs",
+    "bin": "./bin/git-split-diffs",
+    "files": [
+        "./bin/*",
+        "./build/*"
+    ],
+    "license": "MIT",
+    "engines": {
+        "node": ">=12"
+    },
+    "keywords": [
+        "git",
+        "terminal",
+        "shell",
+        "diff",
+        "diffs"
+    ],
     "dependencies": {
-        "@types/node": "^14.14.37",
-        "@types/wrap-ansi": "^3.0.0",
         "ansi-regex": "^5.0.0",
         "chalk": "^4.1.0",
         "term-size": "^2.2.1",
-        "typescript": "^4.2.3",
         "wrap-ansi": "^7.0.0"
     },
     "scripts": {
         "clean": "rimraf ./build",
         "build": "yarn clean && yarn tsc --build",
         "start": "yarn build && node ./build",
+        "prepare": "yarn test && yarn build",
         "test": "jest"
     },
     "devDependencies": {
         "@types/jest": "^26.0.22",
+        "@types/node": "^14.14.37",
+        "@types/wrap-ansi": "^3.0.0",
         "jest": "^26.6.3",
         "prettier": "^2.2.1",
         "rimraf": "^3.0.2",
-        "ts-jest": "^26.5.4"
+        "ts-jest": "^26.5.4",
+        "typescript": "^4.2.3"
     }
 }
