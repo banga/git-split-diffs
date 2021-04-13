@@ -1,5 +1,4 @@
 import * as assert from 'assert';
-import { padColoredText } from './color-utils';
 import { Theme } from './theme';
 import wrapAnsi from 'wrap-ansi';
 import { Chalk } from 'chalk';
@@ -73,7 +72,7 @@ export function iterSideBySideDiff(
                 fileNameB
             )}`;
         }
-        return padColoredText(`${line} `, SCREEN_WIDTH, 'left');
+        return `${line} `.padEnd(SCREEN_WIDTH);
     }
 
     type HunkLineHalf = {
@@ -91,7 +90,7 @@ export function iterSideBySideDiff(
         return [
             lineColor.dim(lineNo.padStart(LINE_NUMBER_WIDTH)),
             lineColor(' ' + linePrefix.padStart(LINE_PREFIX_WIDTH)),
-            lineColor(' ' + padColoredText(lineText, LINE_TEXT_WIDTH, 'left')),
+            lineColor(' ' + lineText.padEnd(LINE_TEXT_WIDTH)),
         ].join('');
     }
 

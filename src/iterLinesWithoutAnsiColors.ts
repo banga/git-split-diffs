@@ -1,4 +1,6 @@
-import { ANSI_COLOR_CODE_REGEX } from './color-utils';
+import ansiRegex from 'ansi-regex';
+
+const ANSI_COLOR_CODE_REGEX = ansiRegex();
 
 /**
  * Strips out ANSI color escape codes, which may be present in diff output if
