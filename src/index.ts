@@ -2,23 +2,28 @@ import chalk from 'chalk';
 import * as process from 'process';
 import stream from 'stream';
 import terminalSize from 'term-size';
+import { Config, CONFIG_DEFAULTS } from './config';
 import { iterlinesFromReadableAsync } from './iterLinesFromReadable';
 import { iterLinesWithoutAnsiColors } from './iterLinesWithoutAnsiColors';
 import { iterSideBySideDiff } from './iterSideBySideDiffs';
 import { iterWithNewlines } from './iterWithNewlines';
-import { defaultTheme } from './theme';
+import { defaultTheme, Theme } from './theme';
 import { transformStreamWithIterables } from './transformStreamWithIterables';
 
 function main() {
-    const screenWidth = terminalSize().columns;
-    const theme = defaultTheme(chalk, screenWidth);
+    const config: Config = {
+        ...CONFIG_DEFAULTS,
+        SCREEN_WIDTH: terminalSize().columns,
+        WRAP_LINES: true,
+    };
+    const theme: Theme = defaultTheme(chalk);
 
     stream.pipeline(
         transformStreamWithIterables(
             process.stdin,
             iterlinesFromReadableAsync,
             iterLinesWithoutAnsiColors,
-            iterSideBySideDiff(theme),
+            iterSideBySideDiff(config, theme),
             iterWithNewlines
         ),
         process.stdout,

@@ -3,23 +3,29 @@ import { padColoredText } from './color-utils';
 import { Theme } from './theme';
 import wrapAnsi from 'wrap-ansi';
 import { Chalk } from 'chalk';
+import { Config } from './config';
 
-export function iterSideBySideDiff({
-    SCREEN_WIDTH,
-    LINE_NUMBER_WIDTH,
-    LINE_PREFIX_WIDTH,
-    MIN_LINE_WIDTH,
-    COMMIT_SHA_COLOR,
-    COMMIT_AUTHOR_COLOR,
-    COMMIT_DATE_COLOR,
-    FILE_NAME_COLOR,
-    FILE_NAME_BORDER_COLOR,
-    HUNK_HEADER_COLOR,
-    DELETED_LINE_COLOR,
-    INSERTED_LINE_COLOR,
-    UNMODIFIED_LINE_COLOR,
-    MISSING_LINE_COLOR,
-}: Theme) {
+export function iterSideBySideDiff(
+    {
+        SCREEN_WIDTH,
+        LINE_NUMBER_WIDTH,
+        LINE_PREFIX_WIDTH,
+        MIN_LINE_WIDTH,
+        WRAP_LINES,
+    }: Config,
+    {
+        COMMIT_SHA_COLOR,
+        COMMIT_AUTHOR_COLOR,
+        COMMIT_DATE_COLOR,
+        FILE_NAME_COLOR,
+        FILE_NAME_BORDER_COLOR,
+        HUNK_HEADER_COLOR,
+        DELETED_LINE_COLOR,
+        INSERTED_LINE_COLOR,
+        UNMODIFIED_LINE_COLOR,
+        MISSING_LINE_COLOR,
+    }: Theme
+) {
     /*
         Each line in a hunk is rendered as follows: <lineNo> <linePrefix[1]>
         <lineWithoutPrefix><lineNo> <linePrefix> <lineWithoutPrefix>
@@ -76,35 +82,50 @@ export function iterSideBySideDiff({
         text: string;
     } | null /* if line is missing */;
 
-    function formatHunkLineHalf(lineHalf: HunkLineHalf, lineColor: Chalk) {
+    function formatHunkLineHalf(
+        lineNo: string,
+        linePrefix: string,
+        lineText: string,
+        lineColor: Chalk
+    ) {
+        return [
+            lineColor.dim(lineNo.padStart(LINE_NUMBER_WIDTH)),
+            lineColor(' ' + linePrefix.padStart(LINE_PREFIX_WIDTH)),
+            lineColor(' ' + padColoredText(lineText, LINE_TEXT_WIDTH, 'left')),
+        ].join('');
+    }
+
+    /**
+     * Wraps or truncates the given line to into the allowed width, depending on
+     * the config.
+     */
+    function fitHunkLineToWidth(lineHalf: HunkLineHalf): string[] {
+        const lineText = lineHalf?.text ?? '';
+        return WRAP_LINES
+            ? wrapAnsi(lineText, LINE_TEXT_WIDTH, {
+                  hard: true,
+                  trim: false,
+              }).split('\n')
+            : [lineText.slice(0, LINE_TEXT_WIDTH)];
+    }
+
+    function formatAndFitHunkLineHalf(
+        lineHalf: HunkLineHalf,
+        lineColor: Chalk
+    ) {
         const lineNo = lineHalf?.number ?? '';
         const linePrefix = lineHalf?.prefix ?? '';
-        const lineText = lineHalf?.text ?? '';
 
-        const wrappedLines = wrapAnsi(lineText, LINE_TEXT_WIDTH, {
-            hard: true,
-            trim: false,
-        }).split('\n');
-        return wrappedLines.map((wrappedLine, index) => {
-            if (index === 0) {
-                return [
-                    lineColor.dim(lineNo.padStart(LINE_NUMBER_WIDTH)),
-                    lineColor(' ' + linePrefix.padStart(LINE_PREFIX_WIDTH)),
-                    lineColor(
-                        ' ' +
-                            padColoredText(wrappedLine, LINE_TEXT_WIDTH, 'left')
-                    ),
-                ].join('');
-            } else {
-                return lineColor(
-                    padColoredText(
-                        padColoredText(wrappedLine, LINE_TEXT_WIDTH, 'left'),
-                        LINE_WIDTH,
-                        'right'
-                    )
-                );
-            }
-        });
+        const [firstLineText, ...wrappedLinesText] = fitHunkLineToWidth(
+            lineHalf
+        );
+        return [
+            formatHunkLineHalf(lineNo, linePrefix, firstLineText, lineColor),
+            ...wrappedLinesText.map((wrappedLineText) =>
+                // Don't render the line number and prefix on wrapped lines
+                formatHunkLineHalf('', '', wrappedLineText, lineColor)
+            ),
+        ];
     }
 
     function lineColorForLineHalf(lineHalf: HunkLineHalf) {
@@ -124,8 +145,8 @@ export function iterSideBySideDiff({
     function formatHunkLine(lineHalfA: HunkLineHalf, lineHalfB: HunkLineHalf) {
         const lineColorA = lineColorForLineHalf(lineHalfA);
         const lineColorB = lineColorForLineHalf(lineHalfB);
-        const formattedLinesA = formatHunkLineHalf(lineHalfA, lineColorA);
-        const formattedLinesB = formatHunkLineHalf(lineHalfB, lineColorB);
+        const formattedLinesA = formatAndFitHunkLineHalf(lineHalfA, lineColorA);
+        const formattedLinesB = formatAndFitHunkLineHalf(lineHalfB, lineColorB);
         const formattedHunkLines = [];
         for (
             let indexA = 0, indexB = 0;

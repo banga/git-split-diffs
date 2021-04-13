@@ -1,5 +1,6 @@
 import chalk from 'chalk';
 import { Readable } from 'stream';
+import { Config, CONFIG_DEFAULTS } from './config';
 import { iterlinesFromReadableAsync } from './iterLinesFromReadable';
 import { iterLinesWithoutAnsiColors } from './iterLinesWithoutAnsiColors';
 import { iterSideBySideDiff } from './iterSideBySideDiffs';
@@ -7,10 +8,22 @@ import { iterWithNewlines } from './iterWithNewlines';
 import { defaultTheme } from './theme';
 import { transformStreamWithIterables } from './transformStreamWithIterables';
 
-const testTheme = defaultTheme(new chalk.Instance({ level: 0 }), 120);
-const iterSideBySideDiffWithoutColors = iterSideBySideDiff(testTheme);
+async function transform(
+    input: string,
+    configOverride?: Partial<Config>
+): Promise<string> {
+    const testConfig: Config = {
+        ...CONFIG_DEFAULTS,
+        SCREEN_WIDTH: 120,
+        WRAP_LINES: true,
+        ...configOverride,
+    };
+    const testTheme = defaultTheme(new chalk.Instance({ level: 0 }));
+    const iterSideBySideDiffWithoutColors = iterSideBySideDiff(
+        testConfig,
+        testTheme
+    );
 
-async function transform(input: string): Promise<string> {
     let string = '';
     const transformedStream = transformStreamWithIterables(
         Readable.from(input),
@@ -25,16 +38,28 @@ async function transform(input: string): Promise<string> {
     return string;
 }
 
+async function generateOutputs(input: string) {
+    return await Promise.all(
+        [false].map((wrapLines) =>
+            transform(input, {
+                WRAP_LINES: wrapLines,
+            })
+        )
+    );
+}
+
 test('empty', async function () {
-    expect(await transform(``)).toMatchInlineSnapshot(`
-        "
-        "
+    expect(await generateOutputs(``)).toMatchInlineSnapshot(`
+        Array [
+          "
+        ",
+        ]
     `);
 });
 
 test('with ANSI color codes', async function () {
     expect(
-        await transform(`
+        await generateOutputs(`
 [1;32mcommit f735de7025c6d626c5ae1a291fe24f143dea0313[m
 Author: Shrey Banga <banga.shrey@gmail.com>
 Date:   Sun Apr 11 15:25:34 2021 -0700
@@ -56,7 +81,8 @@ Date:   Sun Apr 11 15:25:34 2021 -0700
 
 `)
     ).toMatchInlineSnapshot(`
-        "
+        Array [
+          "
         commit f735de7025c6d626c5ae1a291fe24f143dea0313
         Author: Shrey Banga <banga.shrey@gmail.com>
         Date:   Sun Apr 11 15:25:34 2021 -0700
@@ -76,13 +102,14 @@ Date:   Sun Apr 11 15:25:34 2021 -0700
            12       -   [ ] Highlight changes in lines                 13       -   [ ] Highlight changes in lines              
            13                                                          14                                                       
            14                                                          15                                                       
-        "
+        ",
+        ]
     `);
 });
 
 test('commits without diffs', async function () {
     expect(
-        await transform(`
+        await generateOutputs(`
 commit e5f896655402f8cf2d947c528d45e1d56bbf5717 (HEAD -> main)
 Author: Shrey Banga <banga.shrey@gmail.com>
 Date:   Sun Apr 11 16:23:54 2021 -0700
@@ -102,7 +129,8 @@ Date:   Sun Apr 11 10:39:17 2021 -0700
     more todos
 `)
     ).toMatchInlineSnapshot(`
-        "
+        Array [
+          "
         commit e5f896655402f8cf2d947c528d45e1d56bbf5717 (HEAD -> main)
         Author: Shrey Banga <banga.shrey@gmail.com>
         Date:   Sun Apr 11 16:23:54 2021 -0700
@@ -121,13 +149,14 @@ Date:   Sun Apr 11 10:39:17 2021 -0700
 
             more todos
 
-        "
+        ",
+        ]
     `);
 });
 
 test('commit with addition', async function () {
     expect(
-        await transform(`
+        await generateOutputs(`
 commit f735de7025c6d626c5ae1a291fe24f143dea0313
 Author: Shrey Banga <banga.shrey@gmail.com>
 Date:   Sun Apr 11 15:25:34 2021 -0700
@@ -144,7 +173,8 @@ index 9f14e96..eaf3730 100644
  -   [ ] Handle empty diffs
 `)
     ).toMatchInlineSnapshot(`
-        "
+        Array [
+          "
         commit f735de7025c6d626c5ae1a291fe24f143dea0313
         Author: Shrey Banga <banga.shrey@gmail.com>
         Date:   Sun Apr 11 15:25:34 2021 -0700
@@ -159,7 +189,8 @@ index 9f14e96..eaf3730 100644
                                                                        10     + -   [x] Move visual config to theme             
            10       -   [ ] Handle empty diffs                         11       -   [ ] Handle empty diffs                      
            11                                                          12                                                       
-        "
+        ",
+        ]
     `);
 });
 
@@ -203,7 +234,7 @@ index a33d267..ae58a01 100644
 
 test('commits with diffs', async function () {
     expect(
-        await transform(`
+        await generateOutputs(`
 commit 26ca49fb83758bace20a473e231d576aa1bbe115
 Author: Shrey Banga <shrey@quip.com>
 Date:   Tue May 23 16:47:17 2017 -0700
@@ -254,7 +285,8 @@ index 26b77f3..371b5f0 100644
  brew 'tree'
     `)
     ).toMatchInlineSnapshot(`
-        "
+        Array [
+          "
         commit 26ca49fb83758bace20a473e231d576aa1bbe115
         Author: Shrey Banga <shrey@quip.com>
         Date:   Tue May 23 16:47:17 2017 -0700
@@ -301,13 +333,14 @@ index 26b77f3..371b5f0 100644
                                                                        21     + brew 'tldr'                                     
            21       brew 'tree'                                        22       brew 'tree'                                     
            22                                                          23                                                       
-        "
+        ",
+        ]
     `);
 });
 
 test('commit with a new file', async function () {
     expect(
-        await transform(`
+        await generateOutputs(`
 commit e4951eee3b9a8fa471d01dd64075c5fd44879a26
 Author: Shrey Banga <banga.shrey@gmail.com>
 Date:   Sat Apr 10 14:35:42 2021 -0700
@@ -324,7 +357,8 @@ index 0000000..6499edf
 +build/**
 \ No newline at end of file`)
     ).toMatchInlineSnapshot(`
-        "
+        Array [
+          "
         commit e4951eee3b9a8fa471d01dd64075c5fd44879a26
         Author: Shrey Banga <banga.shrey@gmail.com>
         Date:   Sat Apr 10 14:35:42 2021 -0700
@@ -338,13 +372,14 @@ index 0000000..6499edf
                                                                         1     + node_modules/**                                 
                                                                         2     + build/**                                        
                                                                         3       No newline at end of file                       
-        "
+        ",
+        ]
     `);
 });
 
 test('multiple inserts and deletes in the same hunk', async function () {
     expect(
-        await transform(`
+        await generateOutputs(`
 commit e5f896655402f8cf2d947c528d45e1d56bbf5717
 Author: Shrey Banga <banga.shrey@gmail.com>
 Date:   Sun Apr 11 16:23:54 2021 -0700
@@ -386,7 +421,8 @@ index 149981d..fb507a4 100644
  }
         `)
     ).toMatchInlineSnapshot(`
-        "
+        Array [
+          "
         commit e5f896655402f8cf2d947c528d45e1d56bbf5717
         Author: Shrey Banga <banga.shrey@gmail.com>
         Date:   Sun Apr 11 16:23:54 2021 -0700
@@ -420,13 +456,14 @@ index 149981d..fb507a4 100644
            24           );                                             26           );                                          
            25       }                                                  27       }                                               
            26                                                          28                                                       
-        "
+        ",
+        ]
     `);
 });
 
 test('commit with a file move', async function () {
     expect(
-        await transform(`
+        await generateOutputs(`
 commit 1c76ed4bb05429741fd4a48896bb84b11bc661f5
 Author: Shrey Banga <banga.shrey@gmail.com>
 Date:   Sat Apr 10 22:26:15 2021 -0700
@@ -439,7 +476,8 @@ rename from colors.diff
 rename to test-data/colors.diff
     `)
     ).toMatchInlineSnapshot(`
-        "
+        Array [
+          "
         commit 1c76ed4bb05429741fd4a48896bb84b11bc661f5
         Author: Shrey Banga <banga.shrey@gmail.com>
         Date:   Sat Apr 10 22:26:15 2021 -0700
@@ -449,6 +487,7 @@ rename to test-data/colors.diff
         ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
         colors.diff -> test-data/colors.diff                                                                                    
         ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-        "
+        ",
+        ]
     `);
 });

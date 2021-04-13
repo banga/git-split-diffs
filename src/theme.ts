@@ -1,11 +1,6 @@
 import type { Chalk } from 'chalk';
 
 export type Theme = {
-    SCREEN_WIDTH: number;
-    LINE_NUMBER_WIDTH: number;
-    LINE_PREFIX_WIDTH: number;
-    MIN_LINE_WIDTH: number;
-
     COMMIT_SHA_COLOR: Chalk;
     COMMIT_AUTHOR_COLOR: Chalk;
     COMMIT_DATE_COLOR: Chalk;
@@ -20,7 +15,7 @@ export type Theme = {
     MISSING_LINE_COLOR: Chalk;
 };
 
-export function defaultTheme(chalkInstance: Chalk, screenWidth: number): Theme {
+export function defaultTheme(chalkInstance: Chalk): Theme {
     return {
         COMMIT_SHA_COLOR: chalkInstance.green,
         COMMIT_AUTHOR_COLOR: chalkInstance.blueBright,
@@ -32,15 +27,10 @@ export function defaultTheme(chalkInstance: Chalk, screenWidth: number): Theme {
         INSERTED_LINE_COLOR: chalkInstance.greenBright,
         UNMODIFIED_LINE_COLOR: chalkInstance.white,
         MISSING_LINE_COLOR: chalkInstance.white,
-
-        SCREEN_WIDTH: screenWidth,
-        LINE_NUMBER_WIDTH: 5,
-        LINE_PREFIX_WIDTH: 5,
-        MIN_LINE_WIDTH: 8,
     };
 }
 
-export function githubTheme(chalkInstance: Chalk, screenWidth: number): Theme {
+export function githubTheme(chalkInstance: Chalk): Theme {
     return {
         COMMIT_SHA_COLOR: chalkInstance.white.dim,
         COMMIT_AUTHOR_COLOR: chalkInstance.white.bold,
@@ -52,10 +42,5 @@ export function githubTheme(chalkInstance: Chalk, screenWidth: number): Theme {
         INSERTED_LINE_COLOR: chalkInstance.hex('57ab5a').bgHex('253230'),
         UNMODIFIED_LINE_COLOR: chalkInstance.hex('adbac7').bgHex('22282d'),
         MISSING_LINE_COLOR: chalkInstance.bgHex('2d333b'),
-
-        SCREEN_WIDTH: screenWidth,
-        LINE_NUMBER_WIDTH: 5,
-        LINE_PREFIX_WIDTH: 5,
-        MIN_LINE_WIDTH: 8,
     };
 }
