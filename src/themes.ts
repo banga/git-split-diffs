@@ -48,6 +48,7 @@ const THEME_VARIABLE_NAMES = [
     'COMMIT_SHA_COLOR',
     'COMMIT_AUTHOR_COLOR',
     'COMMIT_DATE_COLOR',
+    'BORDER_COLOR',
     'FILE_NAME_COLOR',
     'HUNK_HEADER_COLOR',
     'DELETED_LINE_COLOR',
@@ -157,10 +158,23 @@ function parseColorFunction(definition: ColorDefinition, chalk: Chalk): Chalk {
 }
 
 export function parseTheme(theme: ThemeDefinition, chalk: Chalk): Theme {
+    let defaultColor = theme['DEFAULT_COLOR'] ?? 'white';
+    if (typeof defaultColor === 'string') {
+        defaultColor = { color: defaultColor };
+    }
+
     const themeFunctions: Partial<Theme> = {};
     for (const variableName of THEME_VARIABLE_NAMES) {
+        let value = theme[variableName];
+        if (typeof value === 'string') {
+            value = { color: value };
+        }
+
         themeFunctions[variableName] = parseColorFunction(
-            theme[variableName] ?? theme['DEFAULT_COLOR'] ?? 'white',
+            {
+                ...defaultColor,
+                ...value,
+            },
             chalk
         );
     }

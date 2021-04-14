@@ -16,6 +16,7 @@ export function iterSideBySideDiff(
         COMMIT_SHA_COLOR,
         COMMIT_AUTHOR_COLOR,
         COMMIT_DATE_COLOR,
+        BORDER_COLOR,
         FILE_NAME_COLOR,
         HUNK_HEADER_COLOR,
         DELETED_LINE_COLOR,
@@ -39,6 +40,7 @@ export function iterSideBySideDiff(
         LINE_WIDTH - 1 - LINE_PREFIX_WIDTH - 1 - LINE_NUMBER_WIDTH
     );
     const BLANK_LINE = ''.padStart(LINE_WIDTH);
+    const HORIZONTAL_SEPARATOR = BORDER_COLOR(''.padStart(SCREEN_WIDTH, '─'));
 
     /**
      * Wraps or truncates the given line to into the allowed width, depending on
@@ -75,19 +77,28 @@ export function iterSideBySideDiff(
     }
 
     function* formatFileName(fileNameA: string, fileNameB: string) {
-        let line: string;
+        yield HORIZONTAL_SEPARATOR;
+
+        let indicator;
+        let label;
         if (!fileNameA) {
-            line = ` + ${fileNameB}`;
+            indicator = INSERTED_LINE_COLOR('■■');
+            label = fileNameB;
         } else if (!fileNameB) {
-            line = ` - ${fileNameA}`;
+            indicator = DELETED_LINE_COLOR('■■');
+            label = fileNameA;
         } else if (fileNameA === fileNameB) {
-            line = `   ${fileNameA}`;
+            indicator = DELETED_LINE_COLOR('■') + INSERTED_LINE_COLOR('■');
+            label = fileNameA;
         } else {
-            line = `${fileNameA} -> ${fileNameB}`;
+            indicator = DELETED_LINE_COLOR('■') + INSERTED_LINE_COLOR('■');
+            label = FILE_NAME_COLOR(`${fileNameA} -> ${fileNameB}`);
         }
-        yield FILE_NAME_COLOR(''.padEnd(SCREEN_WIDTH, '─'));
-        yield FILE_NAME_COLOR(`${line} `.padEnd(SCREEN_WIDTH));
-        yield FILE_NAME_COLOR(''.padEnd(SCREEN_WIDTH, '─'));
+        yield FILE_NAME_COLOR(' ') +
+            indicator +
+            FILE_NAME_COLOR(' ' + label.padEnd(SCREEN_WIDTH - 2 - 2));
+
+        yield HORIZONTAL_SEPARATOR;
     }
 
     type HunkLineHalf = {
@@ -303,6 +314,7 @@ export function iterSideBySideDiff(
                     yield* yieldFileName();
                 } else if (state === 'hunk') {
                     yield* yieldHunk();
+                    yield HORIZONTAL_SEPARATOR;
                 }
 
                 state = 'commit';
