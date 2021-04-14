@@ -7,17 +7,25 @@ import { iterLinesWithoutAnsiColors } from './iterLinesWithoutAnsiColors';
 import { iterSideBySideDiff } from './iterSideBySideDiffs';
 import { iterWithNewlines } from './iterWithNewlines';
 import { parseTheme, Theme } from './themes';
-import THEME_DEFINITIONS from './themeDefinitions';
+import { THEME_DEFINITIONS } from './themeDefinitions';
 import { transformStreamWithIterables } from './transformStreamWithIterables';
 import chalk from 'chalk';
+import { getGitConfig } from './getGitConfig';
 
-function main() {
+async function main() {
+    const gitConfig = await getGitConfig();
+    const terminalConfig = {
+        SCREEN_WIDTH: terminalSize().columns,
+    };
     const config: Config = {
         ...CONFIG_DEFAULTS,
-        SCREEN_WIDTH: terminalSize().columns,
-        WRAP_LINES: true,
+        ...terminalConfig,
+        ...gitConfig,
     };
-    const theme: Theme = parseTheme(THEME_DEFINITIONS['default'], chalk);
+    const theme: Theme = parseTheme(
+        THEME_DEFINITIONS[config.THEME_NAME],
+        chalk
+    );
 
     stream.pipeline(
         transformStreamWithIterables(

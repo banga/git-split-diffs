@@ -1,6 +1,6 @@
 import { ThemeDefinition } from './themes';
 
-const THEME_DEFINITIONS: { [key in string]: ThemeDefinition } = {
+export const THEME_DEFINITIONS: { [key in string]: ThemeDefinition } = {
     default: {
         DEFAULT_COLOR: 'white',
         BORDER_COLOR: { modifiers: ['dim'] },
@@ -54,7 +54,7 @@ const THEME_DEFINITIONS: { [key in string]: ThemeDefinition } = {
         INSERTED_LINE_NO_COLOR: { color: 'a5cfb0', backgroundColor: 'cdffd8' },
         UNMODIFIED_LINE_NO_COLOR: { color: 'd1d5da' },
     },
-    'github-dark-dimmed': {
+    'github-dark-dim': {
         DEFAULT_COLOR: { color: 'adbac7', backgroundColor: '22272e' },
         BORDER_COLOR: { color: '444c56' },
         COMMIT_COLOR: { color: 'c6e6ff' },
@@ -69,4 +69,3 @@ const THEME_DEFINITIONS: { [key in string]: ThemeDefinition } = {
         UNMODIFIED_LINE_NO_COLOR: { backgroundColor: '22282d' },
     },
 };
-export default THEME_DEFINITIONS;

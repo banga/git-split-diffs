@@ -9,10 +9,13 @@ export type Config = {
         If false, they will be truncated.
     */
     WRAP_LINES: boolean;
+    THEME_NAME: string;
 };
 
 export const CONFIG_DEFAULTS = {
     LINE_NUMBER_WIDTH: 5,
     LINE_PREFIX_WIDTH: 1,
     MIN_LINE_WIDTH: 8,
+    WRAP_LINES: true,
+    THEME_NAME: 'default',
 };

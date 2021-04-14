@@ -42,7 +42,7 @@ type ColorDefinition =
           modifiers?: ColorModifier[];
       };
 
-const THEME_VARIABLE_NAMES = [
+export const THEME_VARIABLE_NAMES = [
     'DEFAULT_COLOR',
     'COMMIT_COLOR',
     'COMMIT_SHA_COLOR',

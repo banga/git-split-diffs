@@ -16,9 +16,9 @@
 -   [x] Ensure compatibility to node12
 -   [x] Publish to npm
 -   [x] Improv line wrap perf
+-   [x] Read settings from git config
+-   [ ] Add README
 -   [ ] Highlight changes in lines
--   [ ] Read colors from git config
 -   [ ] Colorize "stat"s
 -   [ ] Test on very large diffs
--   [ ] Add README
 -   [ ] See why `less` occasionally goes into search mode
