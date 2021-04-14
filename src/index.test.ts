@@ -379,6 +379,36 @@ index 0000000..6499edf
     `);
 });
 
+test.skip('commit with a new binary file', async function () {
+    expect(
+        await generateOutputs(`
+commit fee3ebd68fda0ef7cb106651039f092768034610 (HEAD -> main, origin/main, origin/HEAD)
+Author: Shrey Banga <banga.shrey@gmail.com>
+Date:   Wed Apr 14 16:40:40 2021 -0700
+
+    Add screenshots
+
+diff --git a/screenshots/default.png b/screenshots/default.png
+new file mode 100644
+index 0000000..40e16dc
+Binary files /dev/null and b/screenshots/default.png differ`)
+    ).toMatchInlineSnapshot(`
+        Array [
+          "                                                                                                                        
+        commit fee3ebd68fda0ef7cb106651039f092768034610 (HEAD -> main, origin/main, origin/HEAD)                                
+        Author: Shrey Banga <banga.shrey@gmail.com>                                                                             
+        Date:   Wed Apr 14 16:40:40 2021 -0700                                                                                  
+                                                                                                                                
+            Add screenshots                                                                                                     
+                                                                                                                                
+        ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+         ■■ screenshots/default.png                                                                                             
+        ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+        ",
+        ]
+    `);
+});
+
 test('multiple inserts and deletes in the same hunk', async function () {
     expect(
         await generateOutputs(`
