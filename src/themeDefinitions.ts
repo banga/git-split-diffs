@@ -14,6 +14,29 @@ const THEME_DEFINITIONS: { [key in string]: ThemeDefinition } = {
         INSERTED_LINE_NO_COLOR: { color: 'green', modifiers: ['dim'] },
         UNMODIFIED_LINE_NO_COLOR: { modifiers: ['dim'] },
     },
+    light: {
+        DEFAULT_COLOR: { color: '333', backgroundColor: 'eee' },
+        BORDER_COLOR: { color: 'ccc' },
+
+        COMMIT_SHA_COLOR: { color: '060' },
+        COMMIT_AUTHOR_COLOR: { color: '633' },
+
+        FILE_NAME_COLOR: '366',
+        HUNK_HEADER_COLOR: { color: '666', backgroundColor: 'e0e0e0' },
+        DELETED_LINE_COLOR: { color: '633', backgroundColor: 'ecc' },
+        INSERTED_LINE_COLOR: { color: '363', backgroundColor: 'cec' },
+        DELETED_LINE_NO_COLOR: {
+            color: '633',
+            backgroundColor: 'ecc',
+            modifiers: ['dim'],
+        },
+        INSERTED_LINE_NO_COLOR: {
+            color: '363',
+            backgroundColor: 'cec',
+            modifiers: ['dim'],
+        },
+        UNMODIFIED_LINE_NO_COLOR: { modifiers: ['dim'] },
+    },
     'color-test': { DEFAULT_COLOR: { modifiers: ['inverse', 'bold'] } },
     'github-light': {
         DEFAULT_COLOR: { color: '05264c', backgroundColor: 'ffffff' },
