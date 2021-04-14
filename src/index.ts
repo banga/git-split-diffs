@@ -1,4 +1,3 @@
-import chalk from 'chalk';
 import * as process from 'process';
 import stream from 'stream';
 import terminalSize from 'term-size';
@@ -7,8 +6,10 @@ import { iterlinesFromReadableAsync } from './iterLinesFromReadable';
 import { iterLinesWithoutAnsiColors } from './iterLinesWithoutAnsiColors';
 import { iterSideBySideDiff } from './iterSideBySideDiffs';
 import { iterWithNewlines } from './iterWithNewlines';
-import { defaultTheme, Theme } from './theme';
+import { parseTheme, Theme } from './themes';
+import THEME_DEFINITIONS from './themeDefinitions';
 import { transformStreamWithIterables } from './transformStreamWithIterables';
+import chalk from 'chalk';
 
 function main() {
     const config: Config = {
@@ -16,7 +17,7 @@ function main() {
         SCREEN_WIDTH: terminalSize().columns,
         WRAP_LINES: true,
     };
-    const theme: Theme = defaultTheme(chalk);
+    const theme: Theme = parseTheme(THEME_DEFINITIONS['default'], chalk);
 
     stream.pipeline(
         transformStreamWithIterables(

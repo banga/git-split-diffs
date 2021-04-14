@@ -5,7 +5,7 @@ import { iterlinesFromReadableAsync } from './iterLinesFromReadable';
 import { iterLinesWithoutAnsiColors } from './iterLinesWithoutAnsiColors';
 import { iterSideBySideDiff } from './iterSideBySideDiffs';
 import { iterWithNewlines } from './iterWithNewlines';
-import { defaultTheme } from './theme';
+import { parseTheme } from './themes';
 import { transformStreamWithIterables } from './transformStreamWithIterables';
 
 async function transform(
@@ -18,7 +18,7 @@ async function transform(
         WRAP_LINES: true,
         ...configOverride,
     };
-    const testTheme = defaultTheme(new chalk.Instance({ level: 0 }));
+    const testTheme = parseTheme({}, new chalk.Instance({ level: 0 }));
     const iterSideBySideDiffWithoutColors = iterSideBySideDiff(
         testConfig,
         testTheme
@@ -51,7 +51,7 @@ async function generateOutputs(input: string) {
 test('empty', async function () {
     expect(await generateOutputs(``)).toMatchInlineSnapshot(`
         Array [
-          "
+          "                                                                                                                        
         ",
         ]
     `);
@@ -82,13 +82,13 @@ Date:   Sun Apr 11 15:25:34 2021 -0700
 `)
     ).toMatchInlineSnapshot(`
         Array [
-          "
-        commit f735de7025c6d626c5ae1a291fe24f143dea0313
-        Author: Shrey Banga <banga.shrey@gmail.com>
-        Date:   Sun Apr 11 15:25:34 2021 -0700
-
-            Add theme support
-
+          "                                                                                                                        
+        commit f735de7025c6d626c5ae1a291fe24f143dea0313                                                                         
+        Author: Shrey Banga <banga.shrey@gmail.com>                                                                             
+        Date:   Sun Apr 11 15:25:34 2021 -0700                                                                                  
+                                                                                                                                
+            Add theme support                                                                                                   
+                                                                                                                                
         ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
            todo.md                                                                                                              
         ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -130,25 +130,25 @@ Date:   Sun Apr 11 10:39:17 2021 -0700
 `)
     ).toMatchInlineSnapshot(`
         Array [
-          "
-        commit e5f896655402f8cf2d947c528d45e1d56bbf5717 (HEAD -> main)
-        Author: Shrey Banga <banga.shrey@gmail.com>
-        Date:   Sun Apr 11 16:23:54 2021 -0700
-
-            Small refactor to allow testing end-to-end
-
-        commit b637f38029f4a89c6a3b73b2b84a6a5b9e260730
-        Author: Shrey Banga <banga.shrey@gmail.com>
-        Date:   Sun Apr 11 11:53:02 2021 -0700
-
-            Organize code
-
-        commit f323143e03af95fee5d38c21238a92ffd4461847
-        Author: Shrey Banga <banga.shrey@gmail.com>
-        Date:   Sun Apr 11 10:39:17 2021 -0700
-
-            more todos
-
+          "                                                                                                                        
+        commit e5f896655402f8cf2d947c528d45e1d56bbf5717 (HEAD -> main)                                                          
+        Author: Shrey Banga <banga.shrey@gmail.com>                                                                             
+        Date:   Sun Apr 11 16:23:54 2021 -0700                                                                                  
+                                                                                                                                
+            Small refactor to allow testing end-to-end                                                                          
+                                                                                                                                
+        commit b637f38029f4a89c6a3b73b2b84a6a5b9e260730                                                                         
+        Author: Shrey Banga <banga.shrey@gmail.com>                                                                             
+        Date:   Sun Apr 11 11:53:02 2021 -0700                                                                                  
+                                                                                                                                
+            Organize code                                                                                                       
+                                                                                                                                
+        commit f323143e03af95fee5d38c21238a92ffd4461847                                                                         
+        Author: Shrey Banga <banga.shrey@gmail.com>                                                                             
+        Date:   Sun Apr 11 10:39:17 2021 -0700                                                                                  
+                                                                                                                                
+            more todos                                                                                                          
+                                                                                                                                
         ",
         ]
     `);
@@ -174,13 +174,13 @@ index 9f14e96..eaf3730 100644
 `)
     ).toMatchInlineSnapshot(`
         Array [
-          "
-        commit f735de7025c6d626c5ae1a291fe24f143dea0313
-        Author: Shrey Banga <banga.shrey@gmail.com>
-        Date:   Sun Apr 11 15:25:34 2021 -0700
-
-            Add theme support
-
+          "                                                                                                                        
+        commit f735de7025c6d626c5ae1a291fe24f143dea0313                                                                         
+        Author: Shrey Banga <banga.shrey@gmail.com>                                                                             
+        Date:   Sun Apr 11 15:25:34 2021 -0700                                                                                  
+                                                                                                                                
+            Add theme support                                                                                                   
+                                                                                                                                
         ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
            todo.md                                                                                                              
         ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -286,13 +286,13 @@ index 26b77f3..371b5f0 100644
     `)
     ).toMatchInlineSnapshot(`
         Array [
-          "
-        commit 26ca49fb83758bace20a473e231d576aa1bbe115
-        Author: Shrey Banga <shrey@quip.com>
-        Date:   Tue May 23 16:47:17 2017 -0700
-
-            sonos to brew
-
+          "                                                                                                                        
+        commit 26ca49fb83758bace20a473e231d576aa1bbe115                                                                         
+        Author: Shrey Banga <shrey@quip.com>                                                                                    
+        Date:   Tue May 23 16:47:17 2017 -0700                                                                                  
+                                                                                                                                
+            sonos to brew                                                                                                       
+                                                                                                                                
         ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
            Brewfile                                                                                                             
         ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -305,12 +305,12 @@ index 26b77f3..371b5f0 100644
            43 - cask 'sonos'                                                                                                    
            44   cask 'spotify'                                         44   cask 'spotify'                                      
            45                                                          45                                                       
-        commit 0efea05a16425b355210c2f1e0d11ed692350d49
-        Author: Shrey Banga <banga.shrey@gmail.com>
-        Date:   Tue May 16 21:21:36 2017 -0700
-
-            java
-
+        commit 0efea05a16425b355210c2f1e0d11ed692350d49                                                                         
+        Author: Shrey Banga <banga.shrey@gmail.com>                                                                             
+        Date:   Tue May 16 21:21:36 2017 -0700                                                                                  
+                                                                                                                                
+            java                                                                                                                
+                                                                                                                                
         ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
            Brewfile                                                                                                             
         ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -319,12 +319,12 @@ index 26b77f3..371b5f0 100644
                                                                        38 + cask 'java'                                         
            38   cask 'ngrok'                                           39   cask 'ngrok'                                        
            39                                                          40                                                       
-        commit 0de4eb9a05b52362d8ff02aba14e389cc76a6f91
-        Author: Shrey Banga <shrey@quip.com>
-        Date:   Tue May 16 00:45:40 2017 -0700
-
-            tldr
-
+        commit 0de4eb9a05b52362d8ff02aba14e389cc76a6f91                                                                         
+        Author: Shrey Banga <shrey@quip.com>                                                                                    
+        Date:   Tue May 16 00:45:40 2017 -0700                                                                                  
+                                                                                                                                
+            tldr                                                                                                                
+                                                                                                                                
         ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
            Brewfile                                                                                                             
         ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -358,13 +358,13 @@ index 0000000..6499edf
 \ No newline at end of file`)
     ).toMatchInlineSnapshot(`
         Array [
-          "
-        commit e4951eee3b9a8fa471d01dd64075c5fd44879a26
-        Author: Shrey Banga <banga.shrey@gmail.com>
-        Date:   Sat Apr 10 14:35:42 2021 -0700
-
-            wip
-
+          "                                                                                                                        
+        commit e4951eee3b9a8fa471d01dd64075c5fd44879a26                                                                         
+        Author: Shrey Banga <banga.shrey@gmail.com>                                                                             
+        Date:   Sat Apr 10 14:35:42 2021 -0700                                                                                  
+                                                                                                                                
+            wip                                                                                                                 
+                                                                                                                                
         ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
          + .gitignore                                                                                                           
         ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -422,13 +422,13 @@ index 149981d..fb507a4 100644
         `)
     ).toMatchInlineSnapshot(`
         Array [
-          "
-        commit e5f896655402f8cf2d947c528d45e1d56bbf5717
-        Author: Shrey Banga <banga.shrey@gmail.com>
-        Date:   Sun Apr 11 16:23:54 2021 -0700
-
-            Small refactor to allow testing end-to-end
-
+          "                                                                                                                        
+        commit e5f896655402f8cf2d947c528d45e1d56bbf5717                                                                         
+        Author: Shrey Banga <banga.shrey@gmail.com>                                                                             
+        Date:   Sun Apr 11 16:23:54 2021 -0700                                                                                  
+                                                                                                                                
+            Small refactor to allow testing end-to-end                                                                          
+                                                                                                                                
         ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
            src/index.ts                                                                                                         
         ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -477,13 +477,13 @@ rename to test-data/colors.diff
     `)
     ).toMatchInlineSnapshot(`
         Array [
-          "
-        commit 1c76ed4bb05429741fd4a48896bb84b11bc661f5
-        Author: Shrey Banga <banga.shrey@gmail.com>
-        Date:   Sat Apr 10 22:26:15 2021 -0700
-
-            Move sample diff files
-
+          "                                                                                                                        
+        commit 1c76ed4bb05429741fd4a48896bb84b11bc661f5                                                                         
+        Author: Shrey Banga <banga.shrey@gmail.com>                                                                             
+        Date:   Sat Apr 10 22:26:15 2021 -0700                                                                                  
+                                                                                                                                
+            Move sample diff files                                                                                              
+                                                                                                                                
         ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
         colors.diff -> test-data/colors.diff                                                                                    
         ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
