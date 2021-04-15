@@ -1,4 +1,6 @@
-# git-split-diffs
+# git-split-diffs (beta)
+
+> ⚠️ This package is currently in beta, please use it at your own risk.
 
 GitHub style split diffs in your terminal.
 
