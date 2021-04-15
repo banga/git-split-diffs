@@ -8,6 +8,8 @@ GitHub style split diffs in your terminal.
 
 ## Usage
 
+This currently requires `node` version 12 or newer to run.
+
 ### Install globally
 
 ```sh
