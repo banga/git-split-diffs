@@ -25,3 +25,5 @@
 -   [ ] See why `less` occasionally goes into search mode
 -   [ ] Simplify some of the parsing logic to fully use state matchines or something
 -   [ ] Simplify operations with formatted strings using something like SpannableStringBuilder
+-   [ ] Test on other OSes
+-   [ ] Support custom themes
