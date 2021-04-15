@@ -1,6 +1,6 @@
 {
     "name": "git-split-diffs",
-    "version": "0.1.10",
+    "version": "0.1.11",
     "description": "Split diffs, now in your terminal",
     "homepage": "https://github.com/banga/git-split-diffs",
     "repository": "github:banga/git-split-diffs",
@@ -34,8 +34,8 @@
         "prepublishOnly": "yarn test && yarn build:publish"
     },
     "devDependencies": {
-        "@types/node": "12.12.6",
         "@types/jest": "^26.0.22",
+        "@types/node": "12.12.6",
         "esbuild": "^0.11.9",
         "jest": "^26.6.3",
         "prettier": "^2.2.1",
