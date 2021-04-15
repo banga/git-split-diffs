@@ -18,8 +18,10 @@
 -   [x] Improv line wrap perf
 -   [x] Read settings from git config
 -   [x] Add README
--   [ ] Fix binary file diffs not showing file names
+-   [x] Fix binary file diffs not showing file names
 -   [ ] Highlight changes in lines
 -   [ ] Colorize "stat"s
 -   [ ] Test on very large diffs
 -   [ ] See why `less` occasionally goes into search mode
+-   [ ] Simplify some of the parsing logic to fully use state matchines or something
+-   [ ] Simplify operations with formatted strings using something like SpannableStringBuilder
