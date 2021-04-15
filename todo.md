@@ -17,8 +17,8 @@
 -   [x] Publish to npm
 -   [x] Improv line wrap perf
 -   [x] Read settings from git config
+-   [x] Add README
 -   [ ] Fix binary file diffs not showing file names
--   [ ] Add README
 -   [ ] Highlight changes in lines
 -   [ ] Colorize "stat"s
 -   [ ] Test on very large diffs
