@@ -21,7 +21,7 @@ git config --global core.pager git-split-diffs --color | less -RFX
 ```sh
 npm install git-split-diffs
 
-git config core.pager <path>/<to>/git-split-diffs --color | less -RFX
+git config core.pager npx git-split-diffs --color | less -RFX
 ```
 
 ### Use manually
