@@ -1,5 +1,11 @@
 # git-split-diffs
 
+GitHub style split diffs in your terminal.
+
+[![asciicast](screenshots/default.png)](https://asciinema.org/a/6MZ4GWjfIyODdts9tjnN0YPy8)
+
+[![asciicast](screenshots/github-light.png)](https://asciinema.org/a/qqkVNGVX7WyL5PQ3rfXTTISMv)
+
 ## Usage
 
 ### Install globally
@@ -43,11 +49,16 @@ You can pick between several [themes](src/themeDefinitions.ts):
 git config split-diffs.theme default
 ```
 
+![Screenshot of default theme](screenshots/default.png)]
+
+
 #### Light
 
 ```
 git config split-diffs.theme light
 ```
+
+![Screenshot of light theme](screenshots/light.png)]
 
 #### GitHub Light
 
@@ -55,8 +66,12 @@ git config split-diffs.theme light
 git config split-diffs.theme github-light
 ```
 
+![Screenshot of GitHub Light theme](screenshots/github-light.png)]
+
 #### GitHub Dark (Dim)
 
 ```
 git config split-diffs.theme github-dark-dim
 ```
+
+![Screenshot of GitHub Dark (Dim) theme](screenshots/github-dark-dim.png)]
