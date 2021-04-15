@@ -49,7 +49,7 @@ You can pick between several [themes](src/themeDefinitions.ts):
 git config split-diffs.theme default
 ```
 
-![Screenshot of default theme](screenshots/default.png)]
+![Screenshot of default theme](screenshots/default.png)
 
 
 #### Light
@@ -58,7 +58,7 @@ git config split-diffs.theme default
 git config split-diffs.theme light
 ```
 
-![Screenshot of light theme](screenshots/light.png)]
+![Screenshot of light theme](screenshots/light.png)
 
 #### GitHub Light
 
@@ -66,7 +66,7 @@ git config split-diffs.theme light
 git config split-diffs.theme github-light
 ```
 
-![Screenshot of GitHub Light theme](screenshots/github-light.png)]
+![Screenshot of GitHub Light theme](screenshots/github-light.png)
 
 #### GitHub Dark (Dim)
 
@@ -74,4 +74,4 @@ git config split-diffs.theme github-light
 git config split-diffs.theme github-dark-dim
 ```
 
-![Screenshot of GitHub Dark (Dim) theme](screenshots/github-dark-dim.png)]
+![Screenshot of GitHub Dark (Dim) theme](screenshots/github-dark-dim.png)
