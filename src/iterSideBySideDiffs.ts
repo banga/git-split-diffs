@@ -280,6 +280,14 @@ export function iterSideBySideDiff(
         return formattedLines;
     }
 
+    /**
+     * Binary file diffs are hard to parse, because they are printed like:
+     * "Binary files (a/<filename>|/dev/null) and (b/<filename>|/dev/null) differ"
+     * but spaces in file names are not escaped, so the " and " could appear in
+     * a path. So we use a regex to hopefully find the right match.
+     */
+    const BINARY_FILES_DIFF_REGEX = /^Binary files (?:a\/(.*)|\/dev\/null) and (?:b\/(.*)|\/dev\/null) differ$/;
+
     return async function* (lines: AsyncIterable<string>) {
         let state: 'commit' | 'diff' | 'hunk' = 'commit';
 
@@ -318,7 +326,7 @@ export function iterSideBySideDiff(
                 }
 
                 state = 'commit';
-            } else if (line.startsWith('diff ')) {
+            } else if (line.startsWith('diff --git')) {
                 if (state === 'diff') {
                     yield* yieldFileName();
                 } else if (state === 'hunk') {
@@ -377,6 +385,11 @@ export function iterSideBySideDiff(
                             fileNameA = line.slice('rename from '.length);
                         } else if (line.startsWith('rename to ')) {
                             fileNameB = line.slice('rename to '.length);
+                        } else if (line.startsWith('Binary files')) {
+                            const match = line.match(BINARY_FILES_DIFF_REGEX);
+                            if (match) {
+                                [, fileNameA, fileNameB] = match;
+                            }
                         }
                     }
                     break;

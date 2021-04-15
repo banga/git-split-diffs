@@ -379,30 +379,36 @@ index 0000000..6499edf
     `);
 });
 
-test.skip('commit with a new binary file', async function () {
+test('commit with a new binary file', async function () {
     expect(
         await generateOutputs(`
-commit fee3ebd68fda0ef7cb106651039f092768034610 (HEAD -> main, origin/main, origin/HEAD)
+commit c0ca4394fd55f1709430414f03db3d04cb9cc72c (HEAD -> main)
 Author: Shrey Banga <banga.shrey@gmail.com>
-Date:   Wed Apr 14 16:40:40 2021 -0700
+Date:   Wed Apr 14 18:24:29 2021 -0700
 
-    Add screenshots
+    test binary file addition
 
 diff --git a/screenshots/default.png b/screenshots/default.png
 new file mode 100644
 index 0000000..40e16dc
-Binary files /dev/null and b/screenshots/default.png differ`)
+Binary files /dev/null and b/screenshots/default.png differ
+diff --git a/test dir a/default.png b/test dir a/default.png
+index 44f1c8a..915e850 100644
+Binary files a/test dir a/default.png and b/test dir a/default.png differ`)
     ).toMatchInlineSnapshot(`
         Array [
           "                                                                                                                        
-        commit fee3ebd68fda0ef7cb106651039f092768034610 (HEAD -> main, origin/main, origin/HEAD)                                
+        commit c0ca4394fd55f1709430414f03db3d04cb9cc72c (HEAD -> main)                                                          
         Author: Shrey Banga <banga.shrey@gmail.com>                                                                             
-        Date:   Wed Apr 14 16:40:40 2021 -0700                                                                                  
+        Date:   Wed Apr 14 18:24:29 2021 -0700                                                                                  
                                                                                                                                 
-            Add screenshots                                                                                                     
+            test binary file addition                                                                                           
                                                                                                                                 
         ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
          ■■ screenshots/default.png                                                                                             
+        ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+        ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+         ■■ test dir a/default.png                                                                                              
         ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
         ",
         ]
