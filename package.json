@@ -21,7 +21,6 @@
         "diffs"
     ],
     "dependencies": {
-        "@types/node": "12.12.6",
         "ansi-regex": "^5.0.0",
         "chalk": "^4.1.0",
         "term-size": "^2.2.1"
@@ -35,6 +34,7 @@
         "prepublishOnly": "yarn test && yarn build:publish"
     },
     "devDependencies": {
+        "@types/node": "12.12.6",
         "@types/jest": "^26.0.22",
         "esbuild": "^0.11.9",
         "jest": "^26.6.3",
