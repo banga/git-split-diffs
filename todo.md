@@ -19,6 +19,7 @@
 -   [x] Read settings from git config
 -   [x] Add README
 -   [x] Fix binary file diffs not showing file names
+-   [x] Test on windows
 -   [ ] Highlight changes in lines
 -   [ ] Syntax highlighting
 -   [ ] Colorize "stat"s
@@ -26,5 +27,5 @@
 -   [ ] See why `less` occasionally goes into search mode
 -   [ ] Simplify some of the parsing logic to fully use state matchines or something
 -   [ ] Simplify operations with formatted strings using something like SpannableStringBuilder
--   [ ] Test on other OSes
+-   [ ] Test on linux
 -   [ ] Support custom themes
