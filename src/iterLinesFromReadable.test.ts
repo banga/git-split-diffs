@@ -59,9 +59,7 @@ test('fuzz', async () => {
         }
         chunks.push(chunk);
     }
-    if (currentLine) {
-        lines.push(currentLine);
-    }
+    lines.push(currentLine);
 
     expect(await toLines(chunks)).toEqual(lines);
 });
