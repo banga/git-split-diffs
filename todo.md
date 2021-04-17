@@ -20,6 +20,7 @@
 -   [x] Add README
 -   [x] Fix binary file diffs not showing file names
 -   [ ] Highlight changes in lines
+-   [ ] Syntax highlighting
 -   [ ] Colorize "stat"s
 -   [ ] Test on very large diffs
 -   [ ] See why `less` occasionally goes into search mode
