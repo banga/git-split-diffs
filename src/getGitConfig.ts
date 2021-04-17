@@ -1,7 +1,9 @@
+import { Chalk } from 'chalk';
 import { exec } from 'child_process';
 import * as util from 'util';
 import { Config } from './config';
 import { THEME_DEFINITIONS } from './themeDefinitions';
+import { parseTheme } from './themes';
 const execAsync = util.promisify(exec);
 
 const GIT_CONFIG_KEY_PREFIX = 'split-diffs';
@@ -25,20 +27,25 @@ async function getRawGitConfig() {
 }
 
 // TODO: Make this less manual
-export async function getGitConfig() {
+export async function getGitConfig(
+    screenWidth: number,
+    chalk: Chalk
+): Promise<Config> {
     const rawConfig = await getRawGitConfig();
-    const config: Partial<Config> = {};
 
-    if (rawConfig['wrap-lines'] === 'true') {
-        config.WRAP_LINES = true;
-    } else if (rawConfig['wrap-lines'] === 'false') {
-        config.WRAP_LINES = false;
-    }
+    // Defaults to true
+    const wrapLines = rawConfig['wrap-lines'] === 'false' ? false : true;
 
-    const themeNames = Object.keys(THEME_DEFINITIONS);
-    if (themeNames.includes(rawConfig['theme-name'])) {
-        config.THEME_NAME = rawConfig['theme-name'];
-    }
+    const themeName =
+        rawConfig['theme-name'] in THEME_DEFINITIONS
+            ? rawConfig['theme-name']
+            : 'default';
 
-    return config;
+    return {
+        SCREEN_WIDTH: screenWidth,
+        LINE_NUMBER_WIDTH: 5,
+        MIN_LINE_WIDTH: 8,
+        WRAP_LINES: wrapLines,
+        ...parseTheme(THEME_DEFINITIONS[themeName], chalk),
+    };
 }

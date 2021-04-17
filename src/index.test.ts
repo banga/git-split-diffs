@@ -1,9 +1,9 @@
 import chalk from 'chalk';
 import { Readable } from 'stream';
-import { Config, CONFIG_DEFAULTS } from './config';
+import { Config } from './config';
 import { iterlinesFromReadableAsync } from './iterLinesFromReadable';
 import { iterLinesWithoutAnsiColors } from './iterLinesWithoutAnsiColors';
-import { iterSideBySideDiff } from './iterSideBySideDiffs';
+import { getSideBySideDiffIterator } from './iterSideBySideDiffs';
 import { iterWithNewlines } from './iterWithNewlines';
 import { parseTheme } from './themes';
 import { transformStreamWithIterables } from './transformStreamWithIterables';
@@ -13,15 +13,15 @@ async function transform(
     configOverride?: Partial<Config>
 ): Promise<string> {
     const testConfig: Config = {
-        ...CONFIG_DEFAULTS,
         SCREEN_WIDTH: 120,
         WRAP_LINES: true,
+        LINE_NUMBER_WIDTH: 5,
+        MIN_LINE_WIDTH: 8,
+        ...parseTheme({}, new chalk.Instance({ level: 0 })),
         ...configOverride,
     };
-    const testTheme = parseTheme({}, new chalk.Instance({ level: 0 }));
-    const iterSideBySideDiffWithoutColors = iterSideBySideDiff(
-        testConfig,
-        testTheme
+    const iterSideBySideDiffWithoutColors = getSideBySideDiffIterator(
+        testConfig
     );
 
     let string = '';

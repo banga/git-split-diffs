@@ -1,27 +1,19 @@
 import * as assert from 'assert';
-import { Theme, ThemeColor } from './themes';
 import { Config } from './config';
-import { wrapLineByWord } from './wrapLineByWord';
+import { Context } from './context';
+import { iterFormatHunkSideBySide } from './iterFormatHunkSideBySide';
+import { iterFormatCommitLine } from './iterFormatCommitLine';
+import { iterFormatFileName } from './iterFormatFileName';
 
-export function iterSideBySideDiff(
-    { SCREEN_WIDTH, LINE_NUMBER_WIDTH, MIN_LINE_WIDTH, WRAP_LINES }: Config,
-    {
-        COMMIT_COLOR,
-        COMMIT_SHA_COLOR,
-        COMMIT_AUTHOR_COLOR,
-        COMMIT_DATE_COLOR,
-        BORDER_COLOR,
-        FILE_NAME_COLOR,
-        HUNK_HEADER_COLOR,
-        DELETED_LINE_COLOR,
-        DELETED_LINE_NO_COLOR,
-        INSERTED_LINE_COLOR,
-        INSERTED_LINE_NO_COLOR,
-        UNMODIFIED_LINE_COLOR,
-        UNMODIFIED_LINE_NO_COLOR,
-        MISSING_LINE_COLOR,
-    }: Theme
-) {
+/**
+ * Binary file diffs are hard to parse, because they are printed like:
+ * "Binary files (a/<filename>|/dev/null) and (b/<filename>|/dev/null) differ"
+ * but spaces in file names are not escaped, so the " and " could appear in
+ * a path. So we use a regex to hopefully find the right match.
+ */
+const BINARY_FILES_DIFF_REGEX = /^Binary files (?:a\/(.*)|\/dev\/null) and (?:b\/(.*)|\/dev\/null) differ$/;
+
+export function getSideBySideDiffIterator(config: Config) {
     /*
         Each line in a hunk is rendered as follows: <lineNo> <linePrefix[1]>
         <lineWithoutPrefix><lineNo> <linePrefix> <lineWithoutPrefix>
@@ -29,189 +21,34 @@ export function iterSideBySideDiff(
         So (LINE_NUMBER_WIDTH + 1 + 1 + 1 + LINE_TEXT_WIDTH) * 2
         = SCREEN_WIDTH
     */
-    const LINE_WIDTH = Math.max(Math.floor(SCREEN_WIDTH / 2), MIN_LINE_WIDTH);
+    const LINE_WIDTH = Math.max(
+        Math.floor(config.SCREEN_WIDTH / 2),
+        config.MIN_LINE_WIDTH
+    );
     const LINE_TEXT_WIDTH = Math.max(
-        LINE_WIDTH - 1 - 1 - 1 - LINE_NUMBER_WIDTH
+        LINE_WIDTH - 1 - 1 - 1 - config.LINE_NUMBER_WIDTH
     );
     const BLANK_LINE = ''.padStart(LINE_WIDTH);
-    const HORIZONTAL_SEPARATOR = BORDER_COLOR(''.padStart(SCREEN_WIDTH, '─'));
+    const HORIZONTAL_SEPARATOR = config.BORDER_COLOR(
+        ''.padStart(config.SCREEN_WIDTH, '─')
+    );
 
-    /**
-     * Wraps or truncates the given line to into the allowed width, depending on
-     * the config.
-     */
-    function* iterFitTextToWidth(
-        text: string,
-        width: number
-    ): Iterable<string> {
-        if (WRAP_LINES) {
-            yield* wrapLineByWord(text, width);
-        } else {
-            yield text.slice(0, width);
-        }
-    }
+    const context: Context = {
+        ...config,
+        LINE_WIDTH,
+        LINE_TEXT_WIDTH,
+        BLANK_LINE,
+        HORIZONTAL_SEPARATOR,
+    };
 
-    function* iterFormatCommitLine(line: string): Iterable<string> {
-        const [label] = line.split(' ', 1);
-
-        let labelColor;
-        switch (label) {
-            case 'commit':
-                labelColor = COMMIT_SHA_COLOR;
-                break;
-            case 'Author:':
-                labelColor = COMMIT_AUTHOR_COLOR;
-                break;
-            case 'Date:':
-                labelColor = COMMIT_DATE_COLOR;
-                break;
-            default:
-                yield COMMIT_COLOR(line.padEnd(SCREEN_WIDTH));
-                return;
-        }
-
-        yield COMMIT_COLOR(
-            `${label} ${labelColor(line.slice(label.length + 1))}` +
-                ''.padEnd(SCREEN_WIDTH - line.length)
-        );
-    }
-
-    function* iterFormatFileName(
-        fileNameA: string,
-        fileNameB: string
-    ): Iterable<string> {
-        yield HORIZONTAL_SEPARATOR;
-
-        let indicator;
-        let label;
-        if (!fileNameA) {
-            indicator = INSERTED_LINE_COLOR('■■');
-            label = fileNameB;
-        } else if (!fileNameB) {
-            indicator = DELETED_LINE_COLOR('■■');
-            label = fileNameA;
-        } else if (fileNameA === fileNameB) {
-            indicator = DELETED_LINE_COLOR('■') + INSERTED_LINE_COLOR('■');
-            label = fileNameA;
-        } else {
-            indicator = DELETED_LINE_COLOR('■') + INSERTED_LINE_COLOR('■');
-            label = FILE_NAME_COLOR(`${fileNameA} -> ${fileNameB}`);
-        }
-        yield FILE_NAME_COLOR(' ') +
-            indicator +
-            FILE_NAME_COLOR(' ' + label.padEnd(SCREEN_WIDTH - 2 - 2));
-
-        yield HORIZONTAL_SEPARATOR;
-    }
-
-    function formatAndFitHunkLineHalf(
-        lineNo: number,
-        line: string | null
-    ): string[] {
-        if (line === null) {
-            return [MISSING_LINE_COLOR(''.padStart(LINE_WIDTH))];
-        }
-
-        const linePrefix = line.slice(0, 1);
-        const lineText = line.slice(1);
-
-        let lineColor: ThemeColor;
-        let lineNoColor: ThemeColor;
-        switch (line[0]) {
-            case '-':
-                lineColor = DELETED_LINE_COLOR;
-                lineNoColor = DELETED_LINE_NO_COLOR;
-                break;
-            case '+':
-                lineColor = INSERTED_LINE_COLOR;
-                lineNoColor = INSERTED_LINE_NO_COLOR;
-                break;
-            default:
-                lineColor = UNMODIFIED_LINE_COLOR;
-                lineNoColor = UNMODIFIED_LINE_NO_COLOR;
-                break;
-        }
-
-        let isFirstLine = true;
-        const formattedHunkLineHalves = [];
-        for (const text of iterFitTextToWidth(lineText, LINE_TEXT_WIDTH)) {
-            formattedHunkLineHalves.push(
-                lineNoColor(lineNo.toString().padStart(LINE_NUMBER_WIDTH)) +
-                    lineColor(
-                        ' ' +
-                            (isFirstLine ? linePrefix : '').padStart(1) +
-                            ' ' +
-                            text.padEnd(LINE_TEXT_WIDTH)
-                    )
-            );
-            isFirstLine = false;
-        }
-        return formattedHunkLineHalves;
-    }
-
-    function* iterFormatAndFitHunkLine(
-        lineNoA: number,
-        lineTextA: string | null,
-        lineNoB: number,
-        lineTextB: string | null
-    ) {
-        const formattedLinesA = formatAndFitHunkLineHalf(lineNoA, lineTextA);
-        const formattedLinesB = formatAndFitHunkLineHalf(lineNoB, lineTextB);
-        let i = 0;
-        while (i < formattedLinesA.length && i < formattedLinesB.length) {
-            yield formattedLinesA[i] + formattedLinesB[i];
-            i++;
-        }
-        while (i < formattedLinesA.length) {
-            yield formattedLinesA[i] + INSERTED_LINE_COLOR(BLANK_LINE);
-            i++;
-        }
-        while (i < formattedLinesB.length) {
-            yield DELETED_LINE_COLOR(BLANK_LINE) + formattedLinesB[i];
-            i++;
-        }
-    }
-
-    function* iterFormatHunkSideBySide(
-        hunkHeaderLine: string,
-        hunkLinesA: (string | null)[],
-        hunkLinesB: (string | null)[],
-        lineNoA: number,
-        lineNoB: number
-    ) {
-        for (const line of iterFitTextToWidth(hunkHeaderLine, SCREEN_WIDTH)) {
-            yield HUNK_HEADER_COLOR(line.padEnd(SCREEN_WIDTH));
-        }
-
-        for (let i = 0; i < hunkLinesA.length || i < hunkLinesB.length; i++) {
-            const lineA = i < hunkLinesA.length ? hunkLinesA[i] : null;
-            const lineB = i < hunkLinesB.length ? hunkLinesB[i] : null;
-            yield* iterFormatAndFitHunkLine(lineNoA, lineA, lineNoB, lineB);
-            if (lineA !== null) {
-                lineNoA++;
-            }
-            if (lineB !== null) {
-                lineNoB++;
-            }
-        }
-    }
-
-    /**
-     * Binary file diffs are hard to parse, because they are printed like:
-     * "Binary files (a/<filename>|/dev/null) and (b/<filename>|/dev/null) differ"
-     * but spaces in file names are not escaped, so the " and " could appear in
-     * a path. So we use a regex to hopefully find the right match.
-     */
-    const BINARY_FILES_DIFF_REGEX = /^Binary files (?:a\/(.*)|\/dev\/null) and (?:b\/(.*)|\/dev\/null) differ$/;
-
-    return async function* (lines: AsyncIterable<string>) {
+    return async function* iterSideBySideDiffs(lines: AsyncIterable<string>) {
         let state: 'commit' | 'diff' | 'hunk' = 'commit';
 
         // File metadata
         let fileNameA: string = '';
         let fileNameB: string = '';
         function* yieldFileName() {
-            yield* iterFormatFileName(fileNameA, fileNameB);
+            yield* iterFormatFileName(context, fileNameA, fileNameB);
         }
 
         // Hunk metadata
@@ -222,6 +59,7 @@ export function iterSideBySideDiff(
         let hunkLinesB: (string | null)[] = [];
         function* yieldHunk() {
             yield* iterFormatHunkSideBySide(
+                context,
                 hunkHeaderLine,
                 // Ignore text for missing files
                 fileNameA ? hunkLinesA : [],
@@ -290,7 +128,7 @@ export function iterSideBySideDiff(
             // Handle state
             switch (state) {
                 case 'commit': {
-                    yield* iterFormatCommitLine(line);
+                    yield* iterFormatCommitLine(context, line);
                     break;
                 }
                 case 'diff':
