@@ -20,7 +20,7 @@
 -   [x] Add README
 -   [x] Fix binary file diffs not showing file names
 -   [x] Test on windows
--   [ ] Highlight changes in lines
+-   [x] Highlight changes in lines
 -   [ ] Show unified diff on narrow widths
 -   [ ] Syntax highlighting
 -   [ ] Colorize "stat"s
