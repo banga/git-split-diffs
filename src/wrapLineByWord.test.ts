@@ -45,6 +45,12 @@ test('break long words', () => {
     ]);
 });
 
+test('should not add or remove characters', () => {
+    for (const s of ['\none\n\ntwo three four\n']) {
+        expect(wrapLineByWord(s, 3).join('')).toEqual(s);
+    }
+});
+
 test('snapshot tests', () => {
     function wrapAndJoin(text: string, width: number): string {
         return wrapLineByWord(text, width).join('\n');

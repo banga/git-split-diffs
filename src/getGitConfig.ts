@@ -35,6 +35,8 @@ export async function getGitConfig(
 
     // Defaults to true
     const wrapLines = rawConfig['wrap-lines'] === 'false' ? false : true;
+    const highlightLineChanges =
+        rawConfig['highlight-line-changes'] === 'false' ? false : true;
 
     const themeName =
         rawConfig['theme-name'] in THEME_DEFINITIONS
@@ -46,6 +48,7 @@ export async function getGitConfig(
         LINE_NUMBER_WIDTH: 5,
         MIN_LINE_WIDTH: 8,
         WRAP_LINES: wrapLines,
+        HIGHLIGHT_LINE_CHANGES: highlightLineChanges,
         ...parseTheme(THEME_DEFINITIONS[themeName], chalk),
     };
 }
