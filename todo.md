@@ -24,6 +24,7 @@
 -   [ ] Show unified diff on narrow widths
 -   [ ] Syntax highlighting
 -   [ ] Colorize "stat"s
+-   [ ] Handle 3-way merge diffs (e.g. during merge conflicts)
 -   [ ] Test on very large diffs
 -   [ ] See why `less` occasionally goes into search mode
 -   [ ] Simplify some of the parsing logic to fully use state matchines or something
