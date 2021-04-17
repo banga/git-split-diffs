@@ -4,13 +4,7 @@ import { Config } from './config';
 import { wrapLineByWord } from './wrapLineByWord';
 
 export function iterSideBySideDiff(
-    {
-        SCREEN_WIDTH,
-        LINE_NUMBER_WIDTH,
-        LINE_PREFIX_WIDTH,
-        MIN_LINE_WIDTH,
-        WRAP_LINES,
-    }: Config,
+    { SCREEN_WIDTH, LINE_NUMBER_WIDTH, MIN_LINE_WIDTH, WRAP_LINES }: Config,
     {
         COMMIT_COLOR,
         COMMIT_SHA_COLOR,
@@ -32,12 +26,12 @@ export function iterSideBySideDiff(
         Each line in a hunk is rendered as follows: <lineNo> <linePrefix[1]>
         <lineWithoutPrefix><lineNo> <linePrefix> <lineWithoutPrefix>
 
-        So (LINE_NUMBER_WIDTH + 1 + LINE_PREFIX_WIDTH + 1 + LINE_TEXT_WIDTH) * 2
+        So (LINE_NUMBER_WIDTH + 1 + 1 + 1 + LINE_TEXT_WIDTH) * 2
         = SCREEN_WIDTH
     */
     const LINE_WIDTH = Math.max(Math.floor(SCREEN_WIDTH / 2), MIN_LINE_WIDTH);
     const LINE_TEXT_WIDTH = Math.max(
-        LINE_WIDTH - 1 - LINE_PREFIX_WIDTH - 1 - LINE_NUMBER_WIDTH
+        LINE_WIDTH - 1 - 1 - 1 - LINE_NUMBER_WIDTH
     );
     const BLANK_LINE = ''.padStart(LINE_WIDTH);
     const HORIZONTAL_SEPARATOR = BORDER_COLOR(''.padStart(SCREEN_WIDTH, '─'));
@@ -46,13 +40,18 @@ export function iterSideBySideDiff(
      * Wraps or truncates the given line to into the allowed width, depending on
      * the config.
      */
-    function* fitTextToWidth(text: string, width: number): Iterable<string> {
-        return WRAP_LINES
-            ? yield* wrapLineByWord(text, width)
-            : yield text.slice(0, width);
+    function* iterFitTextToWidth(
+        text: string,
+        width: number
+    ): Iterable<string> {
+        if (WRAP_LINES) {
+            yield* wrapLineByWord(text, width);
+        } else {
+            yield text.slice(0, width);
+        }
     }
 
-    function formatCommitLine(line: string) {
+    function* iterFormatCommitLine(line: string): Iterable<string> {
         const [label] = line.split(' ', 1);
 
         let labelColor;
@@ -67,16 +66,20 @@ export function iterSideBySideDiff(
                 labelColor = COMMIT_DATE_COLOR;
                 break;
             default:
-                return COMMIT_COLOR(line.padEnd(SCREEN_WIDTH));
+                yield COMMIT_COLOR(line.padEnd(SCREEN_WIDTH));
+                return;
         }
 
-        return COMMIT_COLOR(
+        yield COMMIT_COLOR(
             `${label} ${labelColor(line.slice(label.length + 1))}` +
                 ''.padEnd(SCREEN_WIDTH - line.length)
         );
     }
 
-    function* formatFileName(fileNameA: string, fileNameB: string) {
+    function* iterFormatFileName(
+        fileNameA: string,
+        fileNameB: string
+    ): Iterable<string> {
         yield HORIZONTAL_SEPARATOR;
 
         let indicator;
@@ -101,183 +104,96 @@ export function iterSideBySideDiff(
         yield HORIZONTAL_SEPARATOR;
     }
 
-    type HunkLineHalf = {
-        number: string;
-        prefix: string;
-        text: string;
-    } | null /* if line is missing */;
-
-    function lineColorForLineHalf(lineHalf: HunkLineHalf) {
-        if (!lineHalf) {
-            return MISSING_LINE_COLOR;
-        }
-        switch (lineHalf?.prefix) {
-            case '-':
-                return DELETED_LINE_COLOR;
-            case '+':
-                return INSERTED_LINE_COLOR;
-            default:
-                return UNMODIFIED_LINE_COLOR;
-        }
-    }
-
-    function lineNoColorForLineHalf(lineHalf: HunkLineHalf) {
-        if (!lineHalf) {
-            return MISSING_LINE_COLOR;
-        }
-        switch (lineHalf?.prefix) {
-            case '-':
-                return DELETED_LINE_NO_COLOR;
-            case '+':
-                return INSERTED_LINE_NO_COLOR;
-            default:
-                return UNMODIFIED_LINE_NO_COLOR;
-        }
-    }
-
-    function formatHunkLineHalf(
-        lineNo: string,
-        linePrefix: string,
-        lineText: string,
-        lineColor: ThemeColor,
-        lineNoColor: ThemeColor
-    ) {
-        return [
-            lineNoColor(lineNo.padStart(LINE_NUMBER_WIDTH)),
-            lineColor(' ' + linePrefix.padStart(LINE_PREFIX_WIDTH)),
-            lineColor(' ' + lineText.padEnd(LINE_TEXT_WIDTH)),
-        ].join('');
-    }
-
     function formatAndFitHunkLineHalf(
-        lineHalf: HunkLineHalf,
-        lineColor: ThemeColor,
-        lineNoColor: ThemeColor
-    ) {
-        const lineNo = lineHalf?.number ?? '';
-        const linePrefix = lineHalf?.prefix ?? '';
-        const lineText = lineHalf?.text ?? '';
+        lineNo: number,
+        line: string | null
+    ): string[] {
+        if (line === null) {
+            return [MISSING_LINE_COLOR(''.padStart(LINE_WIDTH))];
+        }
+
+        const linePrefix = line.slice(0, 1);
+        const lineText = line.slice(1);
+
+        let lineColor: ThemeColor;
+        let lineNoColor: ThemeColor;
+        switch (line[0]) {
+            case '-':
+                lineColor = DELETED_LINE_COLOR;
+                lineNoColor = DELETED_LINE_NO_COLOR;
+                break;
+            case '+':
+                lineColor = INSERTED_LINE_COLOR;
+                lineNoColor = INSERTED_LINE_NO_COLOR;
+                break;
+            default:
+                lineColor = UNMODIFIED_LINE_COLOR;
+                lineNoColor = UNMODIFIED_LINE_NO_COLOR;
+                break;
+        }
 
         let isFirstLine = true;
         const formattedHunkLineHalves = [];
-        for (const text of fitTextToWidth(lineText, LINE_TEXT_WIDTH)) {
+        for (const text of iterFitTextToWidth(lineText, LINE_TEXT_WIDTH)) {
             formattedHunkLineHalves.push(
-                formatHunkLineHalf(
-                    isFirstLine ? lineNo : '',
-                    isFirstLine ? linePrefix : '',
-                    text,
-                    lineColor,
-                    lineNoColor
-                )
+                lineNoColor(lineNo.toString().padStart(LINE_NUMBER_WIDTH)) +
+                    lineColor(
+                        ' ' +
+                            (isFirstLine ? linePrefix : '').padStart(1) +
+                            ' ' +
+                            text.padEnd(LINE_TEXT_WIDTH)
+                    )
             );
             isFirstLine = false;
         }
         return formattedHunkLineHalves;
     }
 
-    function formatHunkLine(lineHalfA: HunkLineHalf, lineHalfB: HunkLineHalf) {
-        const lineColorA = lineColorForLineHalf(lineHalfA);
-        const lineNoColorA = lineNoColorForLineHalf(lineHalfA);
-        const formattedLinesA = formatAndFitHunkLineHalf(
-            lineHalfA,
-            lineColorA,
-            lineNoColorA
-        );
-        const lineColorB = lineColorForLineHalf(lineHalfB);
-        const lineNoColorB = lineNoColorForLineHalf(lineHalfB);
-        const formattedLinesB = formatAndFitHunkLineHalf(
-            lineHalfB,
-            lineColorB,
-            lineNoColorB
-        );
-        const formattedHunkLines = [];
-        for (
-            let indexA = 0, indexB = 0;
-            indexA < formattedLinesA.length || indexB < formattedLinesB.length;
-            indexA++, indexB++
-        ) {
-            const formattedLineA =
-                indexA < formattedLinesA.length
-                    ? formattedLinesA[indexA]
-                    : lineColorA(BLANK_LINE);
-            const formattedLineB =
-                indexB < formattedLinesB.length
-                    ? formattedLinesB[indexB]
-                    : lineColorB(BLANK_LINE);
-            formattedHunkLines.push(formattedLineA + formattedLineB);
+    function* iterFormatAndFitHunkLine(
+        lineNoA: number,
+        lineTextA: string | null,
+        lineNoB: number,
+        lineTextB: string | null
+    ) {
+        const formattedLinesA = formatAndFitHunkLineHalf(lineNoA, lineTextA);
+        const formattedLinesB = formatAndFitHunkLineHalf(lineNoB, lineTextB);
+        let i = 0;
+        while (i < formattedLinesA.length && i < formattedLinesB.length) {
+            yield formattedLinesA[i] + formattedLinesB[i];
+            i++;
         }
-
-        return formattedHunkLines;
+        while (i < formattedLinesA.length) {
+            yield formattedLinesA[i] + INSERTED_LINE_COLOR(BLANK_LINE);
+            i++;
+        }
+        while (i < formattedLinesB.length) {
+            yield DELETED_LINE_COLOR(BLANK_LINE) + formattedLinesB[i];
+            i++;
+        }
     }
 
-    function formatHunkSideBySide(
+    function* iterFormatHunkSideBySide(
         hunkHeaderLine: string,
-        hunkLines: string[],
+        hunkLinesA: (string | null)[],
+        hunkLinesB: (string | null)[],
         lineNoA: number,
-        lineNoB: number,
-        fileNameA: string,
-        fileNameB: string
+        lineNoB: number
     ) {
-        const formattedLines: string[] = [];
-
-        for (const line of fitTextToWidth(hunkHeaderLine, SCREEN_WIDTH)) {
-            formattedLines.push(HUNK_HEADER_COLOR(line.padEnd(SCREEN_WIDTH)));
+        for (const line of iterFitTextToWidth(hunkHeaderLine, SCREEN_WIDTH)) {
+            yield HUNK_HEADER_COLOR(line.padEnd(SCREEN_WIDTH));
         }
 
-        let linesA: string[] = [];
-        let linesB: string[] = [];
-
-        // Each contiguous sequence of removals and additions represents a change
-        // operation starting at the same line on both sides (since it has to occur
-        // in the originl file). So we can render a side-by-side diff by rendering
-        // the deletions and inserts in parallel, leaving out room if there are more
-        // lines on one side than the other.
-        function flushHunkChange() {
-            let indexA = 0;
-            let indexB = 0;
-
-            while (indexA < linesA.length || indexB < linesB.length) {
-                let lineA: HunkLineHalf = null;
-                let lineB: HunkLineHalf = null;
-                if (indexA < linesA.length) {
-                    lineA = {
-                        number: lineNoA.toString(),
-                        prefix: linesA[indexA].slice(0, 1),
-                        // truncate lines
-                        text: linesA[indexA].slice(1),
-                    };
-                    lineNoA++;
-                    indexA++;
-                }
-                if (indexB < linesB.length) {
-                    lineB = {
-                        number: lineNoB.toString(),
-                        prefix: linesB[indexB].slice(0, 1),
-                        // truncate lines
-                        text: linesB[indexB].slice(1),
-                    };
-                    lineNoB++;
-                    indexB++;
-                }
-                formattedLines.push(...formatHunkLine(lineA, lineB));
+        for (let i = 0; i < hunkLinesA.length || i < hunkLinesB.length; i++) {
+            const lineA = i < hunkLinesA.length ? hunkLinesA[i] : null;
+            const lineB = i < hunkLinesB.length ? hunkLinesB[i] : null;
+            yield* iterFormatAndFitHunkLine(lineNoA, lineA, lineNoB, lineB);
+            if (lineA !== null) {
+                lineNoA++;
+            }
+            if (lineB !== null) {
+                lineNoB++;
             }
         }
-
-        for (const line of hunkLines) {
-            if (line.startsWith('-')) {
-                linesA.push(line);
-            } else if (line.startsWith('+')) {
-                linesB.push(line);
-            } else {
-                flushHunkChange();
-                linesA = fileNameA ? [line] : [];
-                linesB = fileNameB ? [line] : [];
-            }
-        }
-
-        flushHunkChange();
-
-        return formattedLines;
     }
 
     /**
@@ -295,24 +211,26 @@ export function iterSideBySideDiff(
         let fileNameA: string = '';
         let fileNameB: string = '';
         function* yieldFileName() {
-            yield* formatFileName(fileNameA, fileNameB);
+            yield* iterFormatFileName(fileNameA, fileNameB);
         }
 
         // Hunk metadata
         let startA: number = -1;
         let startB: number = -1;
         let hunkHeaderLine: string = '';
-        let hunkLines: string[] = [];
+        let hunkLinesA: (string | null)[] = [];
+        let hunkLinesB: (string | null)[] = [];
         function* yieldHunk() {
-            yield* formatHunkSideBySide(
+            yield* iterFormatHunkSideBySide(
                 hunkHeaderLine,
-                hunkLines,
+                // Ignore text for missing files
+                fileNameA ? hunkLinesA : [],
+                fileNameB ? hunkLinesB : [],
                 startA,
-                startB,
-                fileNameA,
-                fileNameB
+                startB
             );
-            hunkLines = [];
+            hunkLinesA = [];
+            hunkLinesB = [];
         }
 
         for await (const line of lines) {
@@ -372,7 +290,7 @@ export function iterSideBySideDiff(
             // Handle state
             switch (state) {
                 case 'commit': {
-                    yield formatCommitLine(line);
+                    yield* iterFormatCommitLine(line);
                     break;
                 }
                 case 'diff':
@@ -394,7 +312,20 @@ export function iterSideBySideDiff(
                     }
                     break;
                 case 'hunk': {
-                    hunkLines.push(line);
+                    if (line.startsWith('-')) {
+                        hunkLinesA.push(line);
+                    } else if (line.startsWith('+')) {
+                        hunkLinesB.push(line);
+                    } else {
+                        while (hunkLinesA.length < hunkLinesB.length) {
+                            hunkLinesA.push(null);
+                        }
+                        while (hunkLinesB.length < hunkLinesA.length) {
+                            hunkLinesB.push(null);
+                        }
+                        hunkLinesA.push(line);
+                        hunkLinesB.push(line);
+                    }
                     break;
                 }
             }
