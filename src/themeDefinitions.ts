@@ -17,10 +17,8 @@ export const THEME_DEFINITIONS: { [key in string]: ThemeDefinition } = {
     light: {
         DEFAULT_COLOR: { color: '333', backgroundColor: 'eee' },
         BORDER_COLOR: { color: 'ccc' },
-
         COMMIT_SHA_COLOR: { color: '060' },
         COMMIT_AUTHOR_COLOR: { color: '633' },
-
         FILE_NAME_COLOR: '366',
         HUNK_HEADER_COLOR: { color: '666', backgroundColor: 'e0e0e0' },
         DELETED_LINE_COLOR: { color: '633', backgroundColor: 'ecc' },
@@ -36,6 +34,7 @@ export const THEME_DEFINITIONS: { [key in string]: ThemeDefinition } = {
             modifiers: ['dim'],
         },
         UNMODIFIED_LINE_NO_COLOR: { modifiers: ['dim'] },
+        MISSING_LINE_COLOR: { backgroundColor: 'e8e8e8' },
     },
     'color-test': { DEFAULT_COLOR: { modifiers: ['inverse', 'bold'] } },
     'github-light': {
@@ -49,7 +48,7 @@ export const THEME_DEFINITIONS: { [key in string]: ThemeDefinition } = {
         DELETED_LINE_COLOR: { color: 'd73a49', backgroundColor: 'ffeef0' },
         INSERTED_LINE_COLOR: { color: '22863a', backgroundColor: 'e6ffed' },
         UNMODIFIED_LINE_COLOR: { color: '24292e' },
-        MISSING_LINE_COLOR: { color: 'c2a9ad', backgroundColor: 'fedbdf' },
+        MISSING_LINE_COLOR: { backgroundColor: 'fafbfc' },
         DELETED_LINE_NO_COLOR: { color: 'c2a9ad', backgroundColor: 'ffdce0' },
         INSERTED_LINE_NO_COLOR: { color: 'a5cfb0', backgroundColor: 'cdffd8' },
         UNMODIFIED_LINE_NO_COLOR: { color: 'd1d5da' },
