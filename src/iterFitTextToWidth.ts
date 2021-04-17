@@ -6,13 +6,11 @@ import { wrapLineByWord } from './wrapLineByWord';
  * the config.
  */
 export function* iterFitTextToWidth(
-    context: Context,
     text: string,
-    width: number
+    width: number,
+    shouldWrap: boolean
 ): Iterable<string> {
-    const { WRAP_LINES } = context;
-
-    if (WRAP_LINES) {
+    if (shouldWrap) {
         yield* wrapLineByWord(text, width);
     } else {
         yield text.slice(0, width);

@@ -23,6 +23,7 @@
     "dependencies": {
         "ansi-regex": "^5.0.0",
         "chalk": "^4.1.0",
+        "diff": "^5.0.0",
         "term-size": "^2.2.1"
     },
     "scripts": {
@@ -34,6 +35,7 @@
         "prepublishOnly": "yarn test && yarn build:publish"
     },
     "devDependencies": {
+        "@types/diff": "^5.0.0",
         "@types/jest": "^26.0.22",
         "@types/node": "12.12.6",
         "esbuild": "^0.11.9",

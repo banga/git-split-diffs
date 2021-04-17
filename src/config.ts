@@ -5,4 +5,5 @@ export type Config = Theme & {
     LINE_NUMBER_WIDTH: number;
     MIN_LINE_WIDTH: number;
     WRAP_LINES: boolean;
+    HIGHLIGHT_LINE_CHANGES: boolean;
 };
