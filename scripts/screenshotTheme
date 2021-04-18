@@ -1,8 +1,7 @@
-#!osascript
-
-with timeout of 5 seconds
-    tell app "Terminal"
-        activate
-        do script "cd $GITHUB_WORKSPACE; git show"
-    end tell
-end timeout
+on run argv
+    with timeout of 5 seconds
+        tell app "Terminal"
+            do script "cd " & item 1 of argv & "; git show"
+        end tell
+    end timeout
+end run

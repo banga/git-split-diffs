@@ -22,7 +22,7 @@ jobs:
               if: steps.cache.outputs.cache-hit != 'true'
               run: yarn install --frozen-lockfile
             - run: yarn build:publish
-            - run: ./scripts/screenshotTheme
+            - run: osascript ./scripts/screenshotTheme $GITHUB_WORKSPACE
             - run: screencapture -T 1 screenshot.png
             - name: Upload screenshot
               uses: actions/upload-artifact@v2
