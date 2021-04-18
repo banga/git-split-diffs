@@ -32,3 +32,4 @@
 -   [ ] Simplify operations with formatted strings using something like SpannableStringBuilder
 -   [ ] Test on linux
 -   [ ] Support custom themes
+-   [ ] Automate screenshots with github actions
