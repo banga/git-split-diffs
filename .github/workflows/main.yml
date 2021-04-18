@@ -23,7 +23,7 @@ jobs:
               run: yarn install --frozen-lockfile
             - run: yarn build:publish
             - run: export TERM=xterm
-            - run: git show 5a00d16095a255b57c762289fa434e18088b956b src/iterSideBySideDiffs.ts
+            - run: git show
             - run: screencapture -T 1 screenshot.png
             - name: Upload screenshot
               uses: actions/upload-artifact@v2
