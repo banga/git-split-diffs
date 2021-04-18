@@ -1,4 +1,4 @@
-#!env osascript
+#!osascript
 
 with timeout of 5 seconds
     tell app "Terminal"
