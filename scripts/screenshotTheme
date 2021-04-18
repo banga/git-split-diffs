@@ -1,7 +1,0 @@
-on run argv
-    with timeout of 5 seconds
-        tell app "Terminal"
-            open "screenshots.sh"
-        end tell
-    end timeout
-end run
