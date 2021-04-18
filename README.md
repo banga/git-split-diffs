@@ -4,9 +4,9 @@
 
 GitHub style split diffs in your terminal.
 
-![Screenshot of default theme](screenshots/default.png?raw)
+![Screenshot of default theme](screenshots/default.png?raw=true)
 
-![Screenshot of github-light theme](screenshots/github-light.png)
+![Screenshot of github-light theme](screenshots/github-light.png?raw=true)
 
 [Demo 1](https://asciinema.org/a/6MZ4GWjfIyODdts9tjnN0YPy8?t=3) | [Demo 2](https://asciinema.org/a/qqkVNGVX7WyL5PQ3rfXTTISMv?t=3)
 
@@ -48,7 +48,7 @@ git config split-diffs.wrap-lines false
 ### Inline changes
 
 By default, salient changes within lines are also highlighted:
-![Screenshot of inline changes](screenshots/inline-changes.png)
+![Screenshot of inline changes](screenshots/inline-changes.png?raw=true)
 
 This adds a small overhead to rendering. You can disable this with the `highlight-line-changes` setting:
 ```
@@ -73,7 +73,7 @@ You can pick between several [themes](src/themeDefinitions.ts):
 git config split-diffs.theme default
 ```
 
-![Screenshot of default theme](screenshots/default.png)
+![Screenshot of default theme](screenshots/default.png?raw=true)
 
 
 #### Light
@@ -82,7 +82,7 @@ git config split-diffs.theme default
 git config split-diffs.theme light
 ```
 
-![Screenshot of light theme](screenshots/light.png)
+![Screenshot of light theme](screenshots/light.png?raw=true)
 
 #### GitHub Light
 
@@ -90,7 +90,7 @@ git config split-diffs.theme light
 git config split-diffs.theme github-light
 ```
 
-![Screenshot of GitHub Light theme](screenshots/github-light.png)
+![Screenshot of GitHub Light theme](screenshots/github-light.png?raw=true)
 
 #### GitHub Dark (Dim)
 
@@ -98,4 +98,4 @@ git config split-diffs.theme github-light
 git config split-diffs.theme github-dark-dim
 ```
 
-![Screenshot of GitHub Dark (Dim) theme](screenshots/github-dark-dim.png)
+![Screenshot of GitHub Dark (Dim) theme](screenshots/github-dark-dim.png?raw=true)
