@@ -20,7 +20,7 @@ jobs:
               uses: actions/cache@v2
               with:
                   path: ./node_modules
-                  key: npm-${{ hashFiles('yarn.lock') }}
+                  key: npm-${{ hashFiles('yarn.lock') }}-${{ matrix.os }}-${{ matrix.node_version }}
                   restore-keys: npm-
             - name: Install dependencies
               if: steps.cache.outputs.cache-hit != 'true'
