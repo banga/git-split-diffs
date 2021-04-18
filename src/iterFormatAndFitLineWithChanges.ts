@@ -14,17 +14,20 @@ const HIGHLIGHT_CHANGE_RATIO = 1.0;
  */
 export function getChangesInLine(
     context: Context,
-    lineTextA: string | null,
-    lineTextB: string | null
+    lineA: string | null,
+    lineB: string | null
 ):
     | { changesA: Change[]; changesB: Change[] }
     | { changesA: null; changesB: null } {
     const { HIGHLIGHT_LINE_CHANGES } = context;
 
-    if (!HIGHLIGHT_LINE_CHANGES || lineTextA === null || lineTextB === null) {
+    if (!HIGHLIGHT_LINE_CHANGES || lineA === null || lineB === null) {
         return { changesA: null, changesB: null };
     }
 
+    // Drop the prefix
+    const lineTextA = lineA.slice(1);
+    const lineTextB = lineB.slice(1);
     const changes = diffWords(lineTextA, lineTextB, {
         ignoreCase: false,
         ignoreWhitespace: false,

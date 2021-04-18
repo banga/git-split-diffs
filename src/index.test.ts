@@ -14,8 +14,7 @@ async function transform(
 ): Promise<string> {
     const testConfig: Config = {
         SCREEN_WIDTH: 120,
-        LINE_NUMBER_WIDTH: 5,
-        MIN_LINE_WIDTH: 8,
+        MIN_LINE_WIDTH: 60,
         WRAP_LINES: false,
         HIGHLIGHT_LINE_CHANGES: false,
         ...parseTheme({}, new chalk.Instance({ level: 0 })),
@@ -215,7 +214,7 @@ index a33d267..ae58a01 100644
     `);
 });
 
-test('commits with diffs', async function () {
+test('commits with split diffs', async function () {
     expect(
         await transform(`
 commit 26ca49fb83758bace20a473e231d576aa1bbe115
@@ -317,6 +316,115 @@ index 26b77f3..371b5f0 100644
                                                                        21 + brew 'tldr'                                         
            21   brew 'tree'                                            22   brew 'tree'                                         
            22                                                          23                                                       
+        "
+    `);
+});
+
+test('commits with unified diffs', async function () {
+    expect(
+        await transform(
+            `
+commit 26ca49fb83758bace20a473e231d576aa1bbe115
+Author: Shrey Banga <shrey@quip.com>
+Date:   Tue May 23 16:47:17 2017 -0700
+
+    sonos to brew
+
+diff --git a/Brewfile b/Brewfile
+index 5a38bdb..ef4ff52 100644
+--- a/Brewfile
++++ b/Brewfile
+@@ -19,2 +19,3 @@ brew 'python3'
+ brew 'socat'
++brew 'sonos'
+ brew 'terminal-notifier'
+@@ -42,3 +43,2 @@ cask 'rescuetime'
+ cask 'slate'
+-cask 'sonos'
+ cask 'spotify'
+
+commit 0efea05a16425b355210c2f1e0d11ed692350d49
+Author: Shrey Banga <banga.shrey@gmail.com>
+Date:   Tue May 16 21:21:36 2017 -0700
+
+    java
+
+diff --git a/Brewfile b/Brewfile
+index 371b5f0..5a38bdb 100644
+--- a/Brewfile
++++ b/Brewfile
+@@ -37,2 +37,3 @@ cask 'google-chrome'
+ cask 'iterm2'
++cask 'java'
+ cask 'ngrok'
+
+commit 0de4eb9a05b52362d8ff02aba14e389cc76a6f91
+Author: Shrey Banga <shrey@quip.com>
+Date:   Tue May 16 00:45:40 2017 -0700
+
+    tldr
+
+diff --git a/Brewfile b/Brewfile
+index 26b77f3..371b5f0 100644
+--- a/Brewfile
++++ b/Brewfile
+@@ -20,2 +20,3 @@ brew 'socat'
+ brew 'terminal-notifier'
++brew 'tldr'
+ brew 'tree'
+    `,
+            { SCREEN_WIDTH: 60, MIN_LINE_WIDTH: 60 }
+        )
+    ).toMatchInlineSnapshot(`
+        "                                                            
+        commit 26ca49fb83758bace20a473e231d576aa1bbe115             
+        Author: Shrey Banga <shrey@quip.com>                        
+        Date:   Tue May 23 16:47:17 2017 -0700                      
+                                                                    
+            sonos to brew                                           
+                                                                    
+        ────────────────────────────────────────────────────────────
+         ■■ Brewfile                                                
+        ────────────────────────────────────────────────────────────
+        @@ -19,2 +19,3 @@ brew 'python3'                            
+           19   brew 'socat'                                        
+           20 + brew 'sonos'                                        
+           20   brew 'terminal-notifier'                            
+        @@ -42,3 +43,2 @@ cask 'rescuetime'                         
+           42   cask 'slate'                                        
+           43 - cask 'sonos'                                        
+           44   cask 'spotify'                                      
+           45                                                       
+        ────────────────────────────────────────────────────────────
+        commit 0efea05a16425b355210c2f1e0d11ed692350d49             
+        Author: Shrey Banga <banga.shrey@gmail.com>                 
+        Date:   Tue May 16 21:21:36 2017 -0700                      
+                                                                    
+            java                                                    
+                                                                    
+        ────────────────────────────────────────────────────────────
+         ■■ Brewfile                                                
+        ────────────────────────────────────────────────────────────
+        @@ -37,2 +37,3 @@ cask 'google-chrome'                      
+           37   cask 'iterm2'                                       
+           38 + cask 'java'                                         
+           38   cask 'ngrok'                                        
+           39                                                       
+        ────────────────────────────────────────────────────────────
+        commit 0de4eb9a05b52362d8ff02aba14e389cc76a6f91             
+        Author: Shrey Banga <shrey@quip.com>                        
+        Date:   Tue May 16 00:45:40 2017 -0700                      
+                                                                    
+            tldr                                                    
+                                                                    
+        ────────────────────────────────────────────────────────────
+         ■■ Brewfile                                                
+        ────────────────────────────────────────────────────────────
+        @@ -20,2 +20,3 @@ brew 'socat'                              
+           20   brew 'terminal-notifier'                            
+           21 + brew 'tldr'                                         
+           21   brew 'tree'                                         
+           22                                                       
         "
     `);
 });

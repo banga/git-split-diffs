@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import { Config } from './config';
 import { Context } from './context';
-import { iterFormatHunkSideBySide } from './iterFormatHunkSideBySide';
+import { iterFormatHunk } from './iterFormatHunk';
 import { iterFormatCommitLine } from './iterFormatCommitLine';
 import { iterFormatFileName } from './iterFormatFileName';
 
@@ -14,20 +14,16 @@ import { iterFormatFileName } from './iterFormatFileName';
 const BINARY_FILES_DIFF_REGEX = /^Binary files (?:a\/(.*)|\/dev\/null) and (?:b\/(.*)|\/dev\/null) differ$/;
 
 export function getSideBySideDiffIterator(config: Config) {
-    /*
-        Each line in a hunk is rendered as follows: <lineNo> <linePrefix[1]>
-        <lineWithoutPrefix><lineNo> <linePrefix> <lineWithoutPrefix>
+    // Only split diffs if there's enough room
+    const SPLIT_DIFFS = config.SCREEN_WIDTH >= config.MIN_LINE_WIDTH * 2;
 
-        So (LINE_NUMBER_WIDTH + 1 + 1 + 1 + LINE_TEXT_WIDTH) * 2
-        = SCREEN_WIDTH
-    */
-    const LINE_WIDTH = Math.max(
-        Math.floor(config.SCREEN_WIDTH / 2),
-        config.MIN_LINE_WIDTH
-    );
-    const LINE_TEXT_WIDTH = Math.max(
-        LINE_WIDTH - 1 - 1 - 1 - config.LINE_NUMBER_WIDTH
-    );
+    let LINE_WIDTH: number;
+    if (SPLIT_DIFFS) {
+        LINE_WIDTH = Math.floor(config.SCREEN_WIDTH / 2);
+    } else {
+        LINE_WIDTH = config.SCREEN_WIDTH;
+    }
+
     const BLANK_LINE = ''.padStart(LINE_WIDTH);
     const HORIZONTAL_SEPARATOR = config.BORDER_COLOR(
         ''.padStart(config.SCREEN_WIDTH, '─')
@@ -35,8 +31,8 @@ export function getSideBySideDiffIterator(config: Config) {
 
     const context: Context = {
         ...config,
+        SPLIT_DIFFS,
         LINE_WIDTH,
-        LINE_TEXT_WIDTH,
         BLANK_LINE,
         HORIZONTAL_SEPARATOR,
     };
@@ -58,7 +54,7 @@ export function getSideBySideDiffIterator(config: Config) {
         let hunkLinesA: (string | null)[] = [];
         let hunkLinesB: (string | null)[] = [];
         function* yieldHunk() {
-            yield* iterFormatHunkSideBySide(
+            yield* iterFormatHunk(
                 context,
                 hunkHeaderLine,
                 // Ignore text for missing files

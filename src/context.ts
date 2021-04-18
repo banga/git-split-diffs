@@ -5,8 +5,8 @@ import { Config } from './config';
  * constants.
  */
 export type Context = Config & {
+    SPLIT_DIFFS: boolean;
     LINE_WIDTH: number;
-    LINE_TEXT_WIDTH: number;
     BLANK_LINE: string;
     HORIZONTAL_SEPARATOR: string;
 };

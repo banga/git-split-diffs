@@ -35,8 +35,19 @@ export async function getGitConfig(
 
     // Defaults to true
     const wrapLines = rawConfig['wrap-lines'] === 'false' ? false : true;
+
+    // Defaults to true
     const highlightLineChanges =
         rawConfig['highlight-line-changes'] === 'false' ? false : true;
+
+    // Defaults to 80
+    let minLineWidth = 80;
+    try {
+        const parsedMinLineWidth = parseInt(rawConfig['min-line-width'], 10);
+        if (!isNaN(parsedMinLineWidth)) {
+            minLineWidth = parsedMinLineWidth;
+        }
+    } catch {}
 
     const themeName =
         rawConfig['theme-name'] in THEME_DEFINITIONS
@@ -45,8 +56,7 @@ export async function getGitConfig(
 
     return {
         SCREEN_WIDTH: screenWidth,
-        LINE_NUMBER_WIDTH: 5,
-        MIN_LINE_WIDTH: 8,
+        MIN_LINE_WIDTH: minLineWidth,
         WRAP_LINES: wrapLines,
         HIGHLIGHT_LINE_CHANGES: highlightLineChanges,
         ...parseTheme(THEME_DEFINITIONS[themeName], chalk),

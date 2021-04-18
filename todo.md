@@ -21,7 +21,7 @@
 -   [x] Fix binary file diffs not showing file names
 -   [x] Test on windows
 -   [x] Highlight changes in lines
--   [ ] Show unified diff on narrow widths
+-   [x] Show unified diff on narrow widths
 -   [ ] Syntax highlighting
 -   [ ] Colorize "stat"s
 -   [ ] Handle 3-way merge diffs (e.g. during merge conflicts)
