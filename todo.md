@@ -22,15 +22,15 @@
 -   [x] Test on windows
 -   [x] Highlight changes in lines
 -   [x] Show unified diff on narrow widths
--   [ ] Fix unified diffs
+-   [x] Semi-automate screenshots with a script
+-   [x] Fix unified diffs
+-   [x] Test on very large diffs
 -   [ ] Highlight changes in unified mode
 -   [ ] Syntax highlighting
 -   [ ] Colorize "stat"s
 -   [ ] Handle 3-way merge diffs (e.g. during merge conflicts)
--   [ ] Test on very large diffs
 -   [ ] See why `less` occasionally goes into search mode
 -   [ ] Simplify some of the parsing logic to fully use state matchines or something
 -   [ ] Simplify operations with formatted strings using something like SpannableStringBuilder
 -   [ ] Test on linux
 -   [ ] Support custom themes
--   [ ] Automate screenshots with github actions
