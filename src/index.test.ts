@@ -19,12 +19,11 @@ const CONFIG_OVERRIDES: Record<string, Partial<Config>> = {
         MIN_LINE_WIDTH: 40,
         WRAP_LINES: true,
     },
-    // TOOD: enable after fixing
-    // unifiedWithWrapping: {
-    //     SCREEN_WIDTH: 80,
-    //     MIN_LINE_WIDTH: 80,
-    //     WRAP_LINES: true,
-    // },
+    unifiedWithWrapping: {
+        SCREEN_WIDTH: 80,
+        MIN_LINE_WIDTH: 80,
+        WRAP_LINES: true,
+    },
     inlineChangesHighlighted: {
         HIGHLIGHT_LINE_CHANGES: true,
         DELETED_WORD_COLOR: (s) => s.replace(/./g, '░'),
@@ -226,7 +225,7 @@ index 149981d..fb507a4 100644
             ).toMatchSnapshot();
         });
 
-        test('commit with a new file', async function () {
+        test('commit with file addition', async function () {
             expect(
                 await transform(`
 commit e4951eee3b9a8fa471d01dd64075c5fd44879a26
@@ -247,7 +246,7 @@ index 0000000..6499edf
             ).toMatchSnapshot();
         });
 
-        test('commit with a new binary file', async function () {
+        test('commit with binary file addition', async function () {
             expect(
                 await transform(`
 commit c0ca4394fd55f1709430414f03db3d04cb9cc72c (HEAD -> main)
@@ -266,7 +265,7 @@ Binary files a/test dir a/default.png and b/test dir a/default.png differ`)
             ).toMatchSnapshot();
         });
 
-        test('commit with a file move', async function () {
+        test('commit with file move', async function () {
             expect(
                 await transform(`
 commit 1c76ed4bb05429741fd4a48896bb84b11bc661f5
@@ -280,6 +279,34 @@ similarity index 100%
 rename from colors.diff
 rename to test-data/colors.diff
     `)
+            ).toMatchSnapshot();
+        });
+
+        test('commit with file deletion', async function () {
+            expect(
+                await transform(`
+commit 1e6ebaccc6fadf3390a749e7aa2cc6372b24325e
+Author: Shrey Banga <banga.shrey@gmail.com>
+Date:   Sun Apr 18 03:17:05 2021 -0700
+
+    Update main.yml
+
+diff --git a/.github/workflows/main.yml b/.github/workflows/main.yml
+index dff1332..af022ac 100644
+diff --git a/scripts/screenshotTheme b/scripts/screenshotTheme
+deleted file mode 100755
+index ca15c64..0000000
+--- a/scripts/screenshotTheme
++++ /dev/null
+@@ -1,7 +0,0 @@
+-on run argv
+-    with timeout of 5 seconds
+-        tell app "Terminal"
+-            open "screenshots.sh"
+-        end tell
+-    end timeout
+-end run
+\ No newline at end of file`)
             ).toMatchSnapshot();
         });
 
