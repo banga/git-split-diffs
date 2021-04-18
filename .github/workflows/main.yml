@@ -14,11 +14,7 @@ jobs:
           node-version: 14
       - run: yarn install --frozen-lockfile
       - run: yarn build:publish
-      - run: git config --global core.pager "./bin/git-split-diffs --color"
-      - run: osascript -e 'tell app "Terminal"
-              do script "git show"
-            end tell'
-      - run: screencapture screenshot.png
+      - run: ./scripts/screenshotTheme.sh default
       - name: Upload screenshot
         uses: actions/upload-artifact@v2
         with:
