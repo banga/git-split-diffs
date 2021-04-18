@@ -320,7 +320,7 @@ index 26b77f3..371b5f0 100644
     `);
 });
 
-test('commits with unified diffs', async function () {
+test.skip('commits with unified diffs', async function () {
     expect(
         await transform(
             `

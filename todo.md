@@ -22,6 +22,7 @@
 -   [x] Test on windows
 -   [x] Highlight changes in lines
 -   [x] Show unified diff on narrow widths
+-   [ ] Fix unified diffs
 -   [ ] Highlight changes in unified mode
 -   [ ] Syntax highlighting
 -   [ ] Colorize "stat"s
