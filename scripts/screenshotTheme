@@ -1,7 +1,7 @@
 on run argv
     with timeout of 5 seconds
         tell app "Terminal"
-            do script "cd " & item 1 of argv & "; ls"
+            open "screenshots.sh"
         end tell
     end timeout
 end run
