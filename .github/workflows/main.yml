@@ -4,22 +4,6 @@ on:
   - pull_request
   - workflow_dispatch
 jobs:
-  test:
-    name: Node.js ${{ matrix.node-version }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        node-version:
-          - 14
-          - 12
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
-        with:
-          node-version: ${{ matrix.node-version }}
-      - run: yarn install --frozen-lockfile
-      - run: yarn test
   screenshots:
     name: Capture screenshots
     runs-on: macos-latest
@@ -31,8 +15,8 @@ jobs:
       - run: yarn install --frozen-lockfile
       - run: yarn build:publish
       - run: git config core.pager "./build/git-split-diffs --color"
-      - run: screencapture screenshot.png -T 1 &
       - run: git show
+      - run: screencapture screenshot.png
       - name: Upload screenshot
         uses: actions/upload-artifact@v2
         with:
