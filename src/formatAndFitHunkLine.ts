@@ -30,7 +30,9 @@ export function formatAndFitHunkLine(
         UNMODIFIED_LINE_NO_COLOR,
     } = context;
 
-    if (line === null) {
+    // A line number of 0 happens when we read the "No newline at end of file"
+    // message as a line at the end of a deleted/inserted file.
+    if (line === null || lineNo === 0) {
         return [MISSING_LINE_COLOR(''.padStart(LINE_WIDTH))];
     }
 

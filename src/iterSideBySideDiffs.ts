@@ -15,10 +15,7 @@ const BINARY_FILES_DIFF_REGEX = /^Binary files (?:a\/(.*)|\/dev\/null) and (?:b\
 
 export function getSideBySideDiffIterator(config: Config) {
     // Only split diffs if there's enough room
-
-    // FIXME: unified diffs are buggy
-    // const SPLIT_DIFFS = config.SCREEN_WIDTH >= config.MIN_LINE_WIDTH * 2;
-    const SPLIT_DIFFS = true;
+    const SPLIT_DIFFS = config.SCREEN_WIDTH >= config.MIN_LINE_WIDTH * 2;
 
     let LINE_WIDTH: number;
     if (SPLIT_DIFFS) {
@@ -61,8 +58,8 @@ export function getSideBySideDiffIterator(config: Config) {
                 context,
                 hunkHeaderLine,
                 // Ignore text for missing files
-                fileNameA ? hunkLinesA : [],
-                fileNameB ? hunkLinesB : [],
+                hunkLinesA,
+                hunkLinesB,
                 startA,
                 startB
             );
