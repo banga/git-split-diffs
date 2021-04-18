@@ -23,8 +23,7 @@ jobs:
               run: yarn install --frozen-lockfile
             - run: yarn build:publish
             - run: export TERM=xterm
-            - run: git show
-            - run: screencapture -T 1 screenshot.png
+            - run: bash -c "git show; screencapture -T 1 screenshot.png"
             - name: Upload screenshot
               uses: actions/upload-artifact@v2
               with:
