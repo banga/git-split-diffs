@@ -22,7 +22,7 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: yarn install --frozen-lockfile
       - run: yarn build:publish
-      - run: ./scripts/screenshotTheme.command default
+      - run: osascript -e $'tell app "Terminal"\n activate\n end tell'
       - name: Upload screenshot
         uses: actions/upload-artifact@v2
         with:
