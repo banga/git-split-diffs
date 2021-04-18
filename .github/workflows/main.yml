@@ -24,7 +24,6 @@ jobs:
             - run: yarn build:publish
             - run: export TERM=xterm
             - run: echo 'cd $GITHUB_WORKSPACE; git show src/iterFormatFileName.ts' >> ~/.bashrc
-            - run: "/Library/Application Support/VMware Tools/vmware-resolutionSet" 2560 1440
             - run: open -a Terminal
             - run: osascript -e $'tell app "Terminal"\nset bounds to {0, 0, 1200, 800}\nend tell'
             - run: screencapture -T 1 screenshot.png
