@@ -12,7 +12,15 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: 14
-      - run: yarn install --frozen-lockfile
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ./node_modules
+          key: npm-${{ hashFiles('yarn.lock') }}
+          restore-keys: npm-
+      - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: yarn install --frozen-lockfile
       - run: yarn build:publish
       - run: ./scripts/screenshotTheme.sh default
       - name: Upload screenshot
