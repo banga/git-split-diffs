@@ -4,7 +4,7 @@
 
 GitHub style split diffs in your terminal.
 
-![Screenshot of default theme](screenshots/default.png)
+![Screenshot of default theme](screenshots/default.png?raw)
 
 ![Screenshot of github-light theme](screenshots/github-light.png)
 
