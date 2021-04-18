@@ -43,7 +43,7 @@ By default, lines are wrapped to fit in the screen. If you prefer to truncate th
 git config split-diffs.wrap-lines false
 ```
 
-### Highlighting inline changes
+### Inline changes
 
 By default, salient changes within lines are also highlighted:
 ![Screenshot of inline changes](screenshots/inline-changes.png)
