@@ -1,0 +1,8 @@
+#!env osascript
+
+with timeout of 5 seconds
+    tell app "Terminal"
+        activate
+        do script "cd $GITHUB_WORKSPACE; git show"
+    end tell
+end timeout
