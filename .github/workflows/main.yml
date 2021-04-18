@@ -6,7 +6,7 @@ on:
 jobs:
   test:
     name: Node.js ${{ matrix.node-version }}
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     strategy:
       fail-fast: false
       matrix:
@@ -20,3 +20,17 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - run: yarn install --frozen-lockfile
       - run: yarn test
+  screenshots:
+    name: Capture screenshots
+    runs-on: macos-latest
+    needs: test
+    steps:
+      - name: Git
+        run: git show
+      - name: Capture screenshot
+        run: screencapture screenshot.png
+      - name: Upload screenshot
+        uses: actions/upload-artifact@v2
+        with:
+          name: screenshot
+          path: screenshot.png
