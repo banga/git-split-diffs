@@ -7,8 +7,8 @@ export function* iterFormatFileName(
 ): Iterable<string> {
     const {
         HORIZONTAL_SEPARATOR,
-        INSERTED_LINE_COLOR,
-        DELETED_LINE_COLOR,
+        INSERTED_LINE_NO_COLOR,
+        DELETED_LINE_NO_COLOR,
         FILE_NAME_COLOR,
         SCREEN_WIDTH,
     } = context;
@@ -18,16 +18,16 @@ export function* iterFormatFileName(
     let indicator;
     let label;
     if (!fileNameA) {
-        indicator = INSERTED_LINE_COLOR('■■');
+        indicator = INSERTED_LINE_NO_COLOR('■■');
         label = fileNameB;
     } else if (!fileNameB) {
-        indicator = DELETED_LINE_COLOR('■■');
+        indicator = DELETED_LINE_NO_COLOR('■■');
         label = fileNameA;
     } else if (fileNameA === fileNameB) {
-        indicator = DELETED_LINE_COLOR('■') + INSERTED_LINE_COLOR('■');
+        indicator = DELETED_LINE_NO_COLOR('■') + INSERTED_LINE_NO_COLOR('■');
         label = fileNameA;
     } else {
-        indicator = DELETED_LINE_COLOR('■') + INSERTED_LINE_COLOR('■');
+        indicator = DELETED_LINE_NO_COLOR('■') + INSERTED_LINE_NO_COLOR('■');
         label = FILE_NAME_COLOR(`${fileNameA} -> ${fileNameB}`);
     }
     yield FILE_NAME_COLOR(' ') +
