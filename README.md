@@ -43,6 +43,24 @@ By default, lines are wrapped to fit in the screen. If you prefer to truncate th
 git config split-diffs.wrap-lines false
 ```
 
+### Highlighting inline changes
+
+By default, salient changes within lines are also highlighted:
+![Screenshot of inline changes](screenshots/inline-changes.png)
+
+This adds a small overhead to rendering. You can disable this with the `highlight-line-changes` setting:
+```
+git config split-diffs.highlight-line-changes false
+```
+
+### Narrow terminals
+
+Split diffs can be hard to read on narrow widths, so if we cannot fit two lines of `min-line-width` on screen, we revert to unified diffs. This value is configurable:
+```
+git config split-diffs.min-line-width 40
+```
+This defaults to `80`, so screens below `160` characters will display unified diffs. Set it to `0` to always show split diffs.
+
 ### Themes
 
 You can pick between several [themes](src/themeDefinitions.ts):
