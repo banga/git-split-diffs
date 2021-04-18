@@ -1,30 +1,31 @@
 name: CI
 on:
-  - push
-  - pull_request
-  - workflow_dispatch
+    - push
+    - pull_request
+    - workflow_dispatch
 jobs:
-  screenshots:
-    name: Capture screenshots
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
-        with:
-          node-version: 14
-      - name: Cache dependencies
-        uses: actions/cache@v2
-        with:
-          path: ./node_modules
-          key: npm-${{ hashFiles('yarn.lock') }}
-          restore-keys: npm-
-      - name: Install dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: yarn install --frozen-lockfile
-      - run: yarn build:publish
-      - run: osascript -e $'tell app "Terminal"\n activate\n end tell'
-      - name: Upload screenshot
-        uses: actions/upload-artifact@v2
-        with:
-          name: screenshot
-          path: screenshots/*.png
+    screenshots:
+        name: Capture screenshots
+        runs-on: macos-latest
+        steps:
+            - uses: actions/checkout@v2
+            - uses: actions/setup-node@v2
+              with:
+                  node-version: 14
+            - name: Cache dependencies
+              uses: actions/cache@v2
+              with:
+                  path: ./node_modules
+                  key: npm-${{ hashFiles('yarn.lock') }}
+                  restore-keys: npm-
+            - name: Install dependencies
+              if: steps.cache.outputs.cache-hit != 'true'
+              run: yarn install --frozen-lockfile
+            - run: yarn build:publish
+            - run: osascript -e $'tell app "Terminal"\n activate\n end tell'
+            - run: screencapture -T 1 screenshot.png
+            - name: Upload screenshot
+              uses: actions/upload-artifact@v2
+              with:
+                  name: screenshot
+                  path: screenshot.png
