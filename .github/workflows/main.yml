@@ -4,14 +4,18 @@ on:
     - pull_request
     - workflow_dispatch
 jobs:
-    screenshots:
-        name: Capture screenshots
-        runs-on: macos-latest
+    tests:
+        name: Test on node ${{ matrix.node_version }} and ${{ matrix.os }}
+        runs-on: ${{ matrix.os }}
+        strategy:
+          matrix:
+            node_version: ['12', '14']
+            os: [ubuntu-latest, windows-latest, macOS-latest]        
         steps:
             - uses: actions/checkout@v2
             - uses: actions/setup-node@v2
               with:
-                  node-version: 14
+                  node-version: ${{ matrix.node_version }}
             - name: Cache dependencies
               uses: actions/cache@v2
               with:
@@ -21,14 +25,4 @@ jobs:
             - name: Install dependencies
               if: steps.cache.outputs.cache-hit != 'true'
               run: yarn install --frozen-lockfile
-            - run: yarn build:publish
-            - run: export TERM=xterm
-            - run: echo 'cd $GITHUB_WORKSPACE; git show src/iterFormatFileName.ts' >> ~/.bashrc
-            - run: open -a Terminal
-            - run: osascript -e $'tell app "Terminal"\nset bounds to {0, 0, 1200, 800}\nend tell'
-            - run: screencapture -T 1 screenshot.png
-            - name: Upload screenshot
-              uses: actions/upload-artifact@v2
-              with:
-                  name: screenshot
-                  path: screenshot.png
+            - run: yarn test
