@@ -4,9 +4,11 @@
 
 GitHub style split diffs in your terminal.
 
-[![asciicast of split diffs](screenshots/default.png)](https://asciinema.org/a/6MZ4GWjfIyODdts9tjnN0YPy8?t=3)
+![Screenshot of default theme](screenshots/default.png)
 
-[![asciicast of split diffs with GitHub Light theme](screenshots/github-light.png)](https://asciinema.org/a/qqkVNGVX7WyL5PQ3rfXTTISMv?t=3)
+![Screenshot of github-light theme](screenshots/github-light.png)
+
+[Demo 1](https://asciinema.org/a/6MZ4GWjfIyODdts9tjnN0YPy8?t=3) | [Demo 2](https://asciinema.org/a/qqkVNGVX7WyL5PQ3rfXTTISMv?t=3)
 
 ## Usage
 
