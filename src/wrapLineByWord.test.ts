@@ -119,3 +119,15 @@ test('snapshot tests', () => {
         Fleet Street.”"
     `);
 });
+
+test('off-by-one', () => {
+    expect(
+        wrapLineByWord(
+            '              "url": "https://homebrew.bintray.com/bottles/go-1.14.2_1.catalina.bottle.tar.gz",',
+            72
+        )
+    ).toEqual([
+        '              "url": "https://homebrew.bintray.com/bottles/go-1.14.2_1.c',
+        'atalina.bottle.tar.gz",',
+    ]);
+});

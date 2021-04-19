@@ -1,5 +1,4 @@
-const WORD_REGEX = /(\s*)(\S+)/g;
-const TRAILING_SPACE_REGEX = /\s+$/g;
+const SPACE_REGEX = /\s/;
 
 export function wrapLineByWord(text: string, width: number): string[] {
     // Short circuit if no wrapping is required
@@ -7,68 +6,78 @@ export function wrapLineByWord(text: string, width: number): string[] {
         return [text];
     }
 
-    const lines: string[] = [];
+    const lineBreaks: number[] = [];
     let budget = width;
-    let currentLineParts: string[] = [];
+    let curLineEnd = 0;
 
     function flushLine() {
-        if (currentLineParts.length) {
-            lines.push(currentLineParts.join(''));
-            currentLineParts = [];
-            budget = width;
-        }
+        lineBreaks.push(curLineEnd);
+        budget = width;
     }
 
-    function pushWord(word: string) {
+    function pushWord(startIndex: number, endIndex: number) {
+        const wordLength = endIndex - startIndex;
         // word can fit on current line
-        if (word.length <= budget) {
-            currentLineParts.push(word);
-            budget -= word.length;
+        if (wordLength <= budget) {
+            curLineEnd = endIndex;
+            budget -= wordLength;
             return;
         }
 
         // word can fit in the new line, so start a new one
-        if (word.length <= width) {
+        if (wordLength <= width) {
             flushLine();
-            currentLineParts.push(word);
-            budget -= word.length;
+            curLineEnd = endIndex;
+            budget -= wordLength;
             return;
         }
 
         // word is too long to fit in any line, so lets break it and push each
         // part
-        let wordPartStart = 0;
-        while (wordPartStart < word.length) {
+        while (startIndex < endIndex) {
             if (budget === 0) {
                 flushLine();
             }
-            const wordPart = word.slice(wordPartStart, wordPartStart + budget);
-            wordPartStart += budget;
-            pushWord(wordPart);
+            let remainingLengthInLine = Math.min(budget, endIndex - startIndex);
+            curLineEnd += remainingLengthInLine;
+            startIndex += remainingLengthInLine;
+            flushLine();
         }
     }
 
-    let match: RegExpMatchArray | null = null;
+    let prevIndex = 0;
+    let curIndex = 1;
+    let prevIsSpace = SPACE_REGEX.test(text[prevIndex]);
 
-    // Match by word (non-space characters followed by space) and add one word
-    // at a time
-    while ((match = WORD_REGEX.exec(text))) {
-        const [, leadingSpaces, word] = match;
-        if (leadingSpaces !== undefined) {
-            for (const leadingSpace of leadingSpaces) {
-                pushWord(leadingSpace);
-            }
+    // Add one word at a time
+    while (curIndex < text.length) {
+        const isSpace = SPACE_REGEX.test(text[curIndex]);
+        if (isSpace) {
+            pushWord(prevIndex, curIndex);
+            prevIndex = curIndex;
+        } else if (prevIsSpace) {
+            pushWord(prevIndex, curIndex);
+            prevIndex = curIndex;
         }
-        pushWord(word);
+        prevIsSpace = isSpace;
+        curIndex++;
     }
-    if ((match = TRAILING_SPACE_REGEX.exec(text))) {
-        const [trailingSpaces] = match;
-        for (const trailingSpace of trailingSpaces) {
-            pushWord(trailingSpace);
-        }
+    if (prevIndex < curIndex) {
+        pushWord(prevIndex, curIndex);
+    }
+    if (budget < width) {
+        flushLine();
     }
 
-    flushLine();
+    const lines = [];
+    let prevLineBreak = 0;
+    for (const lineBreak of lineBreaks) {
+        lines.push(text.slice(prevLineBreak, lineBreak));
+        prevLineBreak = lineBreak;
+    }
+    if (prevLineBreak < text.length - 1) {
+        lines.push(text.slice(prevLineBreak));
+    }
 
     return lines;
 }
