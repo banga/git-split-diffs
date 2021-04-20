@@ -29,15 +29,18 @@
     "scripts": {
         "test": "tsc && jest",
         "clean": "rimraf ./build",
-        "build": "yarn clean && yarn esbuild src/index.ts --external:ansi-regex --external:chalk --external:diff --external:term-size --platform=node --target=node12 --outdir=build --bundle",
-        "build:publish": "yarn build --minify",
-        "start": "yarn build && node ./build",
+        "build": "yarn clean && yarn esbuild --external:ansi-regex --external:chalk --external:diff --external:term-size --platform=node --target=node12 --outdir=build --bundle",
+        "build:dev": "yarn build src/index.ts src/benchmark.ts",
+        "build:publish": "yarn build src/index.ts --minify",
+        "benchmark": "yarn build:dev && node build/benchmark.js",
         "prepublishOnly": "yarn test && yarn build:publish"
     },
     "devDependencies": {
+        "@types/benchmark": "^2.1.0",
         "@types/diff": "^5.0.0",
         "@types/jest": "^26.0.22",
         "@types/node": "12.12.6",
+        "benchmark": "^2.1.4",
         "esbuild": "^0.11.9",
         "jest": "^26.6.3",
         "prettier": "^2.2.1",
