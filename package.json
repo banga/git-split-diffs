@@ -29,7 +29,7 @@
     "scripts": {
         "test": "tsc && jest",
         "clean": "rimraf ./build",
-        "build": "yarn clean && yarn esbuild src/index.ts --platform=node --target=node12 --outdir=build --bundle",
+        "build": "yarn clean && yarn esbuild src/index.ts --external:ansi-regex --external:chalk --external:diff --external:term-size --platform=node --target=node12 --outdir=build --bundle",
         "build:publish": "yarn build --minify",
         "start": "yarn build && node ./build",
         "prepublishOnly": "yarn test && yarn build:publish"
