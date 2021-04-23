@@ -5,7 +5,7 @@ import { getContextForConfig } from './context';
 import { iterLinesWithoutAnsiColors } from './iterLinesWithoutAnsiColors';
 import { iterSideBySideDiffs } from './iterSideBySideDiffs';
 import { iterWithNewlines } from './iterWithNewlines';
-import { parseTheme, Theme } from './themes';
+import { Theme } from './themes';
 import { transformStreamWithIterables } from './transformStreamWithIterables';
 
 const noop = (s: string) => s;

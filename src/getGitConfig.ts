@@ -3,7 +3,7 @@ import { exec } from 'child_process';
 import * as util from 'util';
 import { Config } from './config';
 import { THEME_DEFINITIONS } from './themeDefinitions';
-import { parseTheme } from './themes';
+import { parseThemeDefinition } from './themes';
 const execAsync = util.promisify(exec);
 
 const GIT_CONFIG_KEY_PREFIX = 'split-diffs';
@@ -33,6 +33,18 @@ export async function getGitConfig(
 ): Promise<Config> {
     const rawConfig = await getRawGitConfig();
 
+    // Falls back to "default" if misssing/invalid
+    const themeName =
+        rawConfig['theme-name'] in THEME_DEFINITIONS
+            ? rawConfig['theme-name']
+            : 'default';
+    const theme = parseThemeDefinition(THEME_DEFINITIONS[themeName], chalk);
+
+    // Defaults to the theme's setting
+    const syntaxHighlightingTheme =
+        rawConfig['syntax-highlighting-theme'] ??
+        theme.SYNTAX_HIGHLIGHTING_THEME;
+
     // Defaults to true
     const wrapLines = rawConfig['wrap-lines'] === 'false' ? false : true;
 
@@ -49,16 +61,12 @@ export async function getGitConfig(
         }
     } catch {}
 
-    const themeName =
-        rawConfig['theme-name'] in THEME_DEFINITIONS
-            ? rawConfig['theme-name']
-            : 'default';
-
     return {
+        ...theme,
         SCREEN_WIDTH: screenWidth,
         MIN_LINE_WIDTH: minLineWidth,
         WRAP_LINES: wrapLines,
         HIGHLIGHT_LINE_CHANGES: highlightLineChanges,
-        ...parseTheme(THEME_DEFINITIONS[themeName], chalk),
+        SYNTAX_HIGHLIGHTING_THEME: syntaxHighlightingTheme,
     };
 }

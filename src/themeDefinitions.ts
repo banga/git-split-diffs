@@ -2,6 +2,7 @@ import { ThemeDefinition } from './themes';
 
 export const THEME_DEFINITIONS: { [key in string]: ThemeDefinition } = {
     default: {
+        SYNTAX_HIGHLIGHTING_THEME: 'dark-plus',
         DEFAULT_COLOR: 'white',
         BORDER_COLOR: { modifiers: ['dim'] },
         COMMIT_SHA_COLOR: 'green',
@@ -10,13 +11,14 @@ export const THEME_DEFINITIONS: { [key in string]: ThemeDefinition } = {
         HUNK_HEADER_COLOR: { modifiers: ['dim'] },
         DELETED_WORD_COLOR: { color: 'red', modifiers: ['inverse'] },
         INSERTED_WORD_COLOR: { color: 'green', modifiers: ['inverse'] },
-        DELETED_LINE_COLOR: 'red',
-        INSERTED_LINE_COLOR: 'green',
+        DELETED_LINE_COLOR: { color: 'red', backgroundColor: '3a3030' },
+        INSERTED_LINE_COLOR: { color: 'green', backgroundColor: '303a30' },
         DELETED_LINE_NO_COLOR: { color: 'red', modifiers: ['dim'] },
         INSERTED_LINE_NO_COLOR: { color: 'green', modifiers: ['dim'] },
         UNMODIFIED_LINE_NO_COLOR: { modifiers: ['dim'] },
     },
     light: {
+        SYNTAX_HIGHLIGHTING_THEME: 'light-plus',
         DEFAULT_COLOR: { color: '333', backgroundColor: 'eee' },
         BORDER_COLOR: { color: 'ccc' },
         COMMIT_SHA_COLOR: { color: '060' },
@@ -41,8 +43,8 @@ export const THEME_DEFINITIONS: { [key in string]: ThemeDefinition } = {
         UNMODIFIED_LINE_NO_COLOR: { modifiers: ['dim'] },
         MISSING_LINE_COLOR: { backgroundColor: 'e8e8e8' },
     },
-    'color-test': { DEFAULT_COLOR: { modifiers: ['inverse', 'bold'] } },
     'github-light': {
+        SYNTAX_HIGHLIGHTING_THEME: 'github-light',
         DEFAULT_COLOR: { color: '05264c', backgroundColor: 'ffffff' },
         BORDER_COLOR: { color: 'e1e4e8' },
         COMMIT_COLOR: { backgroundColor: 'f1f8fe' },
@@ -61,6 +63,7 @@ export const THEME_DEFINITIONS: { [key in string]: ThemeDefinition } = {
         UNMODIFIED_LINE_NO_COLOR: { color: 'd1d5da' },
     },
     'github-dark-dim': {
+        SYNTAX_HIGHLIGHTING_THEME: 'github-dark',
         DEFAULT_COLOR: { color: 'adbac7', backgroundColor: '22272e' },
         BORDER_COLOR: { color: '444c56' },
         COMMIT_COLOR: { color: 'c6e6ff' },

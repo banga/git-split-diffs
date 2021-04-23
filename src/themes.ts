@@ -42,7 +42,7 @@ type ColorDefinition =
           modifiers?: ColorModifier[];
       };
 
-export const THEME_VARIABLE_NAMES = [
+export const THEME_COLOR_VARIABLE_NAMES = [
     'DEFAULT_COLOR',
     'COMMIT_COLOR',
     'COMMIT_SHA_COLOR',
@@ -63,13 +63,21 @@ export const THEME_VARIABLE_NAMES = [
     'MISSING_LINE_COLOR',
 ] as const;
 
-type ThemeVariables = typeof THEME_VARIABLE_NAMES[number];
+type ThemeColorVariables = typeof THEME_COLOR_VARIABLE_NAMES[number];
 
 export type ThemeColor = (text: string) => string;
 
-export type ThemeDefinition = { [key in ThemeVariables]?: ColorDefinition };
+export type ThemeDefinition = {
+    SYNTAX_HIGHLIGHTING_THEME?: string;
+} & {
+    [key in ThemeColorVariables]?: ColorDefinition;
+};
 
-export type Theme = { [key in ThemeVariables]: ThemeColor };
+export type Theme = {
+    SYNTAX_HIGHLIGHTING_THEME?: string;
+} & {
+    [key in ThemeColorVariables]: ThemeColor;
+};
 
 function parseColor(color: Color, chalk: Chalk): Chalk {
     switch (color) {
@@ -160,20 +168,25 @@ function parseColorFunction(definition: ColorDefinition, chalk: Chalk): Chalk {
     return fn;
 }
 
-export function parseTheme(theme: ThemeDefinition, chalk: Chalk): Theme {
-    let defaultColor = theme['DEFAULT_COLOR'] ?? 'white';
+export function parseThemeDefinition(
+    themeDefinition: ThemeDefinition,
+    chalk: Chalk
+): Theme {
+    let defaultColor = themeDefinition['DEFAULT_COLOR'] ?? 'white';
     if (typeof defaultColor === 'string') {
         defaultColor = { color: defaultColor };
     }
 
-    const themeFunctions: Partial<Theme> = {};
-    for (const variableName of THEME_VARIABLE_NAMES) {
-        let value = theme[variableName];
+    const theme: Partial<Theme> = {
+        SYNTAX_HIGHLIGHTING_THEME: themeDefinition.SYNTAX_HIGHLIGHTING_THEME,
+    };
+    for (const variableName of THEME_COLOR_VARIABLE_NAMES) {
+        let value = themeDefinition[variableName];
         if (typeof value === 'string') {
             value = { color: value };
         }
 
-        themeFunctions[variableName] = parseColorFunction(
+        theme[variableName] = parseColorFunction(
             {
                 ...defaultColor,
                 ...value,
@@ -181,5 +194,6 @@ export function parseTheme(theme: ThemeDefinition, chalk: Chalk): Theme {
             chalk
         );
     }
-    return themeFunctions as Theme;
+
+    return theme as Theme;
 }
