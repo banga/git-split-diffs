@@ -1,4 +1,6 @@
+import { Context } from './context';
 import { FormattedString } from './formattedString';
+import { ThemeColor } from './themes';
 import { wrapSpannedStringByWord } from './wrapSpannedStringByWord';
 
 /**
@@ -6,13 +8,27 @@ import { wrapSpannedStringByWord } from './wrapSpannedStringByWord';
  * the config.
  */
 export function* iterFitTextToWidth(
+    context: Context,
     formattedString: FormattedString,
     width: number,
-    shouldWrap: boolean
+    backgroundColor?: ThemeColor
 ): Iterable<FormattedString> {
-    if (shouldWrap) {
-        yield* wrapSpannedStringByWord(formattedString, width);
+    if (context.WRAP_LINES) {
+        for (const wrappedLine of wrapSpannedStringByWord(
+            formattedString,
+            width
+        )) {
+            wrappedLine.padEnd(width);
+            if (backgroundColor) {
+                wrappedLine.addSpan(0, width, backgroundColor);
+            }
+            yield wrappedLine;
+        }
     } else {
-        yield formattedString.slice(0, width);
+        const truncatedLine = formattedString.slice(0, width).padEnd(width);
+        if (backgroundColor) {
+            truncatedLine.addSpan(0, width, backgroundColor);
+        }
+        yield truncatedLine;
     }
 }

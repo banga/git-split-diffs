@@ -1,5 +1,6 @@
 import { Context } from './context';
 import { T, FormattedString } from './formattedString';
+import { iterFitTextToWidth } from './iterFitTextToWidth';
 
 export function* iterFormatFileName(
     context: Context,
@@ -40,10 +41,13 @@ export function* iterFormatFileName(
             .appendString(' ')
             .appendString(`${fileNameA} -> ${fileNameB}`);
     }
-    formattedString
-        .padEnd(SCREEN_WIDTH)
-        .addSpan(0, SCREEN_WIDTH, FILE_NAME_COLOR);
-    yield formattedString;
+
+    yield* iterFitTextToWidth(
+        context,
+        formattedString,
+        SCREEN_WIDTH,
+        FILE_NAME_COLOR
+    );
 
     yield T().appendString(HORIZONTAL_SEPARATOR);
 }
