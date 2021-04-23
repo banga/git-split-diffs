@@ -182,6 +182,25 @@ Date:   Sun Apr 4 19:04:26 2021 -0700
 "
 `;
 
+exports[`inlineChangesHighlighted commit with tabs 1`] = `
+"                                                                                                                        
+commit f735de7025c6d626c5ae1a291fe24f143dea0313                                                                         
+Author: Shrey Banga <banga.shrey@gmail.com>                                                                             
+Date:   Sun Apr 11 15:25:34 2021 -0700                                                                                  
+                                                                                                                        
+    Add theme support                                                                                                   
+                                                                                                                        
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ ■■ todo.md                                                                                                             
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+@@ -9,2 +9,3 @@                                                                                                         
+    9   -        [x] Organize code                              9   -        [x] Organize code                          
+                                                               10 + -        [x] Move visual config to theme            
+   10   -        [ ] Handle empty diffs                        11   -        [ ] Handle empty diffs                     
+   11                                                          12                                                       
+"
+`;
+
 exports[`inlineChangesHighlighted commits without diffs 1`] = `
 "                                                                                                                        
 commit e5f896655402f8cf2d947c528d45e1d56bbf5717 (HEAD -> main)                                                          
@@ -482,6 +501,26 @@ Date:   Sun Apr 4 19:04:26 2021 -0700
 "
 `;
 
+exports[`splitWithWrapping commit with tabs 1`] = `
+"                                                                                
+commit f735de7025c6d626c5ae1a291fe24f143dea0313                                 
+Author: Shrey Banga <banga.shrey@gmail.com>                                     
+Date:   Sun Apr 11 15:25:34 2021 -0700                                          
+                                                                                
+    Add theme support                                                           
+                                                                                
+────────────────────────────────────────────────────────────────────────────────
+ ■■ todo.md                                                                     
+────────────────────────────────────────────────────────────────────────────────
+@@ -9,2 +9,3 @@                                                                 
+    9   -        [x] Organize code          9   -        [x] Organize code      
+                                           10 + -        [x] Move visual config 
+                                                to theme                        
+   10   -        [ ] Handle empty diffs    11   -        [ ] Handle empty diffs 
+   11                                      12                                   
+"
+`;
+
 exports[`splitWithWrapping commits without diffs 1`] = `
 "                                                                                
 commit e5f896655402f8cf2d947c528d45e1d56bbf5717 (HEAD -> main)                  
@@ -776,6 +815,25 @@ Date:   Sun Apr 4 19:04:26 2021 -0700
 "
 `;
 
+exports[`splitWithoutWrapping commit with tabs 1`] = `
+"                                                                                
+commit f735de7025c6d626c5ae1a291fe24f143dea0313                                 
+Author: Shrey Banga <banga.shrey@gmail.com>                                     
+Date:   Sun Apr 11 15:25:34 2021 -0700                                          
+                                                                                
+    Add theme support                                                           
+                                                                                
+────────────────────────────────────────────────────────────────────────────────
+ ■■ todo.md                                                                     
+────────────────────────────────────────────────────────────────────────────────
+@@ -9,2 +9,3 @@                                                                 
+    9   -        [x] Organize code          9   -        [x] Organize code      
+                                           10 + -        [x] Move visual config 
+   10   -        [ ] Handle empty diffs    11   -        [ ] Handle empty diffs 
+   11                                      12                                   
+"
+`;
+
 exports[`splitWithoutWrapping commits without diffs 1`] = `
 "                                                                                
 commit e5f896655402f8cf2d947c528d45e1d56bbf5717 (HEAD -> main)                  
@@ -1045,6 +1103,25 @@ Date:   Sun Apr 4 19:04:26 2021 -0700
    37 +               \\"sha256\\":                                                 
         \\"bf1e90ed1680b8ee1acb49f2f99426c8a8ac3e49efd63c7f3b41e57e7214dd19\\"      
    32                                                                           
+"
+`;
+
+exports[`unifiedWithWrapping commit with tabs 1`] = `
+"                                                                                
+commit f735de7025c6d626c5ae1a291fe24f143dea0313                                 
+Author: Shrey Banga <banga.shrey@gmail.com>                                     
+Date:   Sun Apr 11 15:25:34 2021 -0700                                          
+                                                                                
+    Add theme support                                                           
+                                                                                
+────────────────────────────────────────────────────────────────────────────────
+ ■■ todo.md                                                                     
+────────────────────────────────────────────────────────────────────────────────
+@@ -9,2 +9,3 @@                                                                 
+    9   -        [x] Organize code                                              
+   10 + -        [x] Move visual config to theme                                
+   10   -        [ ] Handle empty diffs                                         
+   11                                                                           
 "
 `;
 

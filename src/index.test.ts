@@ -1,11 +1,10 @@
-import chalk from 'chalk';
 import { Readable } from 'stream';
 import { Config } from './config';
 import { getContextForConfig } from './context';
 import { iterLinesWithoutAnsiColors } from './iterLinesWithoutAnsiColors';
+import { iterReplaceTabsWithSpaces } from './iterReplaceTabsWithSpaces';
 import { iterSideBySideDiffs } from './iterSideBySideDiffs';
 import { iterWithNewlines } from './iterWithNewlines';
-import { Theme } from './themes';
 import { transformStreamWithIterables } from './transformStreamWithIterables';
 
 const noop = (s: string) => s;
@@ -71,7 +70,12 @@ for (const [configName, configOverride] of Object.entries(CONFIG_OVERRIDES)) {
         const transformedStream = transformStreamWithIterables(
             context,
             Readable.from(input),
-            [iterLinesWithoutAnsiColors, iterSideBySideDiffs, iterWithNewlines]
+            [
+                iterLinesWithoutAnsiColors,
+                iterReplaceTabsWithSpaces,
+                iterSideBySideDiffs,
+                iterWithNewlines,
+            ]
         );
         for await (const chunk of transformedStream) {
             string += chunk.toString();
@@ -196,6 +200,27 @@ index 5a38bdb..ef4ff52 100644
  cask 'slate'
 -cask 'sonos'
  cask 'spotify'`)
+            ).toMatchSnapshot();
+        });
+
+        test('commit with tabs', async function () {
+            expect(
+                await transform(`
+commit f735de7025c6d626c5ae1a291fe24f143dea0313
+Author: Shrey Banga <banga.shrey@gmail.com>
+Date:   Sun Apr 11 15:25:34 2021 -0700
+
+    Add theme support
+
+diff --git a/todo.md b/todo.md
+index 9f14e96..eaf3730 100644
+--- a/todo.md
++++ b/todo.md
+@@ -9,2 +9,3 @@
+ -		[x] Organize code
++-		[x] Move visual config to theme
+ -		[ ] Handle empty diffs
+`)
             ).toMatchSnapshot();
         });
 

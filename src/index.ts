@@ -2,9 +2,10 @@ import chalk from 'chalk';
 import * as process from 'process';
 import stream from 'stream';
 import terminalSize from 'term-size';
-import { Context, getContextForConfig } from './context';
+import { getContextForConfig } from './context';
 import { getGitConfig } from './getGitConfig';
 import { iterLinesWithoutAnsiColors } from './iterLinesWithoutAnsiColors';
+import { iterReplaceTabsWithSpaces } from './iterReplaceTabsWithSpaces';
 import { iterSideBySideDiffs } from './iterSideBySideDiffs';
 import { iterWithNewlines } from './iterWithNewlines';
 import { transformStreamWithIterables } from './transformStreamWithIterables';
@@ -16,6 +17,7 @@ async function main() {
     stream.pipeline(
         transformStreamWithIterables(context, process.stdin, [
             iterLinesWithoutAnsiColors,
+            iterReplaceTabsWithSpaces,
             iterSideBySideDiffs,
             iterWithNewlines,
         ]),
