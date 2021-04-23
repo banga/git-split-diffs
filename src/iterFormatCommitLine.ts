@@ -1,5 +1,6 @@
 import { Context } from './context';
 import { T, FormattedString } from './formattedString';
+import { iterFitTextToWidth } from './iterFitTextToWidth';
 
 export function* iterFormatCommitLine(
     context: Context,
@@ -26,13 +27,21 @@ export function* iterFormatCommitLine(
         case 'Date:':
             labelColor = COMMIT_DATE_COLOR;
             break;
-        default:
-            yield T().appendString(line.padEnd(SCREEN_WIDTH), COMMIT_COLOR);
-            return;
     }
 
-    yield T()
-        .appendString(line.padEnd(SCREEN_WIDTH))
-        .addSpan(label.length + 1, SCREEN_WIDTH - label.length - 1, labelColor)
-        .addSpan(0, SCREEN_WIDTH, COMMIT_COLOR);
+    const formattedLine = T().appendString(line);
+    if (labelColor) {
+        formattedLine.addSpan(
+            label.length + 1,
+            SCREEN_WIDTH - label.length - 1,
+            labelColor
+        );
+    }
+
+    yield* iterFitTextToWidth(
+        context,
+        formattedLine,
+        SCREEN_WIDTH,
+        COMMIT_COLOR
+    );
 }

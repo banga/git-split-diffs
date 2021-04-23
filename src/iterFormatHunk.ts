@@ -128,20 +128,13 @@ export function* iterFormatHunk(
     lineNoA: number,
     lineNoB: number
 ): Iterable<FormattedString> {
-    const {
-        HUNK_HEADER_COLOR,
-        SCREEN_WIDTH,
-        WRAP_LINES,
-        SPLIT_DIFFS,
-    } = context;
+    const { HUNK_HEADER_COLOR, SCREEN_WIDTH, SPLIT_DIFFS } = context;
 
     yield* iterFitTextToWidth(
-        T().appendString(
-            hunkHeaderLine.padEnd(SCREEN_WIDTH),
-            HUNK_HEADER_COLOR
-        ),
+        context,
+        T().appendString(hunkHeaderLine),
         SCREEN_WIDTH,
-        WRAP_LINES
+        HUNK_HEADER_COLOR
     );
 
     if (SPLIT_DIFFS) {

@@ -80,9 +80,9 @@ export function* formatAndFitHunkLine(
     highlightSyntaxInLine(formattedLine, fileName, context.HIGHLIGHTER);
 
     for (const wrappedFormattedLine of iterFitTextToWidth(
+        context,
         formattedLine,
-        lineTextWidth,
-        WRAP_LINES
+        lineTextWidth
     )) {
         const lineNoText = (isFirstLine ? lineNo.toString() : '').padStart(
             LINE_NUMBER_WIDTH
