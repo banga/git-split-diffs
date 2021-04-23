@@ -25,15 +25,14 @@
 -   [x] Semi-automate screenshots with a script
 -   [x] Fix unified diffs
 -   [x] Test on very large diffs
+-   [x] Syntax highlighting
+-   [x] Simplify operations with formatted strings using something like SpannableStringBuilder
 -   [ ] Highlight changes in unified mode
 -   [ ] Make sure to pad wrapped lines in commits
 -   [ ] Wrapped lines on the left with inline changes leak formatting to the right 
--   [x] Syntax highlighting
 -   [ ] Support alpha in colors
 -   [ ] Colorize "stat"s
 -   [ ] Handle 3-way merge diffs (e.g. during merge conflicts)
 -   [ ] See why `less` occasionally goes into search mode
--   [ ] Simplify some of the parsing logic to fully use state matchines or something
--   [ ] Simplify operations with formatted strings using something like SpannableStringBuilder
 -   [ ] Test on linux
 -   [ ] Support custom themes
