@@ -26,6 +26,8 @@
 -   [x] Fix unified diffs
 -   [x] Test on very large diffs
 -   [ ] Highlight changes in unified mode
+-   [ ] Make sure to pad wrapped lines in commits
+-   [ ] Wrapped lines on the left with inline changes leak formatting to the right 
 -   [x] Syntax highlighting
 -   [ ] Support alpha in colors
 -   [ ] Colorize "stat"s
