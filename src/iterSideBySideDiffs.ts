@@ -70,7 +70,7 @@ async function* iterSideBySideDiffsFormatted(
             state = 'diff';
             fileNameA = '';
             fileNameB = '';
-        } else if (line.startsWith('@@')) {
+        } else if (line.startsWith('@@ ')) {
             if (state === 'diff') {
                 yield* yieldFileName();
             } else if (state === 'hunk') {
