@@ -1,21 +1,26 @@
 import { Change } from 'diff';
 import { Context } from './context';
+import { T, FormattedString } from './formattedString';
+import { highlightSyntaxInLine } from './highlightSyntaxInLine';
 import {
     getChangesInLine,
-    iterFormatAndFitLineWithChanges,
-} from './iterFormatAndFitLineWithChanges';
+    highlightChangesInLine,
+} from './highlightChangesInLine';
 import { ThemeColor } from './themes';
+import { iterFitTextToWidth } from './iterFitTextToWidth';
 
 // Assuming people aren't editing lines >=100k lines
 const LINE_NUMBER_WIDTH = 5;
 
-export function formatAndFitHunkLine(
+export function* formatAndFitHunkLine(
     context: Context,
+    fileName: string,
     lineNo: number,
     line: string | null,
     changes: Change[] | null
-): string[] {
+): Iterable<FormattedString> {
     const {
+        BLANK_LINE,
         WRAP_LINES,
         LINE_WIDTH,
         MISSING_LINE_COLOR,
@@ -33,7 +38,8 @@ export function formatAndFitHunkLine(
     // A line number of 0 happens when we read the "No newline at end of file"
     // message as a line at the end of a deleted/inserted file.
     if (line === null || lineNo === 0) {
-        return [MISSING_LINE_COLOR(''.padStart(LINE_WIDTH))];
+        yield T().appendString(BLANK_LINE, MISSING_LINE_COLOR);
+        return;
     }
 
     const linePrefix = line?.slice(0, 1) ?? null;
@@ -69,48 +75,45 @@ export function formatAndFitHunkLine(
     const lineTextWidth = Math.max(LINE_WIDTH - 1 - 1 - 1 - LINE_NUMBER_WIDTH);
 
     let isFirstLine = true;
-    const formattedLines = [];
-    const formattedLineNo = lineNoColor(
-        lineNo.toString().padStart(LINE_NUMBER_WIDTH)
-    );
-    for (const formattedLineText of iterFormatAndFitLineWithChanges(
-        lineText,
-        changes,
+    const formattedLine = T().appendString(lineText);
+    highlightSyntaxInLine(formattedLine, fileName, context.HIGHLIGHTER);
+    highlightChangesInLine(formattedLine, changes, wordColor);
+
+    const lineNoText = lineNo.toString().padStart(LINE_NUMBER_WIDTH);
+
+    for (const wrappedFormattedLine of iterFitTextToWidth(
+        formattedLine,
         lineTextWidth,
-        WRAP_LINES,
-        lineColor,
-        wordColor
+        WRAP_LINES
     )) {
-        const formattedLinePrefix = lineColor(
-            (isFirstLine ? linePrefix : '').padStart(2)
-        );
-        formattedLines.push(
-            formattedLineNo + formattedLinePrefix + formattedLineText
-        );
+        const wrappedLinePrefix = (isFirstLine ? linePrefix : '')
+            .padStart(2)
+            .padEnd(3);
+        yield T()
+            .appendString(lineNoText, lineNoColor)
+            .appendString(wrappedLinePrefix)
+            .appendSpannedString(wrappedFormattedLine)
+            .padEnd(LINE_WIDTH)
+            .addSpan(0, LINE_WIDTH, lineColor);
         isFirstLine = false;
     }
-    return formattedLines;
 }
 
 export function formatAndFitHunkLinePair(
     context: Context,
+    fileNameA: string,
     lineNoA: number,
     lineA: string | null,
+    fileNameB: string,
     lineNoB: number,
     lineB: string | null
 ) {
     const { changesA, changesB } = getChangesInLine(context, lineA, lineB);
-    const formattedLinesA = formatAndFitHunkLine(
-        context,
-        lineNoA,
-        lineA,
-        changesA
+    const formattedLinesA = Array.from(
+        formatAndFitHunkLine(context, fileNameA, lineNoA, lineA, changesA)
     );
-    const formattedLinesB = formatAndFitHunkLine(
-        context,
-        lineNoB,
-        lineB,
-        changesB
+    const formattedLinesB = Array.from(
+        formatAndFitHunkLine(context, fileNameB, lineNoB, lineB, changesB)
     );
     return { formattedLinesA, formattedLinesB };
 }

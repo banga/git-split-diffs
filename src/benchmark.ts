@@ -1,12 +1,16 @@
-import { wrapLineByWord } from './wrapLineByWord';
+import { wrapSpannedStringByWord } from './wrapSpannedStringByWord';
 
 import Benchmark, { Event } from 'benchmark';
+import { SpannedString } from './SpannedString';
 const suite = new Benchmark.Suite();
 
-// add tests
+const string = SpannedString.create().appendString(
+    'Once upon a midnight dreary'
+);
+
 suite
     .add('wrapLineByWord', function () {
-        wrapLineByWord('Once upon a midnight dreary', 3);
+        wrapSpannedStringByWord(string, 3);
     })
     .on('cycle', function (event: Event) {
         console.log(String(event.target));

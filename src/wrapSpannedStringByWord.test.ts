@@ -1,19 +1,22 @@
-import { wrapLineByWord } from './wrapLineByWord';
+import { T } from './formattedString';
+import { wrapSpannedStringByWord } from './wrapSpannedStringByWord';
+
+function wrapString(string: string, width: number): string[] {
+    return Array.from(
+        wrapSpannedStringByWord(T().appendString(string), width)
+    ).map((formattedString) => formattedString.getString());
+}
 
 test('single line', () => {
-    expect(wrapLineByWord('one two three', 100)).toEqual(['one two three']);
+    expect(wrapString('one two three', 100)).toEqual(['one two three']);
 });
 
 test('one word per line', () => {
-    expect(wrapLineByWord('one two three', 5)).toEqual([
-        'one ',
-        'two ',
-        'three',
-    ]);
+    expect(wrapString('one two three', 5)).toEqual(['one ', 'two ', 'three']);
 });
 
 test('multiple words per line', () => {
-    expect(wrapLineByWord('one two three four five six', 10)).toEqual([
+    expect(wrapString('one two three four five six', 10)).toEqual([
         'one two ',
         'three four',
         ' five six',
@@ -21,21 +24,15 @@ test('multiple words per line', () => {
 });
 
 test('leading and trailing spaces', () => {
-    expect(wrapLineByWord(' one two ', 3)).toEqual([
-        ' ',
-        'one',
-        ' ',
-        'two',
-        ' ',
-    ]);
+    expect(wrapString(' one two ', 3)).toEqual([' ', 'one', ' ', 'two', ' ']);
 });
 
 test('multiple spaces', () => {
-    expect(wrapLineByWord('one   two', 4)).toEqual(['one ', '  ', 'two']);
+    expect(wrapString('one   two', 4)).toEqual(['one ', '  ', 'two']);
 });
 
 test('break long words', () => {
-    expect(wrapLineByWord('one longword two', 3)).toEqual([
+    expect(wrapString('one longword two', 3)).toEqual([
         'one',
         ' lo',
         'ngw',
@@ -47,13 +44,13 @@ test('break long words', () => {
 
 test('should not add or remove characters', () => {
     for (const s of ['\none\n\ntwo three four\n']) {
-        expect(wrapLineByWord(s, 3).join('')).toEqual(s);
+        expect(wrapString(s, 3).join('')).toEqual(s);
     }
 });
 
 test('snapshot tests', () => {
     function wrapAndJoin(text: string, width: number): string {
-        return wrapLineByWord(text, width).join('\n');
+        return wrapString(text, width).join('\n');
     }
 
     expect(
@@ -122,7 +119,7 @@ test('snapshot tests', () => {
 
 test('off-by-one', () => {
     expect(
-        wrapLineByWord(
+        wrapString(
             '              "url": "https://homebrew.bintray.com/bottles/go-1.14.2_1.catalina.bottle.tar.gz",',
             72
         )

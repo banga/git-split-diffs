@@ -1,4 +1,5 @@
 import ansiRegex from 'ansi-regex';
+import { Context } from './context';
 
 const ANSI_COLOR_CODE_REGEX = ansiRegex();
 
@@ -7,6 +8,7 @@ const ANSI_COLOR_CODE_REGEX = ansiRegex();
  * --color is used.
  */
 export async function* iterLinesWithoutAnsiColors(
+    context: Context,
     lines: AsyncIterable<string>
 ) {
     for await (const line of lines) {

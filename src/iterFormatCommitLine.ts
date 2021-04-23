@@ -1,9 +1,10 @@
 import { Context } from './context';
+import { T, FormattedString } from './formattedString';
 
 export function* iterFormatCommitLine(
     context: Context,
     line: string
-): Iterable<string> {
+): Iterable<FormattedString> {
     const {
         COMMIT_AUTHOR_COLOR,
         COMMIT_COLOR,
@@ -26,12 +27,12 @@ export function* iterFormatCommitLine(
             labelColor = COMMIT_DATE_COLOR;
             break;
         default:
-            yield COMMIT_COLOR(line.padEnd(SCREEN_WIDTH));
+            yield T().appendString(line.padEnd(SCREEN_WIDTH), COMMIT_COLOR);
             return;
     }
 
-    yield COMMIT_COLOR(
-        `${label} ${labelColor(line.slice(label.length + 1))}` +
-            ''.padEnd(SCREEN_WIDTH - line.length)
-    );
+    yield T()
+        .appendString(line.padEnd(SCREEN_WIDTH))
+        .addSpan(label.length + 1, SCREEN_WIDTH - label.length - 1, labelColor)
+        .addSpan(0, SCREEN_WIDTH, COMMIT_COLOR);
 }

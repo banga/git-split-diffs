@@ -24,12 +24,13 @@
         "ansi-regex": "^5.0.0",
         "chalk": "^4.1.0",
         "diff": "^5.0.0",
+        "shiki": "^0.9.3",
         "term-size": "^2.2.1"
     },
     "scripts": {
         "test": "tsc && jest",
         "clean": "rimraf ./build",
-        "build": "yarn clean && yarn esbuild --external:ansi-regex --external:chalk --external:diff --external:term-size --platform=node --target=node12 --outdir=build --bundle",
+        "build": "yarn clean && yarn esbuild --external:ansi-regex --external:chalk --external:diff --external:shiki --external:term-size --platform=node --target=node12 --outdir=build --bundle",
         "build:dev": "yarn build src/index.ts src/benchmark.ts",
         "build:publish": "yarn build src/index.ts --minify",
         "benchmark": "yarn build:dev && node build/benchmark.js",

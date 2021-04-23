@@ -1,18 +1,18 @@
-import { Context } from './context';
-import { wrapLineByWord } from './wrapLineByWord';
+import { FormattedString } from './formattedString';
+import { wrapSpannedStringByWord } from './wrapSpannedStringByWord';
 
 /**
  * Wraps or truncates the given line to into the allowed width, depending on
  * the config.
  */
 export function* iterFitTextToWidth(
-    text: string,
+    formattedString: FormattedString,
     width: number,
     shouldWrap: boolean
-): Iterable<string> {
+): Iterable<FormattedString> {
     if (shouldWrap) {
-        yield* wrapLineByWord(text, width);
+        yield* wrapSpannedStringByWord(formattedString, width);
     } else {
-        yield text.slice(0, width);
+        yield formattedString.slice(0, width);
     }
 }

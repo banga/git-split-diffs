@@ -1,10 +1,11 @@
 import { Context } from './context';
+import { T, FormattedString } from './formattedString';
 
 export function* iterFormatFileName(
     context: Context,
     fileNameA: string,
     fileNameB: string
-): Iterable<string> {
+): Iterable<FormattedString> {
     const {
         HORIZONTAL_SEPARATOR,
         INSERTED_LINE_NO_COLOR,
@@ -13,26 +14,36 @@ export function* iterFormatFileName(
         SCREEN_WIDTH,
     } = context;
 
-    yield HORIZONTAL_SEPARATOR;
+    yield T().appendString(HORIZONTAL_SEPARATOR);
 
-    let indicator;
-    let label;
+    const formattedString = T().appendString(' ');
     if (!fileNameA) {
-        indicator = INSERTED_LINE_NO_COLOR('■■');
-        label = fileNameB;
+        formattedString
+            .appendString('■■', INSERTED_LINE_NO_COLOR)
+            .appendString(' ')
+            .appendString(fileNameB);
     } else if (!fileNameB) {
-        indicator = DELETED_LINE_NO_COLOR('■■');
-        label = fileNameA;
+        formattedString
+            .appendString('■■', DELETED_LINE_NO_COLOR)
+            .appendString(' ')
+            .appendString(fileNameA);
     } else if (fileNameA === fileNameB) {
-        indicator = DELETED_LINE_NO_COLOR('■') + INSERTED_LINE_NO_COLOR('■');
-        label = fileNameA;
+        formattedString
+            .appendString('■', DELETED_LINE_NO_COLOR)
+            .appendString('■', INSERTED_LINE_NO_COLOR)
+            .appendString(' ')
+            .appendString(fileNameA);
     } else {
-        indicator = DELETED_LINE_NO_COLOR('■') + INSERTED_LINE_NO_COLOR('■');
-        label = FILE_NAME_COLOR(`${fileNameA} -> ${fileNameB}`);
+        formattedString
+            .appendString('■', DELETED_LINE_NO_COLOR)
+            .appendString('■', INSERTED_LINE_NO_COLOR)
+            .appendString(' ')
+            .appendString(`${fileNameA} -> ${fileNameB}`);
     }
-    yield FILE_NAME_COLOR(' ') +
-        indicator +
-        FILE_NAME_COLOR(' ' + label.padEnd(SCREEN_WIDTH - 2 - 2));
+    formattedString
+        .padEnd(SCREEN_WIDTH)
+        .addSpan(0, SCREEN_WIDTH, FILE_NAME_COLOR);
+    yield formattedString;
 
-    yield HORIZONTAL_SEPARATOR;
+    yield T().appendString(HORIZONTAL_SEPARATOR);
 }

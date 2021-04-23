@@ -1,4 +1,6 @@
 import { Readable } from 'stream';
+import { Context } from './context';
+import { iterlinesFromReadableAsync } from './iterLinesFromReadable';
 
 /**
  * Convenience function for transforming a readable stream, `input`, via a
@@ -6,15 +8,16 @@ import { Readable } from 'stream';
  * stream, `output`.
  */
 export function transformStreamWithIterables(
+    context: Context,
     input: Readable,
-    firstTransformer: (input: Readable) => AsyncIterable<string>,
-    ...restTransformers: ((
+    transformers: ((
+        context: Context,
         iterable: AsyncIterable<string>
     ) => AsyncIterable<string>)[]
 ): Readable {
-    let i = firstTransformer(input);
-    for (const transformer of restTransformers) {
-        i = transformer(i);
+    let i = iterlinesFromReadableAsync(input);
+    for (const transformer of transformers) {
+        i = transformer(context, i);
     }
     return Readable.from(i);
 }

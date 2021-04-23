@@ -1,12 +1,40 @@
 import chalk from 'chalk';
 import { Readable } from 'stream';
 import { Config } from './config';
-import { iterlinesFromReadableAsync } from './iterLinesFromReadable';
+import { getContextForConfig } from './context';
 import { iterLinesWithoutAnsiColors } from './iterLinesWithoutAnsiColors';
-import { getSideBySideDiffIterator } from './iterSideBySideDiffs';
+import { iterSideBySideDiffs } from './iterSideBySideDiffs';
 import { iterWithNewlines } from './iterWithNewlines';
-import { parseTheme } from './themes';
+import { parseTheme, Theme } from './themes';
 import { transformStreamWithIterables } from './transformStreamWithIterables';
+
+const noop = (s: string) => s;
+
+const TEST_CONFIG: Config = {
+    SCREEN_WIDTH: 120,
+    MIN_LINE_WIDTH: 60,
+    WRAP_LINES: false,
+    HIGHLIGHT_LINE_CHANGES: false,
+
+    DEFAULT_COLOR: noop,
+    COMMIT_COLOR: noop,
+    COMMIT_SHA_COLOR: noop,
+    COMMIT_AUTHOR_COLOR: noop,
+    COMMIT_DATE_COLOR: noop,
+    BORDER_COLOR: noop,
+    FILE_NAME_COLOR: noop,
+    HUNK_HEADER_COLOR: noop,
+    DELETED_WORD_COLOR: noop,
+    DELETED_LINE_COLOR: noop,
+    DELETED_LINE_NO_COLOR: noop,
+    INSERTED_WORD_COLOR: noop,
+    INSERTED_LINE_COLOR: noop,
+    INSERTED_LINE_NO_COLOR: noop,
+    UNMODIFIED_WORD_COLOR: noop,
+    UNMODIFIED_LINE_COLOR: noop,
+    UNMODIFIED_LINE_NO_COLOR: noop,
+    MISSING_LINE_COLOR: noop,
+};
 
 const CONFIG_OVERRIDES: Record<string, Partial<Config>> = {
     splitWithoutWrapping: {
@@ -34,24 +62,16 @@ const CONFIG_OVERRIDES: Record<string, Partial<Config>> = {
 for (const [configName, configOverride] of Object.entries(CONFIG_OVERRIDES)) {
     async function transform(input: string): Promise<string> {
         const testConfig: Config = {
-            SCREEN_WIDTH: 120,
-            MIN_LINE_WIDTH: 60,
-            WRAP_LINES: false,
-            HIGHLIGHT_LINE_CHANGES: false,
-            ...parseTheme({}, new chalk.Instance({ level: 0 })),
+            ...TEST_CONFIG,
             ...configOverride,
         };
-        const iterSideBySideDiffWithoutColors = getSideBySideDiffIterator(
-            testConfig
-        );
+        const context = await getContextForConfig(testConfig);
 
         let string = '';
         const transformedStream = transformStreamWithIterables(
+            context,
             Readable.from(input),
-            iterlinesFromReadableAsync,
-            iterLinesWithoutAnsiColors,
-            iterSideBySideDiffWithoutColors,
-            iterWithNewlines
+            [iterLinesWithoutAnsiColors, iterSideBySideDiffs, iterWithNewlines]
         );
         for await (const chunk of transformedStream) {
             string += chunk.toString();

@@ -1,9 +1,12 @@
+import { FormattedString } from './formattedString';
+import { SpannedString } from './SpannedString';
+
 const SPACE_REGEX = /\s/;
 
-export function wrapLineByWord(text: string, width: number): string[] {
+function getLineBreaksForString(string: string, width: number): number[] {
     // Short circuit if no wrapping is required
-    if (text.length <= width) {
-        return [text];
+    if (string.length <= width) {
+        return [string.length];
     }
 
     const lineBreaks: number[] = [];
@@ -47,11 +50,11 @@ export function wrapLineByWord(text: string, width: number): string[] {
 
     let prevIndex = 0;
     let curIndex = 1;
-    let prevIsSpace = SPACE_REGEX.test(text[prevIndex]);
+    let prevIsSpace = SPACE_REGEX.test(string[prevIndex]);
 
     // Add one word at a time
-    while (curIndex < text.length) {
-        const isSpace = SPACE_REGEX.test(text[curIndex]);
+    while (curIndex < string.length) {
+        const isSpace = SPACE_REGEX.test(string[curIndex]);
         if (isSpace) {
             pushWord(prevIndex, curIndex);
             prevIndex = curIndex;
@@ -69,15 +72,27 @@ export function wrapLineByWord(text: string, width: number): string[] {
         flushLine();
     }
 
-    const lines = [];
+    return lineBreaks;
+}
+
+export function wrapSpannedStringByWord<T>(
+    spannedString: SpannedString<T>,
+    width: number
+): SpannedString<T>[] {
+    const string = spannedString.getString();
+    const lineBreaks = getLineBreaksForString(string, width);
+
+    const wrappedSpannedStrings: SpannedString<T>[] = [];
     let prevLineBreak = 0;
     for (const lineBreak of lineBreaks) {
-        lines.push(text.slice(prevLineBreak, lineBreak));
+        wrappedSpannedStrings.push(
+            spannedString.slice(prevLineBreak, lineBreak)
+        );
         prevLineBreak = lineBreak;
     }
-    if (prevLineBreak < text.length - 1) {
-        lines.push(text.slice(prevLineBreak));
+    if (prevLineBreak < string.length - 1) {
+        wrappedSpannedStrings.push(spannedString.slice(prevLineBreak));
     }
 
-    return lines;
+    return wrappedSpannedStrings;
 }

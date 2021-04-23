@@ -1,6 +1,6 @@
 import { Change, diffWords } from 'diff';
-import { Context } from 'vm';
-import { iterFitTextToWidth } from './iterFitTextToWidth';
+import { Context } from './context';
+import { FormattedString } from './formattedString';
 import { ThemeColor } from './themes';
 
 const HIGHLIGHT_CHANGE_RATIO = 1.0;
@@ -56,48 +56,24 @@ export function getChangesInLine(
     return { changesA: null, changesB: null };
 }
 
-export function* iterFormatAndFitLineWithChanges(
-    lineText: string,
+export function highlightChangesInLine(
+    formattedLine: FormattedString,
     changes: Change[] | null,
-    lineWidth: number,
-    wrapLines: boolean,
-    lineColor: ThemeColor,
     highlightColor: ThemeColor
-) {
-    let changeIndex = 0;
-    let changeStartIndex = 0;
-    for (const wrappedLine of iterFitTextToWidth(
-        lineText,
-        lineWidth,
-        wrapLines
-    )) {
-        if (changes) {
-            let highlightedText = '';
-            let linePaddingLength = lineWidth;
-            let remainingLength = wrappedLine.length;
-            while (remainingLength > 0) {
-                const change = changes[changeIndex];
-                let changeText = change.value.slice(changeStartIndex);
-                if (changeText.length > remainingLength) {
-                    changeText = changeText.slice(0, remainingLength);
-                    changeStartIndex += remainingLength;
-                    remainingLength = 0;
-                } else {
-                    changeIndex++;
-                    changeStartIndex = 0;
-                }
-                remainingLength -= changeText.length;
-                highlightedText +=
-                    change.added || change.removed
-                        ? highlightColor(changeText)
-                        : lineColor(changeText);
-                linePaddingLength -= changeText.length;
-            }
-            yield lineColor(' ') +
-                highlightedText +
-                lineColor(''.padEnd(linePaddingLength));
-        } else {
-            yield lineColor(' ' + wrappedLine.padEnd(lineWidth));
+): void {
+    if (!changes) {
+        return;
+    }
+
+    let lineIndex = 0;
+    for (const change of changes) {
+        if (change.added || change.removed) {
+            formattedLine.addSpan(
+                lineIndex,
+                lineIndex + change.value.length,
+                highlightColor
+            );
         }
+        lineIndex += change.value.length;
     }
 }
