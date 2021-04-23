@@ -26,7 +26,8 @@
 -   [x] Fix unified diffs
 -   [x] Test on very large diffs
 -   [ ] Highlight changes in unified mode
--   [ ] Syntax highlighting
+-   [x] Syntax highlighting
+-   [ ] Support alpha in colors
 -   [ ] Colorize "stat"s
 -   [ ] Handle 3-way merge diffs (e.g. during merge conflicts)
 -   [ ] See why `less` occasionally goes into search mode
