@@ -79,13 +79,14 @@ export function* formatAndFitHunkLine(
     highlightChangesInLine(formattedLine, changes, wordColor);
     highlightSyntaxInLine(formattedLine, fileName, context.HIGHLIGHTER);
 
-    const lineNoText = lineNo.toString().padStart(LINE_NUMBER_WIDTH);
-
     for (const wrappedFormattedLine of iterFitTextToWidth(
         formattedLine,
         lineTextWidth,
         WRAP_LINES
     )) {
+        const lineNoText = (isFirstLine ? lineNo.toString() : '').padStart(
+            LINE_NUMBER_WIDTH
+        );
         const wrappedLinePrefix = (isFirstLine ? linePrefix : '')
             .padStart(2)
             .padEnd(3);
