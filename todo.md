@@ -28,8 +28,8 @@
 -   [x] Syntax highlighting
 -   [x] Simplify operations with formatted strings using something like SpannableStringBuilder
 -   [ ] Highlight changes in unified mode
--   [ ] Make sure to pad wrapped lines in commits
--   [ ] Wrapped lines on the left with inline changes leak formatting to the right 
+-   [x] Make sure to pad wrapped lines in commits
+-   [ ] Wrapped lines on the left with inline changes leak formatting to the right
 -   [ ] Support alpha in colors
 -   [ ] Colorize "stat"s
 -   [ ] Handle 3-way merge diffs (e.g. during merge conflicts)
