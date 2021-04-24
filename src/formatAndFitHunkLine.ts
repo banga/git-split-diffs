@@ -43,22 +43,18 @@ export function* formatAndFitHunkLine(
     const linePrefix = line?.slice(0, 1) ?? null;
     const lineText = line?.slice(1) ?? null;
 
-    let wordColor: ThemeColor;
     let lineColor: ThemeColor;
     let lineNoColor: ThemeColor;
     switch (linePrefix) {
         case '-':
-            wordColor = DELETED_WORD_COLOR;
             lineColor = DELETED_LINE_COLOR;
             lineNoColor = DELETED_LINE_NO_COLOR;
             break;
         case '+':
-            wordColor = INSERTED_WORD_COLOR;
             lineColor = INSERTED_LINE_COLOR;
             lineNoColor = INSERTED_LINE_NO_COLOR;
             break;
         default:
-            wordColor = UNMODIFIED_LINE_COLOR; // This is actually not used
             lineColor = UNMODIFIED_LINE_COLOR;
             lineNoColor = UNMODIFIED_LINE_NO_COLOR;
             break;
@@ -74,7 +70,7 @@ export function* formatAndFitHunkLine(
 
     let isFirstLine = true;
     const formattedLine = T().appendString(lineText);
-    highlightChangesInLine(formattedLine, changes, wordColor);
+    highlightChangesInLine(context, linePrefix, formattedLine, changes);
     highlightSyntaxInLine(formattedLine, fileName, context.HIGHLIGHTER);
 
     for (const fittedLine of iterFitTextToWidth(

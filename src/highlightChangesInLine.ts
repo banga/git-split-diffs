@@ -17,11 +17,11 @@ function getChangesInLine(
     context: Context,
     lineA: string | null,
     lineB: string | null
-): [Change[], Change[]] | [null, null] {
+): Change[] | null {
     const { HIGHLIGHT_LINE_CHANGES } = context;
 
     if (!HIGHLIGHT_LINE_CHANGES || lineA === null || lineB === null) {
-        return [null, null];
+        return null;
     }
 
     // Drop the prefix
@@ -32,35 +32,29 @@ function getChangesInLine(
         ignoreWhitespace: false,
     });
 
-    const changesA = [];
-    const changesB = [];
+    // Count how many words changed vs total words. Note that a replacement gets
+    // double counted.
     let changedWords = 0;
     let totalWords = 0;
-    for (const change of changes) {
-        if (change.removed) {
-            changedWords += change.count ?? 0;
-            changesA.push(change);
-        } else if (change.added) {
-            changedWords += change.count ?? 0;
-            changesB.push(change);
+    for (const { added, removed, count } of changes) {
+        if (added || removed) {
+            changedWords += count ?? 0;
         } else {
-            totalWords += change.count ?? 0;
-            changesA.push(change);
-            changesB.push(change);
+            totalWords += count ?? 0;
         }
     }
     if (changedWords > totalWords * HIGHLIGHT_CHANGE_RATIO) {
-        return [null, null];
+        return null;
     }
 
-    return [changesA, changesB];
+    return changes;
 }
 
 export function getChangesInLines(
     context: Context,
     linesA: (string | null)[],
     linesB: (string | null)[]
-): ([Change[], Change[]] | [null, null])[] {
+): Array<Change[] | null> {
     const changes = [];
     for (const [lineA, lineB] of zip(linesA, linesB)) {
         changes.push(getChangesInLine(context, lineA ?? null, lineB ?? null));
@@ -69,21 +63,48 @@ export function getChangesInLines(
 }
 
 export function highlightChangesInLine(
+    context: Context,
+    linePrefix: string,
     formattedLine: FormattedString,
-    changes: Change[] | null,
-    highlightColor: ThemeColor
+    changes: Change[] | null
 ): void {
     if (!changes) {
         return;
     }
 
+    const {
+        DELETED_WORD_COLOR,
+        INSERTED_WORD_COLOR,
+        UNMODIFIED_LINE_COLOR,
+    } = context;
+
+    let wordColor: ThemeColor;
+    switch (linePrefix) {
+        case '-':
+            wordColor = DELETED_WORD_COLOR;
+            break;
+        case '+':
+            wordColor = INSERTED_WORD_COLOR;
+            break;
+        default:
+            wordColor = UNMODIFIED_LINE_COLOR; // This is actually not used
+            break;
+    }
+
     let lineIndex = 0;
     for (const change of changes) {
-        if (change.added || change.removed) {
+        // Skip changes that would not be present in the line
+        if (change.removed && linePrefix === '+') {
+            continue;
+        }
+        if (change.added && linePrefix === '-') {
+            continue;
+        }
+        if (change.removed || change.added) {
             formattedLine.addSpan(
                 lineIndex,
                 lineIndex + change.value.length,
-                highlightColor
+                wordColor
             );
         }
         lineIndex += change.value.length;
