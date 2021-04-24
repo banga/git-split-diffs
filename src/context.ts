@@ -1,5 +1,7 @@
+import { Chalk } from 'chalk';
 import { getHighlighter, Highlighter } from 'shiki';
 import { Config } from './config';
+import { FormattedString, T } from './formattedString';
 
 /**
  * Internal context object used to pass around config and config-derived
@@ -9,7 +11,7 @@ export type Context = Config & {
     SPLIT_DIFFS: boolean;
     LINE_WIDTH: number;
     BLANK_LINE: string;
-    HORIZONTAL_SEPARATOR: string;
+    HORIZONTAL_SEPARATOR: FormattedString;
     HIGHLIGHTER?: Highlighter;
 };
 
@@ -25,9 +27,9 @@ export async function getContextForConfig(config: Config): Promise<Context> {
     }
 
     const BLANK_LINE = ''.padStart(LINE_WIDTH);
-    const HORIZONTAL_SEPARATOR = config.BORDER_COLOR(
-        ''.padStart(config.SCREEN_WIDTH, '─')
-    );
+    const HORIZONTAL_SEPARATOR = T()
+        .padEnd(config.SCREEN_WIDTH, '─')
+        .addSpan(0, config.SCREEN_WIDTH, config.BORDER_COLOR);
 
     let HIGHLIGHTER = undefined;
     if (config.SYNTAX_HIGHLIGHTING_THEME) {

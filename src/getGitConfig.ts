@@ -38,7 +38,7 @@ export async function getGitConfig(
         rawConfig['theme-name'] in THEME_DEFINITIONS
             ? rawConfig['theme-name']
             : 'default';
-    const theme = parseThemeDefinition(THEME_DEFINITIONS[themeName], chalk);
+    const theme = parseThemeDefinition(THEME_DEFINITIONS[themeName]);
 
     // Defaults to the theme's setting
     const syntaxHighlightingTheme =
@@ -63,6 +63,7 @@ export async function getGitConfig(
 
     return {
         ...theme,
+        CHALK: chalk,
         SCREEN_WIDTH: screenWidth,
         MIN_LINE_WIDTH: minLineWidth,
         WRAP_LINES: wrapLines,

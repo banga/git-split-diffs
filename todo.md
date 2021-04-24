@@ -30,7 +30,7 @@
 -   [ ] Highlight changes in unified mode
 -   [x] Make sure to pad wrapped lines in commits
 -   [ ] Wrapped lines on the left with inline changes leak formatting to the right
--   [ ] Support alpha in colors
+-   [x] Support alpha in colors
 -   [ ] Colorize "stat"s
 -   [ ] Handle 3-way merge diffs (e.g. during merge conflicts)
 -   [ ] See why `less` occasionally goes into search mode

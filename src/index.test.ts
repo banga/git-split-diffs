@@ -1,3 +1,4 @@
+import chalk from 'chalk';
 import { Readable } from 'stream';
 import { Config } from './config';
 import { getContextForConfig } from './context';
@@ -7,15 +8,23 @@ import { iterSideBySideDiffs } from './iterSideBySideDiffs';
 import { iterWithNewlines } from './iterWithNewlines';
 import { transformStreamWithIterables } from './transformStreamWithIterables';
 
-const noop = (s: string) => s;
+const noop = {};
+const replaceColoredText = (...args: unknown[]) => (text: string) =>
+    text.replace(/./g, '░');
 
 const TEST_CONFIG: Config = {
+    // Provide a fake chalk implementation to make it easier to read snapshots
+    CHALK: {
+        // @ts-expect-error
+        rgb: replaceColoredText,
+        // @ts-expect-error
+        bgRgb: replaceColoredText,
+    },
     SCREEN_WIDTH: 120,
     MIN_LINE_WIDTH: 60,
     WRAP_LINES: false,
     HIGHLIGHT_LINE_CHANGES: false,
 
-    DEFAULT_COLOR: noop,
     COMMIT_COLOR: noop,
     COMMIT_SHA_COLOR: noop,
     COMMIT_AUTHOR_COLOR: noop,
@@ -29,7 +38,6 @@ const TEST_CONFIG: Config = {
     INSERTED_WORD_COLOR: noop,
     INSERTED_LINE_COLOR: noop,
     INSERTED_LINE_NO_COLOR: noop,
-    UNMODIFIED_WORD_COLOR: noop,
     UNMODIFIED_LINE_COLOR: noop,
     UNMODIFIED_LINE_NO_COLOR: noop,
     MISSING_LINE_COLOR: noop,
@@ -53,8 +61,8 @@ const CONFIG_OVERRIDES: Record<string, Partial<Config>> = {
     },
     inlineChangesHighlighted: {
         HIGHLIGHT_LINE_CHANGES: true,
-        DELETED_WORD_COLOR: (s) => s.replace(/./g, '░'),
-        INSERTED_WORD_COLOR: (s) => s.replace(/./g, '▓'),
+        DELETED_WORD_COLOR: { color: { r: 255, g: 0, b: 0, a: 255 } },
+        INSERTED_WORD_COLOR: { color: { r: 0, g: 255, b: 0, a: 255 } },
     },
 };
 

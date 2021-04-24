@@ -21,7 +21,6 @@ export function* formatAndFitHunkLine(
 ): Iterable<FormattedString> {
     const {
         BLANK_LINE,
-        WRAP_LINES,
         LINE_WIDTH,
         MISSING_LINE_COLOR,
         DELETED_WORD_COLOR,
@@ -30,7 +29,6 @@ export function* formatAndFitHunkLine(
         INSERTED_WORD_COLOR,
         INSERTED_LINE_COLOR,
         INSERTED_LINE_NO_COLOR,
-        UNMODIFIED_WORD_COLOR,
         UNMODIFIED_LINE_COLOR,
         UNMODIFIED_LINE_NO_COLOR,
     } = context;
@@ -60,7 +58,7 @@ export function* formatAndFitHunkLine(
             lineNoColor = INSERTED_LINE_NO_COLOR;
             break;
         default:
-            wordColor = UNMODIFIED_WORD_COLOR;
+            wordColor = UNMODIFIED_LINE_COLOR; // This is actually not used
             lineColor = UNMODIFIED_LINE_COLOR;
             lineNoColor = UNMODIFIED_LINE_NO_COLOR;
             break;
@@ -72,14 +70,14 @@ export function* formatAndFitHunkLine(
 
         So (LINE_NUMBER_WIDTH + 1 + 1 + 1 + lineTextWidth) * 2 = LINE_WIDTH
     */
-    const lineTextWidth = Math.max(LINE_WIDTH - 1 - 1 - 1 - LINE_NUMBER_WIDTH);
+    const lineTextWidth = LINE_WIDTH - 1 - 1 - 1 - LINE_NUMBER_WIDTH;
 
     let isFirstLine = true;
     const formattedLine = T().appendString(lineText);
-    highlightChangesInLine(formattedLine, changes, wordColor);
     highlightSyntaxInLine(formattedLine, fileName, context.HIGHLIGHTER);
+    highlightChangesInLine(formattedLine, changes, wordColor);
 
-    for (const wrappedFormattedLine of iterFitTextToWidth(
+    for (const fittedLine of iterFitTextToWidth(
         context,
         formattedLine,
         lineTextWidth
@@ -93,8 +91,7 @@ export function* formatAndFitHunkLine(
         yield T()
             .appendString(lineNoText, lineNoColor)
             .appendString(wrappedLinePrefix)
-            .appendSpannedString(wrappedFormattedLine)
-            .padEnd(LINE_WIDTH)
+            .appendSpannedString(fittedLine)
             .addSpan(0, LINE_WIDTH, lineColor);
         isFirstLine = false;
     }

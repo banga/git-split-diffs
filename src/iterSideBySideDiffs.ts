@@ -56,7 +56,7 @@ async function* iterSideBySideDiffsFormatted(
                 yield* yieldFileName();
             } else if (state === 'hunk') {
                 yield* yieldHunk();
-                yield T().appendString(HORIZONTAL_SEPARATOR);
+                yield HORIZONTAL_SEPARATOR;
             }
 
             state = 'commit';
@@ -159,6 +159,6 @@ export async function* iterSideBySideDiffs(
         context,
         lines
     )) {
-        yield applyFormatting(formattedString);
+        yield applyFormatting(context, formattedString);
     }
 }

@@ -2,7 +2,7 @@ import chalk from 'chalk';
 import path from 'path';
 import { Highlighter } from 'shiki';
 import { FormattedString } from './formattedString';
-import { ThemeColor } from './themes';
+import { parseColorDefinition, ThemeColor } from './themes';
 export type HighlightedText = [string, ThemeColor | null];
 
 export function highlightSyntaxInLine(
@@ -25,7 +25,8 @@ export function highlightSyntaxInLine(
         let index = 0;
         for (const { content, color } of tokens) {
             if (color) {
-                line.addSpan(index, index + content.length, chalk.hex(color));
+                const syntaxColor = parseColorDefinition(color);
+                line.addSpan(index, index + content.length, syntaxColor);
                 index += content.length;
             }
         }

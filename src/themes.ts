@@ -1,4 +1,4 @@
-import { Chalk } from 'chalk';
+import * as assert from 'assert';
 
 type KeywordColor =
     | 'black'
@@ -43,7 +43,6 @@ type ColorDefinition =
       };
 
 export const THEME_COLOR_VARIABLE_NAMES = [
-    'DEFAULT_COLOR',
     'COMMIT_COLOR',
     'COMMIT_SHA_COLOR',
     'COMMIT_AUTHOR_COLOR',
@@ -57,7 +56,6 @@ export const THEME_COLOR_VARIABLE_NAMES = [
     'INSERTED_WORD_COLOR',
     'INSERTED_LINE_COLOR',
     'INSERTED_LINE_NO_COLOR',
-    'UNMODIFIED_WORD_COLOR',
     'UNMODIFIED_LINE_COLOR',
     'UNMODIFIED_LINE_NO_COLOR',
     'MISSING_LINE_COLOR',
@@ -65,13 +63,96 @@ export const THEME_COLOR_VARIABLE_NAMES = [
 
 type ThemeColorVariables = typeof THEME_COLOR_VARIABLE_NAMES[number];
 
-export type ThemeColor = (text: string) => string;
-
 export type ThemeDefinition = {
     SYNTAX_HIGHLIGHTING_THEME?: string;
 } & {
-    [key in ThemeColorVariables]?: ColorDefinition;
+    [key in ThemeColorVariables]: ColorDefinition;
 };
+
+type ColorRgba = {
+    r: number;
+    g: number;
+    b: number;
+    a: number;
+};
+
+export type ThemeColor = {
+    color?: ColorRgba;
+    backgroundColor?: ColorRgba;
+    modifiers?: ColorModifier[];
+};
+
+function hexToRgba(hex: string): ColorRgba {
+    if (hex[0] === '#') {
+        hex = hex.slice(1);
+    }
+
+    let hexNo = parseInt(hex, 16);
+
+    let a = 255;
+    if (hex.length === 8) {
+        a = hexNo & 0xff;
+        hexNo >>>= 8;
+    }
+
+    const b = hexNo & 0xff;
+    hexNo >>>= 8;
+
+    const g = hexNo & 0xff;
+    hexNo >>>= 8;
+
+    const r = hexNo & 0xff;
+
+    return { r, g, b, a };
+}
+
+export function mergeColors(
+    a?: ColorRgba,
+    b?: ColorRgba
+): ColorRgba | undefined {
+    if (!b || b.a === 0) {
+        return a;
+    }
+    if (!a) {
+        return b;
+    }
+    const t = 1.0 - b.a / 255.0;
+    return {
+        r: b.r * (1 - t) + a.r * t,
+        g: b.g * (1 - t) + a.g * t,
+        b: b.b * (1 - t) + a.b * t,
+        a: b.a * (1 - t) + a.a * t,
+    };
+}
+
+function mergeModifiers(
+    a: ColorModifier[] | undefined,
+    b: ColorModifier[] | undefined
+): ColorModifier[] | undefined {
+    if (a && b) {
+        return a.concat(b);
+    }
+    return a ?? b;
+}
+
+function mergeThemeColors(a: ThemeColor, b: ThemeColor): ThemeColor {
+    return {
+        color: mergeColors(a.color, b.color),
+        backgroundColor: mergeColors(a.backgroundColor, b.backgroundColor),
+        modifiers: mergeModifiers(a.modifiers, b.modifiers),
+    };
+}
+
+export function reduceThemeColors(colors: ThemeColor[]): ThemeColor {
+    // Colors are applied in reverse, which allows us to do apply specific
+    // formatting (like syntax highlighting) first and apply more generic colors
+    // (like line colors) last
+    let themeColor: ThemeColor = {};
+    for (let i = colors.length - 1; i >= 0; i--) {
+        themeColor = mergeThemeColors(themeColor, colors[i]);
+    }
+    return themeColor;
+}
 
 export type Theme = {
     SYNTAX_HIGHLIGHTING_THEME?: string;
@@ -79,120 +160,29 @@ export type Theme = {
     [key in ThemeColorVariables]: ThemeColor;
 };
 
-function parseColor(color: Color, chalk: Chalk): Chalk {
-    switch (color) {
-        case 'black':
-        case 'red':
-        case 'green':
-        case 'yellow':
-        case 'blue':
-        case 'magenta':
-        case 'cyan':
-        case 'white':
-        case 'blackBright':
-        case 'redBright':
-        case 'greenBright':
-        case 'yellowBright':
-        case 'blueBright':
-        case 'magentaBright':
-        case 'cyanBright':
-        case 'whiteBright':
-            return chalk[color];
-        default:
-            return chalk.hex(color);
-    }
-}
-
-function parseBackgroundColor(color: Color, chalk: Chalk): Chalk {
-    switch (color) {
-        case 'black':
-        case 'red':
-        case 'green':
-        case 'yellow':
-        case 'blue':
-        case 'magenta':
-        case 'cyan':
-        case 'white':
-        case 'blackBright':
-        case 'redBright':
-        case 'greenBright':
-        case 'yellowBright':
-        case 'blueBright':
-        case 'magentaBright':
-        case 'cyanBright':
-        case 'whiteBright': {
-            const bgFunctionName = `bg${color
-                .slice(0, 1)
-                .toUpperCase()}${color.slice(1)}`;
-            // @ts-expect-error
-            return chalk[bgFunctionName];
-        }
-        default:
-            return chalk.bgHex(color);
-    }
-}
-
-function parseColorModifier(modifier: ColorModifier, chalk: Chalk): Chalk {
-    switch (modifier) {
-        case 'reset':
-        case 'bold':
-        case 'dim':
-        case 'italic':
-        case 'underline':
-        case 'inverse':
-        case 'hidden':
-        case 'strikethrough':
-        case 'visible':
-            return chalk[modifier];
-        default:
-            throw Error(`Invalid color modifier ${modifier}`);
-    }
-}
-
-function parseColorFunction(definition: ColorDefinition, chalk: Chalk): Chalk {
+export function parseColorDefinition(definition: ColorDefinition): ThemeColor {
     if (typeof definition === 'string') {
-        return parseColor(definition, chalk);
+        return { color: hexToRgba(definition) };
     }
-    let fn = chalk;
-    if (definition.color) {
-        fn = parseColor(definition.color, fn);
-    }
-    if (definition.backgroundColor) {
-        fn = parseBackgroundColor(definition.backgroundColor, fn);
-    }
-    if (definition.modifiers) {
-        for (const modifier of definition.modifiers) {
-            fn = parseColorModifier(modifier, fn);
-        }
-    }
-    return fn;
+    return {
+        color: definition.color ? hexToRgba(definition.color) : undefined,
+        backgroundColor: definition.backgroundColor
+            ? hexToRgba(definition.backgroundColor)
+            : undefined,
+        modifiers: definition.modifiers,
+    };
 }
 
-export function parseThemeDefinition(
-    themeDefinition: ThemeDefinition,
-    chalk: Chalk
-): Theme {
-    let defaultColor = themeDefinition['DEFAULT_COLOR'] ?? 'white';
-    if (typeof defaultColor === 'string') {
-        defaultColor = { color: defaultColor };
-    }
-
+export function parseThemeDefinition(themeDefinition: ThemeDefinition): Theme {
     const theme: Partial<Theme> = {
         SYNTAX_HIGHLIGHTING_THEME: themeDefinition.SYNTAX_HIGHLIGHTING_THEME,
     };
     for (const variableName of THEME_COLOR_VARIABLE_NAMES) {
-        let value = themeDefinition[variableName];
-        if (typeof value === 'string') {
-            value = { color: value };
+        const value = themeDefinition[variableName];
+        if (!value) {
+            assert.fail(`${variableName} is missing in theme`);
         }
-
-        theme[variableName] = parseColorFunction(
-            {
-                ...defaultColor,
-                ...value,
-            },
-            chalk
-        );
+        theme[variableName] = parseColorDefinition(value);
     }
 
     return theme as Theme;

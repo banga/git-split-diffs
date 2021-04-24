@@ -9,38 +9,44 @@ export function* iterFormatFileName(
 ): Iterable<FormattedString> {
     const {
         HORIZONTAL_SEPARATOR,
+        INSERTED_LINE_COLOR,
+        DELETED_LINE_COLOR,
         INSERTED_LINE_NO_COLOR,
         DELETED_LINE_NO_COLOR,
         FILE_NAME_COLOR,
         SCREEN_WIDTH,
     } = context;
 
-    yield T().appendString(HORIZONTAL_SEPARATOR);
+    yield HORIZONTAL_SEPARATOR;
 
-    const formattedString = T().appendString(' ');
+    const formattedString = T().appendString(' ■■ ');
+    let fileNameLabel;
     if (!fileNameA) {
         formattedString
-            .appendString('■■', INSERTED_LINE_NO_COLOR)
-            .appendString(' ')
-            .appendString(fileNameB);
+            .addSpan(1, 3, INSERTED_LINE_NO_COLOR)
+            .addSpan(1, 3, INSERTED_LINE_COLOR);
+        fileNameLabel = fileNameB;
     } else if (!fileNameB) {
         formattedString
-            .appendString('■■', DELETED_LINE_NO_COLOR)
-            .appendString(' ')
-            .appendString(fileNameA);
+            .addSpan(1, 3, DELETED_LINE_NO_COLOR)
+            .addSpan(1, 3, DELETED_LINE_COLOR);
+        fileNameLabel = fileNameA;
     } else if (fileNameA === fileNameB) {
         formattedString
-            .appendString('■', DELETED_LINE_NO_COLOR)
-            .appendString('■', INSERTED_LINE_NO_COLOR)
-            .appendString(' ')
-            .appendString(fileNameA);
+            .addSpan(1, 2, DELETED_LINE_NO_COLOR)
+            .addSpan(2, 3, INSERTED_LINE_NO_COLOR)
+            .addSpan(1, 2, DELETED_LINE_COLOR)
+            .addSpan(2, 3, INSERTED_LINE_COLOR);
+        fileNameLabel = fileNameA;
     } else {
         formattedString
-            .appendString('■', DELETED_LINE_NO_COLOR)
-            .appendString('■', INSERTED_LINE_NO_COLOR)
-            .appendString(' ')
-            .appendString(`${fileNameA} -> ${fileNameB}`);
+            .addSpan(1, 2, DELETED_LINE_NO_COLOR)
+            .addSpan(2, 3, INSERTED_LINE_NO_COLOR)
+            .addSpan(1, 2, DELETED_LINE_COLOR)
+            .addSpan(2, 3, INSERTED_LINE_COLOR);
+        fileNameLabel = `${fileNameA} -> ${fileNameB}`;
     }
+    formattedString.appendString(fileNameLabel);
 
     yield* iterFitTextToWidth(
         context,
@@ -49,5 +55,5 @@ export function* iterFormatFileName(
         FILE_NAME_COLOR
     );
 
-    yield T().appendString(HORIZONTAL_SEPARATOR);
+    yield HORIZONTAL_SEPARATOR;
 }
