@@ -1,8 +1,6 @@
-# git-split-diffs (beta)
+# git-split-diffs
 
-> ⚠️ This package is currently in beta, please use it at your own risk.
-
-GitHub style split diffs in your terminal.
+GitHub style split diffs with syntax highlighting in your terminal.
 
 ![Screenshot of default theme](screenshots/default.png?raw=true)
 
