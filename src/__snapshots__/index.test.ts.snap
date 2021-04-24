@@ -12,13 +12,13 @@ Date:   Tue May 23 16:47:17 2017 -0700
  ■■ Brewfile                                                                                                            
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 @@ -19,2 +19,3 @@ brew 'python3'                                                                                        
-   19   brew 'socat'                                           19   brew 'socat'                                        
-                                                               20 + brew 'sonos'                                        
-   20   brew 'terminal-notifier'                               21   brew 'terminal-notifier'                            
+   19    brew 'socat'                                          19    brew 'socat'                                       
+                                                               20  + brew 'sonos'                                       
+   20    brew 'terminal-notifier'                              21    brew 'terminal-notifier'                           
 @@ -42,3 +43,2 @@ cask 'rescuetime'                                                                                     
-   42   cask 'slate'                                           43   cask 'slate'                                        
-   43 - cask 'sonos'                                                                                                    
-   44   cask 'spotify'                                         44   cask 'spotify'                                      
+   42    cask 'slate'                                          43    cask 'slate'                                       
+   43  - cask 'sonos'                                                                                                   
+   44    cask 'spotify'                                        44    cask 'spotify'                                     
 "
 `;
 
@@ -34,9 +34,9 @@ Date:   Sun Apr 11 15:25:34 2021 -0700
  ■■ todo.md                                                                                                             
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 @@ -9,2 +9,3 @@                                                                                                         
-    9   -   [x] Organize code                                   9   -   [x] Organize code                               
-                                                               10 + -   [x] Move visual config to theme                 
-   10   -   [ ] Handle empty diffs                             11   -   [ ] Handle empty diffs                          
+    9    -   [x] Organize code                                  9    -   [x] Organize code                              
+                                                               10  + -   [x] Move visual config to theme                
+   10    -   [ ] Handle empty diffs                            11    -   [ ] Handle empty diffs                         
    11                                                          12                                                       
 "
 `;
@@ -90,9 +90,9 @@ Date:   Sat Apr 10 14:35:42 2021 -0700
  ■■ .gitignore                                                                                                          
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 @@ -0,0 +1,2 @@                                                                                                         
-                                                                1 + node_modules/**                                     
-                                                                2 + build/**                                            
-                                                                3   No newline at end of file                           
+                                                                1  + node_modules/**                                    
+                                                                2  + build/**                                           
+                                                                3    No newline at end of file                          
 "
 `;
 
@@ -111,14 +111,14 @@ Date:   Sun Apr 18 03:17:05 2021 -0700
  ■■ scripts/screenshotTheme                                                                                             
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 @@ -1,7 +0,0 @@                                                                                                         
-    1 - on run argv                                                                                                     
-    2 -     with timeout of 5 seconds                                                                                   
-    3 -         tell app \\"Terminal\\"                                                                                     
-    4 -             open \\"screenshots.sh\\"                                                                               
-    5 -         end tell                                                                                                
-    6 -     end timeout                                                                                                 
-    7 - end run                                                                                                         
-    8   No newline at end of file                                                                                       
+    1  - on run argv                                                                                                    
+    2  -     with timeout of 5 seconds                                                                                  
+    3  -         tell app \\"Terminal\\"                                                                                    
+    4  -             open \\"screenshots.sh\\"                                                                              
+    5  -         end tell                                                                                               
+    6  -     end timeout                                                                                                
+    7  - end run                                                                                                        
+    8    No newline at end of file                                                                                      
 "
 `;
 
@@ -148,36 +148,36 @@ Date:   Sun Apr 4 19:04:26 2021 -0700
  ■■ Brewfile.lock.json                                                                                                  
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 @@ -5 +5 @@                                                                                                             
-    5 -         \\"revision\\": ░░░░                                5 +         \\"revision\\": ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+    5  -         \\"revision\\": ░░░░                               5  +         \\"revision\\": ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 @@ -8 +8 @@                                                                                                             
-    8 -         \\"revision\\": ░░░░                                8 +         \\"revision\\": ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+    8  -         \\"revision\\": ░░░░                               8  +         \\"revision\\": ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 @@ -11 +11 @@                                                                                                           
-   11 -         \\"revision\\": ░░░░                               11 +         \\"revision\\": ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+   11  -         \\"revision\\": ░░░░                              11  +         \\"revision\\": ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 @@ -16 +16 @@                                                                                                           
-   16 -         \\"version\\": \\"1.░░.░░░\\",                         16 +         \\"version\\": \\"1.░░.░\\",                        
+   16  -         \\"version\\": \\"1.░░.░░░\\",                        16  +         \\"version\\": \\"1.░░.░\\",                       
 @@ -17,0 +18 @@                                                                                                         
-                                                               18 +           \\"rebuild\\": 0,                             
+                                                               18  +           \\"rebuild\\": 0,                            
 @@ -19,0 +21 @@                                                                                                         
-                                                               21 +           \\"root_url\\": \\"https://homebrew.bintray.com/
+                                                               21  +           \\"root_url\\": \\"https://homebrew.bintray.com
 @@ -20,0 +23,8 @@                                                                                                       
-                                                               23 +             \\"arm64_big_sur\\": {                      
-                                                               24 +               \\"url\\": \\"https://homebrew.bintray.com/b
-                                                               25 +               \\"sha256\\": \\"e7c1efdd09e951eb46d01a3200b
-                                                               26 +             },                                      
-                                                               27 +             \\"big_sur\\": {                            
-                                                               28 +               \\"url\\": \\"https://homebrew.bintray.com/b
-                                                               29 +               \\"sha256\\": \\"ea37f33fd27369612a3e4e6db6a
-                                                               30 +             },                                      
+                                                               23  +             \\"arm64_big_sur\\": {                     
+                                                               24  +               \\"url\\": \\"https://homebrew.bintray.com/
+                                                               25  +               \\"sha256\\": \\"e7c1efdd09e951eb46d01a3200
+                                                               26  +             },                                     
+                                                               27  +             \\"big_sur\\": {                           
+                                                               28  +               \\"url\\": \\"https://homebrew.bintray.com/
+                                                               29  +               \\"sha256\\": \\"ea37f33fd27369612a3e4e6db6
+                                                               30  +             },                                     
 @@ -22,2 +32,2 @@                                                                                                       
-   22 -               \\"url\\": \\"https://homebrew.bintray.com/b   32 +               \\"url\\": \\"https://homebrew.bintray.com/b
-   23 -               \\"sha256\\": \\"░░░░░░░░░░░░░░░░░░░░░░░░░░░   33 +               \\"sha256\\": \\"░░░░░░░░░░░░░░░░░░░░░░░░░░░
+   22  -               \\"url\\": \\"https://homebrew.bintray.com/   32  +               \\"url\\": \\"https://homebrew.bintray.com/
+   23  -               \\"sha256\\": \\"░░░░░░░░░░░░░░░░░░░░░░░░░░   33  +               \\"sha256\\": \\"░░░░░░░░░░░░░░░░░░░░░░░░░░
 @@ -26,6 +36,2 @@                                                                                                       
-   26 -               \\"url\\": \\"https://homebrew.bintray.com/b   36 +               \\"url\\": \\"https://homebrew.bintray.com/b
-   27 -               \\"sha256\\": \\"░░░░░░░░░░░░░░░░░░░░░░░░░░░   37 +               \\"sha256\\": \\"░░░░░░░░░░░░░░░░░░░░░░░░░░░
-   28 -             },                                                                                                  
-   29 -             \\"high_sierra\\": {                                                                                    
-   30 -               \\"url\\": \\"https://homebrew.bintray.com/b                                                            
-   31 -               \\"sha256\\": \\"0997f6f5cda0e3bdb7789a80b53                                                            
+   26  -               \\"url\\": \\"https://homebrew.bintray.com/   36  +               \\"url\\": \\"https://homebrew.bintray.com/
+   27  -               \\"sha256\\": \\"░░░░░░░░░░░░░░░░░░░░░░░░░░   37  +               \\"sha256\\": \\"░░░░░░░░░░░░░░░░░░░░░░░░░░
+   28  -             },                                                                                                 
+   29  -             \\"high_sierra\\": {                                                                                   
+   30  -               \\"url\\": \\"https://homebrew.bintray.com/                                                            
+   31  -               \\"sha256\\": \\"0997f6f5cda0e3bdb7789a80b5                                                            
    32                                                          38                                                       
 "
 `;
@@ -194,9 +194,9 @@ Date:   Sun Apr 11 15:25:34 2021 -0700
  ■■ todo.md                                                                                                             
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 @@ -9,2 +9,3 @@                                                                                                         
-    9   -        [x] Organize code                              9   -        [x] Organize code                          
-                                                               10 + -        [x] Move visual config to theme            
-   10   -        [ ] Handle empty diffs                        11   -        [ ] Handle empty diffs                     
+    9    -        [x] Organize code                             9    -        [x] Organize code                         
+                                                               10  + -        [x] Move visual config to theme           
+   10    -        [ ] Handle empty diffs                       11    -        [ ] Handle empty diffs                    
    11                                                          12                                                       
 "
 `;
@@ -241,28 +241,28 @@ Date:   Sun Apr 11 16:23:54 2021 -0700
  ■■ src/index.ts                                                                                                        
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 @@ -1,5 +1,6 @@                                                                                                         
-    1   import chalk from 'chalk';                              1   import chalk from 'chalk';                          
-    2   import * as process from 'process';                     2   import * as process from 'process';                 
-                                                                3 + import stream from 'stream';                        
-    3   import terminalSize from 'term-size';                   4   import terminalSize from 'term-size';               
-    4   import { iterlinesFromReadableAsync } from './iterLi    5   import { iterlinesFromReadableAsync } from './iterLi
-    5   import { iterLinesWithoutAnsiColors } from './iterLi    6   import { iterLinesWithoutAnsiColors } from './iterLi
+    1    import chalk from 'chalk';                             1    import chalk from 'chalk';                         
+    2    import * as process from 'process';                    2    import * as process from 'process';                
+                                                                3  + import stream from 'stream';                       
+    3    import terminalSize from 'term-size';                  4    import terminalSize from 'term-size';              
+    4    import { iterlinesFromReadableAsync } from './iterL    5    import { iterlinesFromReadableAsync } from './iterL
+    5    import { iterLinesWithoutAnsiColors } from './iterL    6    import { iterLinesWithoutAnsiColors } from './iterL
 @@ -12,15 +13,16 @@ function main() {                                                                                   
-   12       const screenWidth = terminalSize().columns;        13       const screenWidth = terminalSize().columns;     
-   13       const theme = defaultTheme(chalk, screenWidth);    14       const theme = defaultTheme(chalk, screenWidth); 
+   12        const screenWidth = terminalSize().columns;       13        const screenWidth = terminalSize().columns;    
+   13        const theme = defaultTheme(chalk, screenWidth);   14        const theme = defaultTheme(chalk, screenWidth);
    14                                                          15                                                       
-   15 -     transformStreamWithIterables(                      16 +     stream.pipeline(                                
-   16 -         process.stdin,                                 17 +         transformStreamWithIterables(               
-   17 -         [                                              18 +             process.stdin,                          
-   18               iterlinesFromReadableAsync,                19               iterlinesFromReadableAsync,             
-   19               iterLinesWithoutAnsiColors,                20               iterLinesWithoutAnsiColors,             
-   20               iterSideBySideDiff(theme),                 21               iterSideBySideDiff(theme),              
-   21 -             iterWithNewlines░                          22 +             iterWithNewlines                        
-   22 -         ░,                                             23 +         ░,                                          
-   23 -         process.stdout                                 24 +         process.stdout░                             
-                                                               25 +         console.error                               
-   24       );                                                 26       );                                              
-   25   }                                                      27   }                                                   
+   15  -     transformStreamWithIterables(                     16  +     stream.pipeline(                               
+   16  -         process.stdin,                                17  +         transformStreamWithIterables(              
+   17  -         [                                             18  +             process.stdin,                         
+   18                iterlinesFromReadableAsync,               19                iterlinesFromReadableAsync,            
+   19                iterLinesWithoutAnsiColors,               20                iterLinesWithoutAnsiColors,            
+   20                iterSideBySideDiff(theme),                21                iterSideBySideDiff(theme),             
+   21  -             iterWithNewlines░                         22  +             iterWithNewlines                       
+   22  -         ░,                                            23  +         ░,                                         
+   23  -         process.stdout                                24  +         process.stdout░                            
+                                                               25  +         console.error                              
+   24        );                                                26        );                                             
+   25    }                                                     27    }                                                  
    26                                                          28                                                       
 "
 `;
@@ -279,13 +279,13 @@ Date:   Sun Apr 11 15:25:34 2021 -0700
  ■■ todo.md                                                                                                             
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 @@ -7,6 +7,7 @@                                                                                                         
-    7   -   [x] Handle file addition/deletion properly          7   -   [x] Handle file addition/deletion properly      
-    8   -   [x] Fix incorrect line positions when a hunk has    8   -   [x] Fix incorrect line positions when a hunk has
-    9   -   [x] Organize code                                   9   -   [x] Organize code                               
-                                                               10 + -   [x] Move visual config to theme                 
-   10   -   [ ] Handle empty diffs                             11   -   [ ] Handle empty diffs                          
-   11   -   [ ] Handle moves and renames without diffs         12   -   [ ] Handle moves and renames without diffs      
-   12   -   [ ] Highlight changes in lines                     13   -   [ ] Highlight changes in lines                  
+    7    -   [x] Handle file addition/deletion properly         7    -   [x] Handle file addition/deletion properly     
+    8    -   [x] Fix incorrect line positions when a hunk ha    8    -   [x] Fix incorrect line positions when a hunk ha
+    9    -   [x] Organize code                                  9    -   [x] Organize code                              
+                                                               10  + -   [x] Move visual config to theme                
+   10    -   [ ] Handle empty diffs                            11    -   [ ] Handle empty diffs                         
+   11    -   [ ] Handle moves and renames without diffs        12    -   [ ] Handle moves and renames without diffs     
+   12    -   [ ] Highlight changes in lines                    13    -   [ ] Highlight changes in lines                 
    13                                                          14                                                       
    14                                                          15                                                       
 "
@@ -303,13 +303,13 @@ Date:   Tue May 23 16:47:17 2017 -0700
  ■■ Brewfile                                                                    
 ────────────────────────────────────────────────────────────────────────────────
 @@ -19,2 +19,3 @@ brew 'python3'                                                
-   19   brew 'socat'                       19   brew 'socat'                    
-                                           20 + brew 'sonos'                    
-   20   brew 'terminal-notifier'           21   brew 'terminal-notifier'        
+   19    brew 'socat'                      19    brew 'socat'                   
+                                           20  + brew 'sonos'                   
+   20    brew 'terminal-notifier'          21    brew 'terminal-notifier'       
 @@ -42,3 +43,2 @@ cask 'rescuetime'                                             
-   42   cask 'slate'                       43   cask 'slate'                    
-   43 - cask 'sonos'                                                            
-   44   cask 'spotify'                     44   cask 'spotify'                  
+   42    cask 'slate'                      43    cask 'slate'                   
+   43  - cask 'sonos'                                                           
+   44    cask 'spotify'                    44    cask 'spotify'                 
 "
 `;
 
@@ -325,10 +325,10 @@ Date:   Sun Apr 11 15:25:34 2021 -0700
  ■■ todo.md                                                                     
 ────────────────────────────────────────────────────────────────────────────────
 @@ -9,2 +9,3 @@                                                                 
-    9   -   [x] Organize code               9   -   [x] Organize code           
-                                           10 + -   [x] Move visual config to   
-                                                theme                           
-   10   -   [ ] Handle empty diffs         11   -   [ ] Handle empty diffs      
+    9    -   [x] Organize code              9    -   [x] Organize code          
+                                           10  + -   [x] Move visual config to  
+                                                 theme                          
+   10    -   [ ] Handle empty diffs        11    -   [ ] Handle empty diffs     
    11                                      12                                   
 "
 `;
@@ -382,9 +382,9 @@ Date:   Sat Apr 10 14:35:42 2021 -0700
  ■■ .gitignore                                                                  
 ────────────────────────────────────────────────────────────────────────────────
 @@ -0,0 +1,2 @@                                                                 
-                                            1 + node_modules/**                 
-                                            2 + build/**                        
-                                            3   No newline at end of file       
+                                            1  + node_modules/**                
+                                            2  + build/**                       
+                                            3    No newline at end of file      
 "
 `;
 
@@ -403,15 +403,15 @@ Date:   Sun Apr 18 03:17:05 2021 -0700
  ■■ scripts/screenshotTheme                                                     
 ────────────────────────────────────────────────────────────────────────────────
 @@ -1,7 +0,0 @@                                                                 
-    1 - on run argv                                                             
-    2 -     with timeout of 5 seconds                                           
-    3 -         tell app \\"Terminal\\"                                             
-    4 -             open                                                        
-        \\"screenshots.sh\\"                                                        
-    5 -         end tell                                                        
-    6 -     end timeout                                                         
-    7 - end run                                                                 
-    8   No newline at end of file                                               
+    1  - on run argv                                                            
+    2  -     with timeout of 5 seconds                                          
+    3  -         tell app \\"Terminal\\"                                            
+    4  -             open                                                       
+         \\"screenshots.sh\\"                                                       
+    5  -         end tell                                                       
+    6  -     end timeout                                                        
+    7  - end run                                                                
+    8    No newline at end of file                                              
 "
 `;
 
@@ -441,62 +441,63 @@ Date:   Sun Apr 4 19:04:26 2021 -0700
  ■■ Brewfile.lock.json                                                          
 ────────────────────────────────────────────────────────────────────────────────
 @@ -5 +5 @@                                                                     
-    5 -         \\"revision\\": null            5 +         \\"revision\\": \\"ee2f8d3ba29
-                                                76e50ef577d517bf175c94fbbb0dd\\"  
+    5  -         \\"revision\\": null           5  +         \\"revision\\": \\"ee2f8d3ba2
+                                                 976e50ef577d517bf175c94fbbb0dd\\"
 @@ -8 +8 @@                                                                     
-    8 -         \\"revision\\": null            8 +         \\"revision\\": \\"c4cf96857c0
-                                                50dfa4f65f52109862dc68e55f60a\\"  
+    8  -         \\"revision\\": null           8  +         \\"revision\\": \\"c4cf96857c
+                                                 050dfa4f65f52109862dc68e55f60a\\"
 @@ -11 +11 @@                                                                   
-   11 -         \\"revision\\": null           11 +         \\"revision\\": \\"504d4b93aa6
-                                                eaf4fce1bf17c19f55828ad7229a4\\"  
+   11  -         \\"revision\\": null          11  +         \\"revision\\": \\"504d4b93aa
+                                                 6eaf4fce1bf17c19f55828ad7229a4\\"
 @@ -16 +16 @@                                                                   
-   16 -         \\"version\\": \\"1.14.2_1\\",     16 +         \\"version\\": \\"1.16.3\\",    
+   16  -         \\"version\\": \\"1.14.2_1\\",    16  +         \\"version\\": \\"1.16.3\\",   
 @@ -17,0 +18 @@                                                                 
-                                           18 +           \\"rebuild\\": 0,         
+                                           18  +           \\"rebuild\\": 0,        
 @@ -19,0 +21 @@                                                                 
-                                           21 +           \\"root_url\\": \\"https://h
-                                                omebrew.bintray.com/bottles\\",   
+                                           21  +           \\"root_url\\": \\"https://
+                                                 homebrew.bintray.com/bottles\\", 
 @@ -20,0 +23,8 @@                                                               
-                                           23 +             \\"arm64_big_sur\\": {  
-                                           24 +               \\"url\\": \\"https://ho
-                                                mebrew.bintray.com/bottles/go-1.
-                                                16.3.arm64_big_sur.bottle.tar.gz
-                                                \\",                              
-                                           25 +               \\"sha256\\": \\"e7c1efd
-                                                d09e951eb46d01a3200b01e7fa55ce28
-                                                5b75470051be7fef34f4233ce\\"      
-                                           26 +             },                  
-                                           27 +             \\"big_sur\\": {        
-                                           28 +               \\"url\\": \\"https://ho
-                                                mebrew.bintray.com/bottles/go-1.
-                                                16.3.big_sur.bottle.tar.gz\\",    
-                                           29 +               \\"sha256\\": \\"ea37f33
-                                                fd27369612a3e4e6db6adc46db0e8bdf
-                                                6fac1332bf51bafaa66d43969\\"      
-                                           30 +             },                  
+                                           23  +             \\"arm64_big_sur\\": { 
+                                           24  +               \\"url\\": \\"https://h
+                                                 omebrew.bintray.com/bottles/go-
+                                                 1.16.3.arm64_big_sur.bottle.tar
+                                                 .gz\\",                          
+                                           25  +               \\"sha256\\": \\"e7c1ef
+                                                 dd09e951eb46d01a3200b01e7fa55ce
+                                                 285b75470051be7fef34f4233ce\\"   
+                                           26  +             },                 
+                                           27  +             \\"big_sur\\": {       
+                                           28  +               \\"url\\": \\"https://h
+                                                 omebrew.bintray.com/bottles/go-
+                                                 1.16.3.big_sur.bottle.tar.gz\\", 
+                                           29  +               \\"sha256\\": \\"ea37f3
+                                                 3fd27369612a3e4e6db6adc46db0e8b
+                                                 df6fac1332bf51bafaa66d43969\\"   
+                                           30  +             },                 
 @@ -22,2 +32,2 @@                                                               
-   22 -               \\"url\\": \\"https://ho   32 +               \\"url\\": \\"https://ho
-        mebrew.bintray.com/bottles/go-1.        mebrew.bintray.com/bottles/go-1.
-        14.2_1.catalina.bottle.tar.gz\\",         16.3.catalina.bottle.tar.gz\\",   
-   23 -               \\"sha256\\": \\"15b5623   33 +               \\"sha256\\": \\"69c28f5
-        471330edcc681d7f9d57b449660e6d4b        e60612801c66e51e93d32068f822b245
-        98c7f67af67f4991fc75d61fc\\"              ab83246cb6cb374572eb59e15\\"      
+   22  -               \\"url\\": \\"https://h   32  +               \\"url\\": \\"https://h
+         omebrew.bintray.com/bottles/go-         omebrew.bintray.com/bottles/go-
+         1.14.2_1.catalina.bottle.tar.gz         1.16.3.catalina.bottle.tar.gz\\",
+         \\",                                                                     
+   23  -               \\"sha256\\": \\"15b562   33  +               \\"sha256\\": \\"69c28f
+         3471330edcc681d7f9d57b449660e6d         5e60612801c66e51e93d32068f822b2
+         4b98c7f67af67f4991fc75d61fc\\"            45ab83246cb6cb374572eb59e15\\"   
 @@ -26,6 +36,2 @@                                                               
-   26 -               \\"url\\": \\"https://ho   36 +               \\"url\\": \\"https://ho
-        mebrew.bintray.com/bottles/go-1.        mebrew.bintray.com/bottles/go-1.
-        14.2_1.mojave.bottle.tar.gz\\",           16.3.mojave.bottle.tar.gz\\",     
-   27 -               \\"sha256\\": \\"fa65e7d   37 +               \\"sha256\\": \\"bf1e90e
-        abe514e65ae625ed3c84a6bf58df01ac        d1680b8ee1acb49f2f99426c8a8ac3e4
-        effc6e9aa99752ca8c320ce69\\"              9efd63c7f3b41e57e7214dd19\\"      
-   28 -             },                                                          
-   29 -             \\"high_sierra\\": {                                            
-   30 -               \\"url\\": \\"https://ho                                        
-        mebrew.bintray.com/bottles/go-1.                                        
-        14.2_1.high_sierra.bottle.tar.gz                                        
-        \\",                                                                      
-   31 -               \\"sha256\\": \\"0997f6f                                        
-        5cda0e3bdb7789a80b53621cb588202a                                        
-        b37fd89bcd269f8dfafd23351\\"                                              
+   26  -               \\"url\\": \\"https://h   36  +               \\"url\\": \\"https://h
+         omebrew.bintray.com/bottles/go-         omebrew.bintray.com/bottles/go-
+         1.14.2_1.mojave.bottle.tar.gz\\",         1.16.3.mojave.bottle.tar.gz\\",  
+   27  -               \\"sha256\\": \\"fa65e7   37  +               \\"sha256\\": \\"bf1e90
+         dabe514e65ae625ed3c84a6bf58df01         ed1680b8ee1acb49f2f99426c8a8ac3
+         aceffc6e9aa99752ca8c320ce69\\"            e49efd63c7f3b41e57e7214dd19\\"   
+   28  -             },                                                         
+   29  -             \\"high_sierra\\": {                                           
+   30  -               \\"url\\": \\"https://h                                        
+         omebrew.bintray.com/bottles/go-                                        
+         1.14.2_1.high_sierra.bottle.tar                                        
+         .gz\\",                                                                  
+   31  -               \\"sha256\\": \\"0997f6                                        
+         f5cda0e3bdb7789a80b53621cb58820                                        
+         2ab37fd89bcd269f8dfafd23351\\"                                           
    32                                      38                                   
 "
 `;
@@ -513,10 +514,10 @@ Date:   Sun Apr 11 15:25:34 2021 -0700
  ■■ todo.md                                                                     
 ────────────────────────────────────────────────────────────────────────────────
 @@ -9,2 +9,3 @@                                                                 
-    9   -        [x] Organize code          9   -        [x] Organize code      
-                                           10 + -        [x] Move visual config 
-                                                to theme                        
-   10   -        [ ] Handle empty diffs    11   -        [ ] Handle empty diffs 
+    9    -        [x] Organize code         9    -        [x] Organize code     
+                                           10  + -        [x] Move visual config
+                                                  to theme                      
+   10    -        [ ] Handle empty diffs   11    -        [ ] Handle empty diffs
    11                                      12                                   
 "
 `;
@@ -561,43 +562,43 @@ Date:   Sun Apr 11 16:23:54 2021 -0700
  ■■ src/index.ts                                                                
 ────────────────────────────────────────────────────────────────────────────────
 @@ -1,5 +1,6 @@                                                                 
-    1   import chalk from 'chalk';          1   import chalk from 'chalk';      
-    2   import * as process from            2   import * as process from        
-        'process';                              'process';                      
-                                            3 + import stream from 'stream';    
-    3   import terminalSize from            4   import terminalSize from        
-        'term-size';                            'term-size';                    
-    4   import {                            5   import {                        
-        iterlinesFromReadableAsync }            iterlinesFromReadableAsync }    
-        from './iterLinesFromReadable';         from './iterLinesFromReadable'; 
-    5   import {                            6   import {                        
-        iterLinesWithoutAnsiColors }            iterLinesWithoutAnsiColors }    
-        from                                    from                            
-        './iterLinesWithoutAnsiColors';         './iterLinesWithoutAnsiColors'; 
+    1    import chalk from 'chalk';         1    import chalk from 'chalk';     
+    2    import * as process from           2    import * as process from       
+         'process';                              'process';                     
+                                            3  + import stream from 'stream';   
+    3    import terminalSize from           4    import terminalSize from       
+         'term-size';                            'term-size';                   
+    4    import {                           5    import {                       
+         iterlinesFromReadableAsync }            iterlinesFromReadableAsync }   
+         from './iterLinesFromReadable';         from './iterLinesFromReadable';
+    5    import {                           6    import {                       
+         iterLinesWithoutAnsiColors }            iterLinesWithoutAnsiColors }   
+         from                                    from                           
+         './iterLinesWithoutAnsiColors';         './iterLinesWithoutAnsiColors';
 @@ -12,15 +13,16 @@ function main() {                                           
-   12       const screenWidth =            13       const screenWidth =         
-        terminalSize().columns;                 terminalSize().columns;         
-   13       const theme =                  14       const theme =               
-        defaultTheme(chalk,                     defaultTheme(chalk,             
-        screenWidth);                           screenWidth);                   
+   12        const screenWidth =           13        const screenWidth =        
+         terminalSize().columns;                 terminalSize().columns;        
+   13        const theme =                 14        const theme =              
+         defaultTheme(chalk,                     defaultTheme(chalk,            
+         screenWidth);                           screenWidth);                  
    14                                      15                                   
-   15 -                                    16 +     stream.pipeline(            
-        transformStreamWithIterables(                                           
-   16 -         process.stdin,             17 +                                 
-                                                transformStreamWithIterables(   
-   17 -         [                          18 +             process.stdin,      
+   15  -                                   16  +     stream.pipeline(           
+         transformStreamWithIterables(                                          
+   16  -         process.stdin,            17  +                                
+                                                 transformStreamWithIterables(  
+   17  -         [                         18  +             process.stdin,     
    18                                      19                                   
-        iterlinesFromReadableAsync,             iterlinesFromReadableAsync,     
+         iterlinesFromReadableAsync,             iterlinesFromReadableAsync,    
    19                                      20                                   
-        iterLinesWithoutAnsiColors,             iterLinesWithoutAnsiColors,     
+         iterLinesWithoutAnsiColors,             iterLinesWithoutAnsiColors,    
    20                                      21                                   
-        iterSideBySideDiff(theme),              iterSideBySideDiff(theme),      
-   21 -             iterWithNewlines,      22 +             iterWithNewlines    
-   22 -         ],                         23 +         ),                      
-   23 -         process.stdout             24 +         process.stdout,         
-                                           25 +         console.error           
-   24       );                             26       );                          
-   25   }                                  27   }                               
+         iterSideBySideDiff(theme),              iterSideBySideDiff(theme),     
+   21  -             iterWithNewlines,     22  +             iterWithNewlines   
+   22  -         ],                        23  +         ),                     
+   23  -         process.stdout            24  +         process.stdout,        
+                                           25  +         console.error          
+   24        );                            26        );                         
+   25    }                                 27    }                              
    26                                      28                                   
 "
 `;
@@ -614,20 +615,20 @@ Date:   Sun Apr 11 15:25:34 2021 -0700
  ■■ todo.md                                                                     
 ────────────────────────────────────────────────────────────────────────────────
 @@ -7,6 +7,7 @@                                                                 
-    7   -   [x] Handle file                 7   -   [x] Handle file             
-        addition/deletion properly              addition/deletion properly      
-    8   -   [x] Fix incorrect line          8   -   [x] Fix incorrect line      
-        positions when a hunk has               positions when a hunk has       
-        discontinuous inserts and/or            discontinuous inserts and/or    
-        deletes                                 deletes                         
-    9   -   [x] Organize code               9   -   [x] Organize code           
-                                           10 + -   [x] Move visual config to   
-                                                theme                           
-   10   -   [ ] Handle empty diffs         11   -   [ ] Handle empty diffs      
-   11   -   [ ] Handle moves and renames   12   -   [ ] Handle moves and renames
-         without diffs                           without diffs                  
-   12   -   [ ] Highlight changes in       13   -   [ ] Highlight changes in    
-        lines                                   lines                           
+    7    -   [x] Handle file                7    -   [x] Handle file            
+         addition/deletion properly              addition/deletion properly     
+    8    -   [x] Fix incorrect line         8    -   [x] Fix incorrect line     
+         positions when a hunk has               positions when a hunk has      
+         discontinuous inserts and/or            discontinuous inserts and/or   
+         deletes                                 deletes                        
+    9    -   [x] Organize code              9    -   [x] Organize code          
+                                           10  + -   [x] Move visual config to  
+                                                 theme                          
+   10    -   [ ] Handle empty diffs        11    -   [ ] Handle empty diffs     
+   11    -   [ ] Handle moves and          12    -   [ ] Handle moves and       
+         renames without diffs                   renames without diffs          
+   12    -   [ ] Highlight changes in      13    -   [ ] Highlight changes in   
+         lines                                   lines                          
    13                                      14                                   
    14                                      15                                   
 "
@@ -645,13 +646,13 @@ Date:   Tue May 23 16:47:17 2017 -0700
  ■■ Brewfile                                                                    
 ────────────────────────────────────────────────────────────────────────────────
 @@ -19,2 +19,3 @@ brew 'python3'                                                
-   19   brew 'socat'                       19   brew 'socat'                    
-                                           20 + brew 'sonos'                    
-   20   brew 'terminal-notifier'           21   brew 'terminal-notifier'        
+   19    brew 'socat'                      19    brew 'socat'                   
+                                           20  + brew 'sonos'                   
+   20    brew 'terminal-notifier'          21    brew 'terminal-notifier'       
 @@ -42,3 +43,2 @@ cask 'rescuetime'                                             
-   42   cask 'slate'                       43   cask 'slate'                    
-   43 - cask 'sonos'                                                            
-   44   cask 'spotify'                     44   cask 'spotify'                  
+   42    cask 'slate'                      43    cask 'slate'                   
+   43  - cask 'sonos'                                                           
+   44    cask 'spotify'                    44    cask 'spotify'                 
 "
 `;
 
@@ -667,9 +668,9 @@ Date:   Sun Apr 11 15:25:34 2021 -0700
  ■■ todo.md                                                                     
 ────────────────────────────────────────────────────────────────────────────────
 @@ -9,2 +9,3 @@                                                                 
-    9   -   [x] Organize code               9   -   [x] Organize code           
-                                           10 + -   [x] Move visual config to th
-   10   -   [ ] Handle empty diffs         11   -   [ ] Handle empty diffs      
+    9    -   [x] Organize code              9    -   [x] Organize code          
+                                           10  + -   [x] Move visual config to t
+   10    -   [ ] Handle empty diffs        11    -   [ ] Handle empty diffs     
    11                                      12                                   
 "
 `;
@@ -723,9 +724,9 @@ Date:   Sat Apr 10 14:35:42 2021 -0700
  ■■ .gitignore                                                                  
 ────────────────────────────────────────────────────────────────────────────────
 @@ -0,0 +1,2 @@                                                                 
-                                            1 + node_modules/**                 
-                                            2 + build/**                        
-                                            3   No newline at end of file       
+                                            1  + node_modules/**                
+                                            2  + build/**                       
+                                            3    No newline at end of file      
 "
 `;
 
@@ -744,14 +745,14 @@ Date:   Sun Apr 18 03:17:05 2021 -0700
  ■■ scripts/screenshotTheme                                                     
 ────────────────────────────────────────────────────────────────────────────────
 @@ -1,7 +0,0 @@                                                                 
-    1 - on run argv                                                             
-    2 -     with timeout of 5 seconds                                           
-    3 -         tell app \\"Terminal\\"                                             
-    4 -             open \\"screenshots.sh                                        
-    5 -         end tell                                                        
-    6 -     end timeout                                                         
-    7 - end run                                                                 
-    8   No newline at end of file                                               
+    1  - on run argv                                                            
+    2  -     with timeout of 5 seconds                                          
+    3  -         tell app \\"Terminal\\"                                            
+    4  -             open \\"screenshots.s                                        
+    5  -         end tell                                                       
+    6  -     end timeout                                                        
+    7  - end run                                                                
+    8    No newline at end of file                                              
 "
 `;
 
@@ -781,36 +782,36 @@ Date:   Sun Apr 4 19:04:26 2021 -0700
  ■■ Brewfile.lock.json                                                          
 ────────────────────────────────────────────────────────────────────────────────
 @@ -5 +5 @@                                                                     
-    5 -         \\"revision\\": null            5 +         \\"revision\\": \\"ee2f8d3ba29
+    5  -         \\"revision\\": null           5  +         \\"revision\\": \\"ee2f8d3ba2
 @@ -8 +8 @@                                                                     
-    8 -         \\"revision\\": null            8 +         \\"revision\\": \\"c4cf96857c0
+    8  -         \\"revision\\": null           8  +         \\"revision\\": \\"c4cf96857c
 @@ -11 +11 @@                                                                   
-   11 -         \\"revision\\": null           11 +         \\"revision\\": \\"504d4b93aa6
+   11  -         \\"revision\\": null          11  +         \\"revision\\": \\"504d4b93aa
 @@ -16 +16 @@                                                                   
-   16 -         \\"version\\": \\"1.14.2_1\\",     16 +         \\"version\\": \\"1.16.3\\",    
+   16  -         \\"version\\": \\"1.14.2_1\\",    16  +         \\"version\\": \\"1.16.3\\",   
 @@ -17,0 +18 @@                                                                 
-                                           18 +           \\"rebuild\\": 0,         
+                                           18  +           \\"rebuild\\": 0,        
 @@ -19,0 +21 @@                                                                 
-                                           21 +           \\"root_url\\": \\"https://h
+                                           21  +           \\"root_url\\": \\"https://
 @@ -20,0 +23,8 @@                                                               
-                                           23 +             \\"arm64_big_sur\\": {  
-                                           24 +               \\"url\\": \\"https://ho
-                                           25 +               \\"sha256\\": \\"e7c1efd
-                                           26 +             },                  
-                                           27 +             \\"big_sur\\": {        
-                                           28 +               \\"url\\": \\"https://ho
-                                           29 +               \\"sha256\\": \\"ea37f33
-                                           30 +             },                  
+                                           23  +             \\"arm64_big_sur\\": { 
+                                           24  +               \\"url\\": \\"https://h
+                                           25  +               \\"sha256\\": \\"e7c1ef
+                                           26  +             },                 
+                                           27  +             \\"big_sur\\": {       
+                                           28  +               \\"url\\": \\"https://h
+                                           29  +               \\"sha256\\": \\"ea37f3
+                                           30  +             },                 
 @@ -22,2 +32,2 @@                                                               
-   22 -               \\"url\\": \\"https://ho   32 +               \\"url\\": \\"https://ho
-   23 -               \\"sha256\\": \\"15b5623   33 +               \\"sha256\\": \\"69c28f5
+   22  -               \\"url\\": \\"https://h   32  +               \\"url\\": \\"https://h
+   23  -               \\"sha256\\": \\"15b562   33  +               \\"sha256\\": \\"69c28f
 @@ -26,6 +36,2 @@                                                               
-   26 -               \\"url\\": \\"https://ho   36 +               \\"url\\": \\"https://ho
-   27 -               \\"sha256\\": \\"fa65e7d   37 +               \\"sha256\\": \\"bf1e90e
-   28 -             },                                                          
-   29 -             \\"high_sierra\\": {                                            
-   30 -               \\"url\\": \\"https://ho                                        
-   31 -               \\"sha256\\": \\"0997f6f                                        
+   26  -               \\"url\\": \\"https://h   36  +               \\"url\\": \\"https://h
+   27  -               \\"sha256\\": \\"fa65e7   37  +               \\"sha256\\": \\"bf1e90
+   28  -             },                                                         
+   29  -             \\"high_sierra\\": {                                           
+   30  -               \\"url\\": \\"https://h                                        
+   31  -               \\"sha256\\": \\"0997f6                                        
    32                                      38                                   
 "
 `;
@@ -827,9 +828,9 @@ Date:   Sun Apr 11 15:25:34 2021 -0700
  ■■ todo.md                                                                     
 ────────────────────────────────────────────────────────────────────────────────
 @@ -9,2 +9,3 @@                                                                 
-    9   -        [x] Organize code          9   -        [x] Organize code      
-                                           10 + -        [x] Move visual config 
-   10   -        [ ] Handle empty diffs    11   -        [ ] Handle empty diffs 
+    9    -        [x] Organize code         9    -        [x] Organize code     
+                                           10  + -        [x] Move visual config
+   10    -        [ ] Handle empty diffs   11    -        [ ] Handle empty diffs
    11                                      12                                   
 "
 `;
@@ -874,28 +875,28 @@ Date:   Sun Apr 11 16:23:54 2021 -0700
  ■■ src/index.ts                                                                
 ────────────────────────────────────────────────────────────────────────────────
 @@ -1,5 +1,6 @@                                                                 
-    1   import chalk from 'chalk';          1   import chalk from 'chalk';      
-    2   import * as process from 'proces    2   import * as process from 'proces
-                                            3 + import stream from 'stream';    
-    3   import terminalSize from 'term-s    4   import terminalSize from 'term-s
-    4   import { iterlinesFromReadableAs    5   import { iterlinesFromReadableAs
-    5   import { iterLinesWithoutAnsiCol    6   import { iterLinesWithoutAnsiCol
+    1    import chalk from 'chalk';         1    import chalk from 'chalk';     
+    2    import * as process from 'proce    2    import * as process from 'proce
+                                            3  + import stream from 'stream';   
+    3    import terminalSize from 'term-    4    import terminalSize from 'term-
+    4    import { iterlinesFromReadableA    5    import { iterlinesFromReadableA
+    5    import { iterLinesWithoutAnsiCo    6    import { iterLinesWithoutAnsiCo
 @@ -12,15 +13,16 @@ function main() {                                           
-   12       const screenWidth = terminal   13       const screenWidth = terminal
-   13       const theme = defaultTheme(c   14       const theme = defaultTheme(c
+   12        const screenWidth = termina   13        const screenWidth = termina
+   13        const theme = defaultTheme(   14        const theme = defaultTheme(
    14                                      15                                   
-   15 -     transformStreamWithIterables   16 +     stream.pipeline(            
-   16 -         process.stdin,             17 +         transformStreamWithItera
-   17 -         [                          18 +             process.stdin,      
-   18               iterlinesFromReadabl   19               iterlinesFromReadabl
-   19               iterLinesWithoutAnsi   20               iterLinesWithoutAnsi
-   20               iterSideBySideDiff(t   21               iterSideBySideDiff(t
-   21 -             iterWithNewlines,      22 +             iterWithNewlines    
-   22 -         ],                         23 +         ),                      
-   23 -         process.stdout             24 +         process.stdout,         
-                                           25 +         console.error           
-   24       );                             26       );                          
-   25   }                                  27   }                               
+   15  -     transformStreamWithIterable   16  +     stream.pipeline(           
+   16  -         process.stdin,            17  +         transformStreamWithIter
+   17  -         [                         18  +             process.stdin,     
+   18                iterlinesFromReadab   19                iterlinesFromReadab
+   19                iterLinesWithoutAns   20                iterLinesWithoutAns
+   20                iterSideBySideDiff(   21                iterSideBySideDiff(
+   21  -             iterWithNewlines,     22  +             iterWithNewlines   
+   22  -         ],                        23  +         ),                     
+   23  -         process.stdout            24  +         process.stdout,        
+                                           25  +         console.error          
+   24        );                            26        );                         
+   25    }                                 27    }                              
    26                                      28                                   
 "
 `;
@@ -912,13 +913,13 @@ Date:   Sun Apr 11 15:25:34 2021 -0700
  ■■ todo.md                                                                     
 ────────────────────────────────────────────────────────────────────────────────
 @@ -7,6 +7,7 @@                                                                 
-    7   -   [x] Handle file addition/del    7   -   [x] Handle file addition/del
-    8   -   [x] Fix incorrect line posit    8   -   [x] Fix incorrect line posit
-    9   -   [x] Organize code               9   -   [x] Organize code           
-                                           10 + -   [x] Move visual config to th
-   10   -   [ ] Handle empty diffs         11   -   [ ] Handle empty diffs      
-   11   -   [ ] Handle moves and renames   12   -   [ ] Handle moves and renames
-   12   -   [ ] Highlight changes in lin   13   -   [ ] Highlight changes in lin
+    7    -   [x] Handle file addition/de    7    -   [x] Handle file addition/de
+    8    -   [x] Fix incorrect line posi    8    -   [x] Fix incorrect line posi
+    9    -   [x] Organize code              9    -   [x] Organize code          
+                                           10  + -   [x] Move visual config to t
+   10    -   [ ] Handle empty diffs        11    -   [ ] Handle empty diffs     
+   11    -   [ ] Handle moves and rename   12    -   [ ] Handle moves and rename
+   12    -   [ ] Highlight changes in li   13    -   [ ] Highlight changes in li
    13                                      14                                   
    14                                      15                                   
 "
@@ -936,13 +937,13 @@ Date:   Tue May 23 16:47:17 2017 -0700
  ■■ Brewfile                                                                    
 ────────────────────────────────────────────────────────────────────────────────
 @@ -19,2 +19,3 @@ brew 'python3'                                                
-   19   brew 'socat'                                                            
-   20 + brew 'sonos'                                                            
-   20   brew 'terminal-notifier'                                                
+   19    brew 'socat'                                                           
+   20  + brew 'sonos'                                                           
+   20    brew 'terminal-notifier'                                               
 @@ -42,3 +43,2 @@ cask 'rescuetime'                                             
-   42   cask 'slate'                                                            
-   43 - cask 'sonos'                                                            
-   44   cask 'spotify'                                                          
+   42    cask 'slate'                                                           
+   43  - cask 'sonos'                                                           
+   44    cask 'spotify'                                                         
 "
 `;
 
@@ -958,9 +959,9 @@ Date:   Sun Apr 11 15:25:34 2021 -0700
  ■■ todo.md                                                                     
 ────────────────────────────────────────────────────────────────────────────────
 @@ -9,2 +9,3 @@                                                                 
-    9   -   [x] Organize code                                                   
-   10 + -   [x] Move visual config to theme                                     
-   10   -   [ ] Handle empty diffs                                              
+    9    -   [x] Organize code                                                  
+   10  + -   [x] Move visual config to theme                                    
+   10    -   [ ] Handle empty diffs                                             
    11                                                                           
 "
 `;
@@ -1014,8 +1015,8 @@ Date:   Sat Apr 10 14:35:42 2021 -0700
  ■■ .gitignore                                                                  
 ────────────────────────────────────────────────────────────────────────────────
 @@ -0,0 +1,2 @@                                                                 
-    1 + node_modules/**                                                         
-    2 + build/**                                                                
+    1  + node_modules/**                                                        
+    2  + build/**                                                               
                                                                                 
 "
 `;
@@ -1035,14 +1036,14 @@ Date:   Sun Apr 18 03:17:05 2021 -0700
  ■■ scripts/screenshotTheme                                                     
 ────────────────────────────────────────────────────────────────────────────────
 @@ -1,7 +0,0 @@                                                                 
-    1 - on run argv                                                             
-    2 -     with timeout of 5 seconds                                           
-    3 -         tell app \\"Terminal\\"                                             
-    4 -             open \\"screenshots.sh\\"                                       
-    5 -         end tell                                                        
-    6 -     end timeout                                                         
-    7 - end run                                                                 
-    8   No newline at end of file                                               
+    1  - on run argv                                                            
+    2  -     with timeout of 5 seconds                                          
+    3  -         tell app \\"Terminal\\"                                            
+    4  -             open \\"screenshots.sh\\"                                      
+    5  -         end tell                                                       
+    6  -     end timeout                                                        
+    7  - end run                                                                
+    8    No newline at end of file                                              
 "
 `;
 
@@ -1072,36 +1073,36 @@ Date:   Sun Apr 4 19:04:26 2021 -0700
  ■■ Brewfile.lock.json                                                          
 ────────────────────────────────────────────────────────────────────────────────
 @@ -5 +5 @@                                                                     
-    5 -         \\"revision\\": null                                                
+    5  -         \\"revision\\": null                                               
 @@ -8 +8 @@                                                                     
-    8 -         \\"revision\\": null                                                
+    8  -         \\"revision\\": null                                               
 @@ -11 +11 @@                                                                   
-   11 -         \\"revision\\": null                                                
+   11  -         \\"revision\\": null                                               
 @@ -16 +16 @@                                                                   
-   16 -         \\"version\\": \\"1.14.2_1\\",                                          
+   16  -         \\"version\\": \\"1.14.2_1\\",                                         
 @@ -17,0 +18 @@                                                                 
 @@ -19,0 +21 @@                                                                 
 @@ -20,0 +23,8 @@                                                               
 @@ -22,2 +32,2 @@                                                               
-   22 -               \\"url\\": \\"https://homebrew.bintray.com/bottles/go-1.14.2_1.c
-        atalina.bottle.tar.gz\\",                                                 
-   23 -               \\"sha256\\":                                                 
-        \\"15b5623471330edcc681d7f9d57b449660e6d4b98c7f67af67f4991fc75d61fc\\"      
+   22  -               \\"url\\": \\"https://homebrew.bintray.com/bottles/go-1.14.2_1.
+         catalina.bottle.tar.gz\\",                                               
+   23  -               \\"sha256\\":                                                
+         \\"15b5623471330edcc681d7f9d57b449660e6d4b98c7f67af67f4991fc75d61fc\\"     
 @@ -26,6 +36,2 @@                                                               
-   26 -               \\"url\\":                                                    
-        \\"https://homebrew.bintray.com/bottles/go-1.14.2_1.mojave.bottle.tar.gz\\",
-   27 -               \\"sha256\\":                                                 
-        \\"fa65e7dabe514e65ae625ed3c84a6bf58df01aceffc6e9aa99752ca8c320ce69\\"      
-   28 -             },                                                          
-   29 -             \\"high_sierra\\": {                                            
-   30 -               \\"url\\": \\"https://homebrew.bintray.com/bottles/go-1.14.2_1.h
-        igh_sierra.bottle.tar.gz\\",                                              
-   31 -               \\"sha256\\":                                                 
-        \\"0997f6f5cda0e3bdb7789a80b53621cb588202ab37fd89bcd269f8dfafd23351\\"      
-   36 +               \\"url\\":                                                    
-        \\"https://homebrew.bintray.com/bottles/go-1.16.3.mojave.bottle.tar.gz\\",  
-   37 +               \\"sha256\\":                                                 
-        \\"bf1e90ed1680b8ee1acb49f2f99426c8a8ac3e49efd63c7f3b41e57e7214dd19\\"      
+   26  -               \\"url\\": \\"https://homebrew.bintray.com/bottles/go-1.14.2_1.
+         mojave.bottle.tar.gz\\",                                                 
+   27  -               \\"sha256\\":                                                
+         \\"fa65e7dabe514e65ae625ed3c84a6bf58df01aceffc6e9aa99752ca8c320ce69\\"     
+   28  -             },                                                         
+   29  -             \\"high_sierra\\": {                                           
+   30  -               \\"url\\": \\"https://homebrew.bintray.com/bottles/go-1.14.2_1.
+         high_sierra.bottle.tar.gz\\",                                            
+   31  -               \\"sha256\\":                                                
+         \\"0997f6f5cda0e3bdb7789a80b53621cb588202ab37fd89bcd269f8dfafd23351\\"     
+   36  +               \\"url\\":                                                   
+         \\"https://homebrew.bintray.com/bottles/go-1.16.3.mojave.bottle.tar.gz\\", 
+   37  +               \\"sha256\\":                                                
+         \\"bf1e90ed1680b8ee1acb49f2f99426c8a8ac3e49efd63c7f3b41e57e7214dd19\\"     
    32                                                                           
 "
 `;
@@ -1118,9 +1119,9 @@ Date:   Sun Apr 11 15:25:34 2021 -0700
  ■■ todo.md                                                                     
 ────────────────────────────────────────────────────────────────────────────────
 @@ -9,2 +9,3 @@                                                                 
-    9   -        [x] Organize code                                              
-   10 + -        [x] Move visual config to theme                                
-   10   -        [ ] Handle empty diffs                                         
+    9    -        [x] Organize code                                             
+   10  + -        [x] Move visual config to theme                               
+   10    -        [ ] Handle empty diffs                                        
    11                                                                           
 "
 `;
@@ -1165,35 +1166,35 @@ Date:   Sun Apr 11 16:23:54 2021 -0700
  ■■ src/index.ts                                                                
 ────────────────────────────────────────────────────────────────────────────────
 @@ -1,5 +1,6 @@                                                                 
-    1   import chalk from 'chalk';                                              
-    2   import * as process from 'process';                                     
-    3 + import stream from 'stream';                                            
-    3   import terminalSize from 'term-size';                                   
-    4   import { iterlinesFromReadableAsync } from './iterLinesFromReadable';   
-    5   import { iterLinesWithoutAnsiColors } from                              
-        './iterLinesWithoutAnsiColors';                                         
+    1    import chalk from 'chalk';                                             
+    2    import * as process from 'process';                                    
+    3  + import stream from 'stream';                                           
+    3    import terminalSize from 'term-size';                                  
+    4    import { iterlinesFromReadableAsync } from './iterLinesFromReadable';  
+    5    import { iterLinesWithoutAnsiColors } from                             
+         './iterLinesWithoutAnsiColors';                                        
 @@ -12,15 +13,16 @@ function main() {                                           
-   12       const screenWidth = terminalSize().columns;                         
-   13       const theme = defaultTheme(chalk, screenWidth);                     
+   12        const screenWidth = terminalSize().columns;                        
+   13        const theme = defaultTheme(chalk, screenWidth);                    
    14                                                                           
-   15 -     transformStreamWithIterables(                                       
-   16 -         process.stdin,                                                  
-   17 -         [                                                               
-   16 +     stream.pipeline(                                                    
-   17 +         transformStreamWithIterables(                                   
-   18 +             process.stdin,                                              
-   18               iterlinesFromReadableAsync,                                 
-   19               iterLinesWithoutAnsiColors,                                 
-   20               iterSideBySideDiff(theme),                                  
-   21 -             iterWithNewlines,                                           
-   22 -         ],                                                              
-   23 -         process.stdout                                                  
-   22 +             iterWithNewlines                                            
-   23 +         ),                                                              
-   24 +         process.stdout,                                                 
-   25 +         console.error                                                   
-   24       );                                                                  
-   25   }                                                                       
+   15  -     transformStreamWithIterables(                                      
+   16  -         process.stdin,                                                 
+   17  -         [                                                              
+   16  +     stream.pipeline(                                                   
+   17  +         transformStreamWithIterables(                                  
+   18  +             process.stdin,                                             
+   18                iterlinesFromReadableAsync,                                
+   19                iterLinesWithoutAnsiColors,                                
+   20                iterSideBySideDiff(theme),                                 
+   21  -             iterWithNewlines,                                          
+   22  -         ],                                                             
+   23  -         process.stdout                                                 
+   22  +             iterWithNewlines                                           
+   23  +         ),                                                             
+   24  +         process.stdout,                                                
+   25  +         console.error                                                  
+   24        );                                                                 
+   25    }                                                                      
    26                                                                           
 "
 `;
@@ -1210,14 +1211,14 @@ Date:   Sun Apr 11 15:25:34 2021 -0700
  ■■ todo.md                                                                     
 ────────────────────────────────────────────────────────────────────────────────
 @@ -7,6 +7,7 @@                                                                 
-    7   -   [x] Handle file addition/deletion properly                          
-    8   -   [x] Fix incorrect line positions when a hunk has discontinuous      
-        inserts and/or deletes                                                  
-    9   -   [x] Organize code                                                   
-   10 + -   [x] Move visual config to theme                                     
-   10   -   [ ] Handle empty diffs                                              
-   11   -   [ ] Handle moves and renames without diffs                          
-   12   -   [ ] Highlight changes in lines                                      
+    7    -   [x] Handle file addition/deletion properly                         
+    8    -   [x] Fix incorrect line positions when a hunk has discontinuous     
+         inserts and/or deletes                                                 
+    9    -   [x] Organize code                                                  
+   10  + -   [x] Move visual config to theme                                    
+   10    -   [ ] Handle empty diffs                                             
+   11    -   [ ] Handle moves and renames without diffs                         
+   12    -   [ ] Highlight changes in lines                                     
    13                                                                           
    14                                                                           
 "

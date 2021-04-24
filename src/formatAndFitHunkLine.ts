@@ -66,11 +66,11 @@ export function* formatAndFitHunkLine(
 
     /*
         Each line is rendered as follows: 
-        <lineNo> <linePrefix> <lineText>
+        <lineNo>  <linePrefix> <lineText>
 
-        So (LINE_NUMBER_WIDTH + 1 + 1 + 1 + lineTextWidth) * 2 = LINE_WIDTH
+        So (LINE_NUMBER_WIDTH + 2 + 1 + 1 + lineTextWidth) * 2 = LINE_WIDTH
     */
-    const lineTextWidth = LINE_WIDTH - 1 - 1 - 1 - LINE_NUMBER_WIDTH;
+    const lineTextWidth = LINE_WIDTH - 2 - 1 - 1 - LINE_NUMBER_WIDTH;
 
     let isFirstLine = true;
     const formattedLine = T().appendString(lineText);
@@ -82,9 +82,9 @@ export function* formatAndFitHunkLine(
         formattedLine,
         lineTextWidth
     )) {
-        const lineNoText = (isFirstLine ? lineNo.toString() : '').padStart(
-            LINE_NUMBER_WIDTH
-        );
+        const lineNoText =
+            (isFirstLine ? lineNo.toString() : '').padStart(LINE_NUMBER_WIDTH) +
+            ' ';
         const wrappedLinePrefix = (isFirstLine ? linePrefix : '')
             .padStart(2)
             .padEnd(3);
