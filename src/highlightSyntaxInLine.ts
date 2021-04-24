@@ -1,4 +1,3 @@
-import chalk from 'chalk';
 import path from 'path';
 import { Highlighter } from 'shiki';
 import { FormattedString } from './formattedString';

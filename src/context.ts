@@ -1,4 +1,3 @@
-import { Chalk } from 'chalk';
 import { getHighlighter, Highlighter } from 'shiki';
 import { Config } from './config';
 import { FormattedString, T } from './formattedString';

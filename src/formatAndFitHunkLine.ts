@@ -1,13 +1,10 @@
 import { Change } from 'diff';
 import { Context } from './context';
-import { T, FormattedString } from './formattedString';
+import { FormattedString, T } from './formattedString';
+import { highlightChangesInLine } from './highlightChangesInLine';
 import { highlightSyntaxInLine } from './highlightSyntaxInLine';
-import {
-    getChangesInLines,
-    highlightChangesInLine,
-} from './highlightChangesInLine';
-import { ThemeColor } from './themes';
 import { iterFitTextToWidth } from './iterFitTextToWidth';
+import { ThemeColor } from './themes';
 
 // Assuming people aren't editing lines >=100k lines
 const LINE_NUMBER_WIDTH = 5;
@@ -23,10 +20,8 @@ export function* formatAndFitHunkLine(
         BLANK_LINE,
         LINE_WIDTH,
         MISSING_LINE_COLOR,
-        DELETED_WORD_COLOR,
         DELETED_LINE_COLOR,
         DELETED_LINE_NO_COLOR,
-        INSERTED_WORD_COLOR,
         INSERTED_LINE_COLOR,
         INSERTED_LINE_NO_COLOR,
         UNMODIFIED_LINE_COLOR,

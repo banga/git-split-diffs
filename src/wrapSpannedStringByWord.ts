@@ -1,4 +1,3 @@
-import { FormattedString } from './formattedString';
 import { SpannedString } from './SpannedString';
 
 const SPACE_REGEX = /\s/;

@@ -1,4 +1,3 @@
-import { inspect } from 'util';
 import { Context } from './context';
 import { SpannedString } from './SpannedString';
 import { reduceThemeColors, ThemeColor } from './themes';
