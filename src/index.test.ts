@@ -1,15 +1,17 @@
-import chalk from 'chalk';
 import { Readable } from 'stream';
 import { Config } from './config';
 import { getContextForConfig } from './context';
 import { iterReplaceTabsWithSpaces } from './iterReplaceTabsWithSpaces';
 import { iterSideBySideDiffs } from './iterSideBySideDiffs';
 import { iterWithNewlines } from './iterWithNewlines';
+import { THEME_COLOR_VARIABLE_NAMES } from './themes';
 import { transformStreamWithIterables } from './transformStreamWithIterables';
 
-const noop = {};
-const replaceColoredText = (...args: unknown[]) => (text: string) =>
-    text.replace(/./g, '░');
+const TEST_THEME = Object.fromEntries(
+    THEME_COLOR_VARIABLE_NAMES.map((name) => [name, {}])
+);
+
+const replaceColoredText = () => (text: string) => text.replace(/./g, '░');
 
 const TEST_CONFIG: Config = {
     // Provide a fake chalk implementation to make it easier to read snapshots
@@ -23,23 +25,7 @@ const TEST_CONFIG: Config = {
     MIN_LINE_WIDTH: 60,
     WRAP_LINES: false,
     HIGHLIGHT_LINE_CHANGES: false,
-
-    COMMIT_COLOR: noop,
-    COMMIT_SHA_COLOR: noop,
-    COMMIT_AUTHOR_COLOR: noop,
-    COMMIT_DATE_COLOR: noop,
-    BORDER_COLOR: noop,
-    FILE_NAME_COLOR: noop,
-    HUNK_HEADER_COLOR: noop,
-    DELETED_WORD_COLOR: noop,
-    DELETED_LINE_COLOR: noop,
-    DELETED_LINE_NO_COLOR: noop,
-    INSERTED_WORD_COLOR: noop,
-    INSERTED_LINE_COLOR: noop,
-    INSERTED_LINE_NO_COLOR: noop,
-    UNMODIFIED_LINE_COLOR: noop,
-    UNMODIFIED_LINE_NO_COLOR: noop,
-    MISSING_LINE_COLOR: noop,
+    ...TEST_THEME,
 };
 
 const CONFIG_OVERRIDES: Record<string, Partial<Config>> = {

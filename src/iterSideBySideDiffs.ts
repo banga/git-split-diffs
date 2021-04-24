@@ -1,8 +1,9 @@
 import ansiRegex from 'ansi-regex';
 import * as assert from 'assert';
 import { Context } from './context';
-import { applyFormatting, T, FormattedString } from './formattedString';
-import { iterFormatCommitLine } from './iterFormatCommitLine';
+import { applyFormatting, FormattedString, T } from './formattedString';
+import { iterFormatCommitBodyLine } from './iterFormatCommitBodyLine';
+import { iterFormatCommitHeaderLine } from './iterFormatCommitHeaderLine';
 import { iterFormatFileName } from './iterFormatFileName';
 import { iterFormatHunk } from './iterFormatHunk';
 
@@ -31,6 +32,9 @@ async function* iterSideBySideDiffsFormatted(
     const { HORIZONTAL_SEPARATOR } = context;
 
     let state: State = 'unknown';
+
+    // Commit metadata
+    let isFirstCommitBodyLine = false;
 
     // File metadata
     let fileNameA: string = '';
@@ -105,6 +109,9 @@ async function* iterSideBySideDiffsFormatted(
                     fileNameA = '';
                     fileNameB = '';
                     break;
+                case 'commit-body':
+                    isFirstCommitBodyLine = true;
+                    break;
             }
 
             state = nextState;
@@ -116,9 +123,17 @@ async function* iterSideBySideDiffsFormatted(
                 yield T().appendString(rawLine);
                 break;
             }
-            case 'commit-header':
+            case 'commit-header': {
+                yield* iterFormatCommitHeaderLine(context, line);
+                break;
+            }
             case 'commit-body': {
-                yield* iterFormatCommitLine(context, line);
+                yield* iterFormatCommitBodyLine(
+                    context,
+                    line,
+                    isFirstCommitBodyLine
+                );
+                isFirstCommitBodyLine = false;
                 break;
             }
             case 'diff': {

@@ -2,13 +2,14 @@ import { Context } from './context';
 import { T, FormattedString } from './formattedString';
 import { iterFitTextToWidth } from './iterFitTextToWidth';
 
-export function* iterFormatCommitLine(
+export function* iterFormatCommitHeaderLine(
     context: Context,
     line: string
 ): Iterable<FormattedString> {
     const {
+        COMMIT_HEADER_LABEL_COLOR,
         COMMIT_AUTHOR_COLOR,
-        COMMIT_COLOR,
+        COMMIT_HEADER_COLOR,
         COMMIT_DATE_COLOR,
         COMMIT_SHA_COLOR,
         SCREEN_WIDTH,
@@ -29,19 +30,17 @@ export function* iterFormatCommitLine(
             break;
     }
 
-    const formattedLine = T().appendString(line);
+    const formattedLine = T()
+        .appendString(line)
+        .addSpan(0, label.length, COMMIT_HEADER_LABEL_COLOR);
     if (labelColor) {
-        formattedLine.addSpan(
-            label.length + 1,
-            SCREEN_WIDTH - label.length - 1,
-            labelColor
-        );
+        formattedLine.addSpan(0, SCREEN_WIDTH - label.length - 1, labelColor);
     }
 
     yield* iterFitTextToWidth(
         context,
         formattedLine,
         SCREEN_WIDTH,
-        COMMIT_COLOR
+        COMMIT_HEADER_COLOR
     );
 }
