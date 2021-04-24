@@ -925,6 +925,295 @@ Date:   Sun Apr 11 15:25:34 2021 -0700
 "
 `;
 
+exports[`unifiedWithInlineChangesHighlighted commit with a small diff 1`] = `
+"
+commit 26ca49fb83758bace20a473e231d576aa1bbe115                                 
+Author: Shrey Banga <shrey@quip.com>                                            
+Date:   Tue May 23 16:47:17 2017 -0700                                          
+                                                                                
+    sonos to brew                                                               
+                                                                                
+────────────────────────────────────────────────────────────────────────────────
+ ■■ Brewfile                                                                    
+────────────────────────────────────────────────────────────────────────────────
+@@ -19,2 +19,3 @@ brew 'python3'                                                
+   19    brew 'socat'                                                           
+   20  + brew 'sonos'                                                           
+   20    brew 'terminal-notifier'                                               
+@@ -42,3 +43,2 @@ cask 'rescuetime'                                             
+   42    cask 'slate'                                                           
+   43  - cask 'sonos'                                                           
+   44    cask 'spotify'                                                         
+"
+`;
+
+exports[`unifiedWithInlineChangesHighlighted commit with addition 1`] = `
+"
+commit f735de7025c6d626c5ae1a291fe24f143dea0313                                 
+Author: Shrey Banga <banga.shrey@gmail.com>                                     
+Date:   Sun Apr 11 15:25:34 2021 -0700                                          
+                                                                                
+    Add theme support                                                           
+                                                                                
+────────────────────────────────────────────────────────────────────────────────
+ ■■ todo.md                                                                     
+────────────────────────────────────────────────────────────────────────────────
+@@ -9,2 +9,3 @@                                                                 
+    9    -   [x] Organize code                                                  
+   10  + -   [x] Move visual config to theme                                    
+   10    -   [ ] Handle empty diffs                                             
+   11                                                                           
+"
+`;
+
+exports[`unifiedWithInlineChangesHighlighted commit with binary file addition 1`] = `
+"
+commit c0ca4394fd55f1709430414f03db3d04cb9cc72c (HEAD -> main)                  
+Author: Shrey Banga <banga.shrey@gmail.com>                                     
+Date:   Wed Apr 14 18:24:29 2021 -0700                                          
+                                                                                
+    test binary file addition                                                   
+                                                                                
+────────────────────────────────────────────────────────────────────────────────
+ ■■ screenshots/default.png                                                     
+────────────────────────────────────────────────────────────────────────────────
+────────────────────────────────────────────────────────────────────────────────
+ ■■ test dir a/default.png                                                      
+────────────────────────────────────────────────────────────────────────────────
+"
+`;
+
+exports[`unifiedWithInlineChangesHighlighted commit with deletion 1`] = `
+"commit eccfb5a2b3d76ba53df315f977da74b18d50113e
+Author: Shrey Banga <shrey@quip.com>
+Date:   Thu Aug 22 10:07:25 2019 -0700
+
+    Remove deprecated option
+
+diff --git a/Code/User/settings.json b/Code/User/settings.json
+index a33d267..ae58a01 100644
+--- a/Code/User/settings.json
++++ b/Code/User/settings.json
+@@ -26,5 +26,4 @@
+   // search
+   \\"search.location\\": \\"panel\\",
+-  \\"search.usePCRE2\\": true,
+
+   // telemetry
+"
+`;
+
+exports[`unifiedWithInlineChangesHighlighted commit with file addition 1`] = `
+"
+commit e4951eee3b9a8fa471d01dd64075c5fd44879a26                                 
+Author: Shrey Banga <banga.shrey@gmail.com>                                     
+Date:   Sat Apr 10 14:35:42 2021 -0700                                          
+                                                                                
+    wip                                                                         
+                                                                                
+────────────────────────────────────────────────────────────────────────────────
+ ■■ .gitignore                                                                  
+────────────────────────────────────────────────────────────────────────────────
+@@ -0,0 +1,2 @@                                                                 
+    1  + node_modules/**                                                        
+    2  + build/**                                                               
+                                                                                
+"
+`;
+
+exports[`unifiedWithInlineChangesHighlighted commit with file deletion 1`] = `
+"
+commit 1e6ebaccc6fadf3390a749e7aa2cc6372b24325e                                 
+Author: Shrey Banga <banga.shrey@gmail.com>                                     
+Date:   Sun Apr 18 03:17:05 2021 -0700                                          
+                                                                                
+    Update main.yml                                                             
+                                                                                
+────────────────────────────────────────────────────────────────────────────────
+ ■■                                                                             
+────────────────────────────────────────────────────────────────────────────────
+────────────────────────────────────────────────────────────────────────────────
+ ■■ scripts/screenshotTheme                                                     
+────────────────────────────────────────────────────────────────────────────────
+@@ -1,7 +0,0 @@                                                                 
+    1  - on run argv                                                            
+    2  -     with timeout of 5 seconds                                          
+    3  -         tell app \\"Terminal\\"                                            
+    4  -             open \\"screenshots.sh\\"                                      
+    5  -         end tell                                                       
+    6  -     end timeout                                                        
+    7  - end run                                                                
+    8    No newline at end of file                                              
+"
+`;
+
+exports[`unifiedWithInlineChangesHighlighted commit with file move 1`] = `
+"
+commit 1c76ed4bb05429741fd4a48896bb84b11bc661f5                                 
+Author: Shrey Banga <banga.shrey@gmail.com>                                     
+Date:   Sat Apr 10 22:26:15 2021 -0700                                          
+                                                                                
+    Move sample diff files                                                      
+                                                                                
+────────────────────────────────────────────────────────────────────────────────
+ ■■ colors.diff -> test-data/colors.diff                                        
+────────────────────────────────────────────────────────────────────────────────
+"
+`;
+
+exports[`unifiedWithInlineChangesHighlighted commit with inline line changes 1`] = `
+"
+commit 9e424d329800e945e3003c9e275f80bdef69e591                                 
+Author: Shrey Banga <banga.shrey@gmail.com>                                     
+Date:   Sun Apr 4 19:04:26 2021 -0700                                           
+                                                                                
+    update lockfile                                                             
+                                                                                
+────────────────────────────────────────────────────────────────────────────────
+ ■■ Brewfile.lock.json                                                          
+────────────────────────────────────────────────────────────────────────────────
+@@ -5 +5 @@                                                                     
+    5  -         \\"revision\\": ░░░░                                               
+@@ -8 +8 @@                                                                     
+    8  -         \\"revision\\": ░░░░                                               
+@@ -11 +11 @@                                                                   
+   11  -         \\"revision\\": ░░░░                                               
+@@ -16 +16 @@                                                                   
+   16  -         \\"version\\": \\"1.░░.░░░\\",                                         
+@@ -17,0 +18 @@                                                                 
+@@ -19,0 +21 @@                                                                 
+@@ -20,0 +23,8 @@                                                               
+@@ -22,2 +32,2 @@                                                               
+   22  -               \\"url\\": \\"https://homebrew.bintray.com/bottles/go-1.░░.░░░.
+   23  -               \\"sha256\\": \\"░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+@@ -26,6 +36,2 @@                                                               
+   26  -               \\"url\\": \\"https://homebrew.bintray.com/bottles/go-1.░░.░░░.
+   27  -               \\"sha256\\": \\"░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+   28  -             },                                                         
+   29  -             \\"high_sierra\\": {                                           
+   30  -               \\"url\\": \\"https://homebrew.bintray.com/bottles/go-1.14.2_1.
+   31  -               \\"sha256\\": \\"0997f6f5cda0e3bdb7789a80b53621cb588202ab37fd89
+   36  +               \\"url\\": \\"https://homebrew.bintray.com/bottles/go-1.16.3.mo
+   37  +               \\"sha256\\": \\"bf1e90ed1680b8ee1acb49f2f99426c8a8ac3e49efd63c
+   32                                                                           
+"
+`;
+
+exports[`unifiedWithInlineChangesHighlighted commit with tabs 1`] = `
+"
+commit f735de7025c6d626c5ae1a291fe24f143dea0313                                 
+Author: Shrey Banga <banga.shrey@gmail.com>                                     
+Date:   Sun Apr 11 15:25:34 2021 -0700                                          
+                                                                                
+    Add theme support                                                           
+                                                                                
+────────────────────────────────────────────────────────────────────────────────
+ ■■ todo.md                                                                     
+────────────────────────────────────────────────────────────────────────────────
+@@ -9,2 +9,3 @@                                                                 
+    9    -        [x] Organize code                                             
+   10  + -        [x] Move visual config to theme                               
+   10    -        [ ] Handle empty diffs                                        
+   11                                                                           
+"
+`;
+
+exports[`unifiedWithInlineChangesHighlighted commits without diffs 1`] = `
+"
+commit e5f896655402f8cf2d947c528d45e1d56bbf5717 (HEAD -> main)                  
+Author: Shrey Banga <banga.shrey@gmail.com>                                     
+Date:   Sun Apr 11 16:23:54 2021 -0700                                          
+                                                                                
+    Small refactor to allow testing end-to-end                                  
+                                                                                
+commit b637f38029f4a89c6a3b73b2b84a6a5b9e260730                                 
+Author: Shrey Banga <banga.shrey@gmail.com>                                     
+Date:   Sun Apr 11 11:53:02 2021 -0700                                          
+                                                                                
+    Organize code                                                               
+                                                                                
+commit f323143e03af95fee5d38c21238a92ffd4461847                                 
+Author: Shrey Banga <banga.shrey@gmail.com>                                     
+Date:   Sun Apr 11 10:39:17 2021 -0700                                          
+                                                                                
+    more todos                                                                  
+                                                                                
+"
+`;
+
+exports[`unifiedWithInlineChangesHighlighted empty 1`] = `
+"
+"
+`;
+
+exports[`unifiedWithInlineChangesHighlighted multiple inserts and deletes in the same hunk 1`] = `
+"
+commit e5f896655402f8cf2d947c528d45e1d56bbf5717                                 
+Author: Shrey Banga <banga.shrey@gmail.com>                                     
+Date:   Sun Apr 11 16:23:54 2021 -0700                                          
+                                                                                
+    Small refactor to allow testing end-to-end                                  
+                                                                                
+────────────────────────────────────────────────────────────────────────────────
+ ■■ src/index.ts                                                                
+────────────────────────────────────────────────────────────────────────────────
+@@ -1,5 +1,6 @@                                                                 
+    1    import chalk from 'chalk';                                             
+    2    import * as process from 'process';                                    
+    3  + import stream from 'stream';                                           
+    3    import terminalSize from 'term-size';                                  
+    4    import { iterlinesFromReadableAsync } from './iterLinesFromReadable';  
+    5    import { iterLinesWithoutAnsiColors } from './iterLinesWithoutAnsiColor
+@@ -12,15 +13,16 @@ function main() {                                           
+   12        const screenWidth = terminalSize().columns;                        
+   13        const theme = defaultTheme(chalk, screenWidth);                    
+   14                                                                           
+   15  -     transformStreamWithIterables(                                      
+   16  -         process.stdin,                                                 
+   17  -         [                                                              
+   16  +     stream.pipeline(                                                   
+   17  +         transformStreamWithIterables(                                  
+   18  +             process.stdin,                                             
+   18                iterlinesFromReadableAsync,                                
+   19                iterLinesWithoutAnsiColors,                                
+   20                iterSideBySideDiff(theme),                                 
+   21  -             iterWithNewlines░                                          
+   22  -         ░,                                                             
+   23  -         process.stdout                                                 
+   22  +             iterWithNewlines                                           
+   23  +         ),                                                             
+   24  +         process.stdout,                                                
+   25  +         console.error                                                  
+   24        );                                                                 
+   25    }                                                                      
+   26                                                                           
+"
+`;
+
+exports[`unifiedWithInlineChangesHighlighted with ANSI color codes 1`] = `
+"
+commit f735de7025c6d626c5ae1a291fe24f143dea0313                                 
+Author: Shrey Banga <banga.shrey@gmail.com>                                     
+Date:   Sun Apr 11 15:25:34 2021 -0700                                          
+                                                                                
+    Add theme support                                                           
+                                                                                
+────────────────────────────────────────────────────────────────────────────────
+ ■■ todo.md                                                                     
+────────────────────────────────────────────────────────────────────────────────
+@@ -7,6 +7,7 @@                                                                 
+    7    -   [x] Handle file addition/deletion properly                         
+    8    -   [x] Fix incorrect line positions when a hunk has discontinuous inse
+    9    -   [x] Organize code                                                  
+   10  + -   [x] Move visual config to theme                                    
+   10    -   [ ] Handle empty diffs                                             
+   11    -   [ ] Handle moves and renames without diffs                         
+   12    -   [ ] Highlight changes in lines                                     
+   13                                                                           
+   14                                                                           
+"
+`;
+
 exports[`unifiedWithWrapping commit with a small diff 1`] = `
 "
 commit 26ca49fb83758bace20a473e231d576aa1bbe115                                 

@@ -2,6 +2,7 @@ import { Change, diffWords } from 'diff';
 import { Context } from './context';
 import { FormattedString } from './formattedString';
 import { ThemeColor } from './themes';
+import { zip } from './zip';
 
 const HIGHLIGHT_CHANGE_RATIO = 1.0;
 
@@ -12,17 +13,15 @@ const HIGHLIGHT_CHANGE_RATIO = 1.0;
  * the line is below a threshold, otherwise the lines have changed substantially
  * enough for the granular diffs to not be useful.
  */
-export function getChangesInLine(
+function getChangesInLine(
     context: Context,
     lineA: string | null,
     lineB: string | null
-):
-    | { changesA: Change[]; changesB: Change[] }
-    | { changesA: null; changesB: null } {
+): [Change[], Change[]] | [null, null] {
     const { HIGHLIGHT_LINE_CHANGES } = context;
 
     if (!HIGHLIGHT_LINE_CHANGES || lineA === null || lineB === null) {
-        return { changesA: null, changesB: null };
+        return [null, null];
     }
 
     // Drop the prefix
@@ -50,10 +49,23 @@ export function getChangesInLine(
             changesB.push(change);
         }
     }
-    if (changedWords <= totalWords * HIGHLIGHT_CHANGE_RATIO) {
-        return { changesA, changesB };
+    if (changedWords > totalWords * HIGHLIGHT_CHANGE_RATIO) {
+        return [null, null];
     }
-    return { changesA: null, changesB: null };
+
+    return [changesA, changesB];
+}
+
+export function getChangesInLines(
+    context: Context,
+    linesA: (string | null)[],
+    linesB: (string | null)[]
+): ([Change[], Change[]] | [null, null])[] {
+    const changes = [];
+    for (const [lineA, lineB] of zip(linesA, linesB)) {
+        changes.push(getChangesInLine(context, lineA ?? null, lineB ?? null));
+    }
+    return changes;
 }
 
 export function highlightChangesInLine(

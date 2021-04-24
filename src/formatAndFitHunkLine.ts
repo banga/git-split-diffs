@@ -3,7 +3,7 @@ import { Context } from './context';
 import { T, FormattedString } from './formattedString';
 import { highlightSyntaxInLine } from './highlightSyntaxInLine';
 import {
-    getChangesInLine,
+    getChangesInLines,
     highlightChangesInLine,
 } from './highlightChangesInLine';
 import { ThemeColor } from './themes';
@@ -95,23 +95,4 @@ export function* formatAndFitHunkLine(
             .addSpan(0, LINE_WIDTH, lineColor);
         isFirstLine = false;
     }
-}
-
-export function formatAndFitHunkLinePair(
-    context: Context,
-    fileNameA: string,
-    lineNoA: number,
-    lineA: string | null,
-    fileNameB: string,
-    lineNoB: number,
-    lineB: string | null
-) {
-    const { changesA, changesB } = getChangesInLine(context, lineA, lineB);
-    const formattedLinesA = Array.from(
-        formatAndFitHunkLine(context, fileNameA, lineNoA, lineA, changesA)
-    );
-    const formattedLinesB = Array.from(
-        formatAndFitHunkLine(context, fileNameB, lineNoB, lineB, changesB)
-    );
-    return { formattedLinesA, formattedLinesB };
 }

@@ -27,7 +27,7 @@
 -   [x] Test on very large diffs
 -   [x] Syntax highlighting
 -   [x] Simplify operations with formatted strings using something like SpannableStringBuilder
--   [ ] Highlight changes in unified mode
+-   [x] Highlight changes in unified mode
 -   [x] Make sure to pad wrapped lines in commits
 -   [x] Wrapped lines on the left with inline changes leak formatting to the right
 -   [x] Support alpha in colors

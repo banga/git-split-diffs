@@ -44,7 +44,15 @@ const CONFIG_OVERRIDES: Record<string, Partial<Config>> = {
         MIN_LINE_WIDTH: 80,
         WRAP_LINES: true,
     },
+    // This is in split mode
     inlineChangesHighlighted: {
+        HIGHLIGHT_LINE_CHANGES: true,
+        DELETED_WORD_COLOR: { color: { r: 255, g: 0, b: 0, a: 255 } },
+        INSERTED_WORD_COLOR: { color: { r: 0, g: 255, b: 0, a: 255 } },
+    },
+    unifiedWithInlineChangesHighlighted: {
+        SCREEN_WIDTH: 80,
+        MIN_LINE_WIDTH: 80,
         HIGHLIGHT_LINE_CHANGES: true,
         DELETED_WORD_COLOR: { color: { r: 255, g: 0, b: 0, a: 255 } },
         INSERTED_WORD_COLOR: { color: { r: 0, g: 255, b: 0, a: 255 } },

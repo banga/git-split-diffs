@@ -1,10 +1,10 @@
+import { Change } from 'diff';
 import { Context } from './context';
-import {
-    formatAndFitHunkLine,
-    formatAndFitHunkLinePair,
-} from './formatAndFitHunkLine';
+import { formatAndFitHunkLine } from './formatAndFitHunkLine';
 import { T, FormattedString } from './formattedString';
+import { getChangesInLines } from './highlightChangesInLine';
 import { iterFitTextToWidth } from './iterFitTextToWidth';
+import { zip } from './zip';
 
 function* iterFormatHunkSplit(
     context: Context,
@@ -13,42 +13,42 @@ function* iterFormatHunkSplit(
     hunkLinesA: (string | null)[],
     hunkLinesB: (string | null)[],
     lineNoA: number,
-    lineNoB: number
+    lineNoB: number,
+    lineChanges: ([Change[], Change[]] | [null, null])[]
 ): Iterable<FormattedString> {
     const { MISSING_LINE_COLOR, BLANK_LINE } = context;
 
-    for (let i = 0; i < hunkLinesA.length || i < hunkLinesB.length; i++) {
-        const lineA = i < hunkLinesA.length ? hunkLinesA[i] : null;
-        const lineB = i < hunkLinesB.length ? hunkLinesB[i] : null;
+    for (const [lineA, lineB, changes] of zip(
+        hunkLinesA,
+        hunkLinesB,
+        lineChanges
+    )) {
+        const [changesA, changesB] = changes ?? [];
 
-        const { formattedLinesA, formattedLinesB } = formatAndFitHunkLinePair(
+        const formattedLinesA = formatAndFitHunkLine(
             context,
             fileNameA,
             lineNoA,
-            lineA,
+            lineA ?? null,
+            changesA ?? null
+        );
+        const formattedLinesB = formatAndFitHunkLine(
+            context,
             fileNameB,
             lineNoB,
-            lineB
+            lineB ?? null,
+            changesB ?? null
         );
 
-        let j = 0;
-        while (j < formattedLinesA.length && j < formattedLinesB.length) {
+        const missingLine = T().appendString(BLANK_LINE, MISSING_LINE_COLOR);
+
+        for (const [formattedLineA, formattedLineB] of zip(
+            formattedLinesA,
+            formattedLinesB
+        )) {
             yield T()
-                .appendSpannedString(formattedLinesA[j])
-                .appendSpannedString(formattedLinesB[j]);
-            j++;
-        }
-        while (j < formattedLinesA.length) {
-            yield T()
-                .appendSpannedString(formattedLinesA[j])
-                .appendString(BLANK_LINE, MISSING_LINE_COLOR);
-            j++;
-        }
-        while (j < formattedLinesB.length) {
-            yield T()
-                .appendString(BLANK_LINE, MISSING_LINE_COLOR)
-                .appendSpannedString(formattedLinesB[j]);
-            j++;
+                .appendSpannedString(formattedLineA ?? missingLine)
+                .appendSpannedString(formattedLineB ?? missingLine);
         }
 
         if (lineA !== null) {
@@ -67,11 +67,13 @@ function* iterFormatHunkUnified(
     hunkLinesA: (string | null)[],
     hunkLinesB: (string | null)[],
     lineNoA: number,
-    lineNoB: number
+    lineNoB: number,
+    lineChanges: ([Change[], Change[]] | [null, null])[]
 ): Iterable<FormattedString> {
     for (let indexA = 0, indexB = 0; indexA < hunkLinesA.length; indexA++) {
         const hunkLineA = hunkLinesA[indexA];
         const prefixA = hunkLineA?.slice(0, 1) ?? null;
+        const [changesA, changesB] = lineChanges[indexA];
 
         if (prefixA === null) {
             // Ignore the missing lines we insert to match up indexes
@@ -82,7 +84,7 @@ function* iterFormatHunkUnified(
                 fileNameA,
                 lineNoA,
                 hunkLineA,
-                null
+                changesA
             );
             lineNoA++;
         } else {
@@ -96,7 +98,7 @@ function* iterFormatHunkUnified(
                         fileNameB,
                         lineNoB,
                         hunkLineB,
-                        null
+                        changesB
                     );
                     lineNoB++;
                 }
@@ -109,7 +111,7 @@ function* iterFormatHunkUnified(
                 fileNameA,
                 lineNoA,
                 hunkLineA,
-                null
+                changesA
             );
             lineNoA++;
             lineNoB++;
@@ -137,6 +139,8 @@ export function* iterFormatHunk(
         HUNK_HEADER_COLOR
     );
 
+    const changes = getChangesInLines(context, hunkLinesA, hunkLinesB);
+
     if (SPLIT_DIFFS) {
         yield* iterFormatHunkSplit(
             context,
@@ -145,7 +149,8 @@ export function* iterFormatHunk(
             hunkLinesA,
             hunkLinesB,
             lineNoA,
-            lineNoB
+            lineNoB,
+            changes
         );
     } else {
         yield* iterFormatHunkUnified(
@@ -155,7 +160,8 @@ export function* iterFormatHunk(
             hunkLinesA,
             hunkLinesB,
             lineNoA,
-            lineNoB
+            lineNoB,
+            changes
         );
     }
 }
