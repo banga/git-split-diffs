@@ -170,8 +170,19 @@ export class SpannedString<T> {
     }
 
     *iterSubstrings(): IterableIterator<[string, T[]]> {
+        const activeSpansById = new Map<number, Span<T>>();
+
+        function getActiveAttributes() {
+            return (
+                Array.from(activeSpansById.values())
+                    // Attributes should be returned in the order they were
+                    // applied.
+                    .sort((a, b) => a.id - b.id)
+                    .map((span) => span.attribute)
+            );
+        }
+
         let lastIndex = 0;
-        let activeSpans: Span<T>[] = [];
         for (let spanIndex = 0; spanIndex <= this._string.length; spanIndex++) {
             const spans = this._spanMarkers[spanIndex];
 
@@ -180,24 +191,17 @@ export class SpannedString<T> {
             }
 
             if (spanIndex > lastIndex) {
-                activeSpans.sort((a, b) => a.id - b.id);
                 yield [
                     this._string.slice(lastIndex, spanIndex),
-                    activeSpans.map((span) => span.attribute),
+                    getActiveAttributes(),
                 ];
             }
 
-            const toRemove = new Set(
-                spans
-                    .filter((span) => !span.isStart)
-                    .map((span) => span.attribute)
-            );
-            activeSpans = activeSpans.filter(
-                (span) => !toRemove.has(span.attribute)
-            );
             for (const span of spans) {
                 if (span.isStart) {
-                    activeSpans.push(span);
+                    activeSpansById.set(span.id, span);
+                } else {
+                    activeSpansById.delete(span.id);
                 }
             }
 
@@ -205,10 +209,7 @@ export class SpannedString<T> {
         }
 
         if (lastIndex < this._string.length) {
-            yield [
-                this._string.slice(lastIndex),
-                activeSpans.map((span) => span.attribute),
-            ];
+            yield [this._string.slice(lastIndex), getActiveAttributes()];
         }
     }
 }

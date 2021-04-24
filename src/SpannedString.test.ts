@@ -151,6 +151,24 @@ test('construction', () => {
     ]);
 });
 
+test('identical attributes', () => {
+    {
+        const a = S()
+            .appendString('one', 'b')
+            .appendString('two')
+            .addSpan(0, 6, 'u');
+        expect(apply(a)).toEqual('<u><b>one</b></u><u>two</u>');
+    }
+
+    {
+        const a = S()
+            .appendString('one', 'b')
+            .appendString('two')
+            .addSpan(0, 6, 'b');
+        expect(apply(a)).toEqual('<b><b>one</b></b><b>two</b>');
+    }
+});
+
 describe('slice', () => {
     test('containing spans', () => {
         const string = S().appendString('one', 'b').addSpan(1, 3, 'i');
