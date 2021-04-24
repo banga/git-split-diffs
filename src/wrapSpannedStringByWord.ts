@@ -4,11 +4,6 @@ import { SpannedString } from './SpannedString';
 const SPACE_REGEX = /\s/;
 
 function getLineBreaksForString(string: string, width: number): number[] {
-    // Short circuit if no wrapping is required
-    if (string.length <= width) {
-        return [string.length];
-    }
-
     const lineBreaks: number[] = [];
     let budget = width;
     let curLineEnd = 0;
@@ -75,24 +70,24 @@ function getLineBreaksForString(string: string, width: number): number[] {
     return lineBreaks;
 }
 
-export function wrapSpannedStringByWord<T>(
+export function* wrapSpannedStringByWord<T>(
     spannedString: SpannedString<T>,
     width: number
-): SpannedString<T>[] {
+): Iterable<SpannedString<T>> {
+    // Short circuit if no wrapping is required
     const string = spannedString.getString();
-    const lineBreaks = getLineBreaksForString(string, width);
+    if (string.length < width) {
+        yield spannedString;
+        return;
+    }
 
-    const wrappedSpannedStrings: SpannedString<T>[] = [];
+    const lineBreaks = getLineBreaksForString(string, width);
     let prevLineBreak = 0;
     for (const lineBreak of lineBreaks) {
-        wrappedSpannedStrings.push(
-            spannedString.slice(prevLineBreak, lineBreak)
-        );
+        yield spannedString.slice(prevLineBreak, lineBreak);
         prevLineBreak = lineBreak;
     }
     if (prevLineBreak < string.length - 1) {
-        wrappedSpannedStrings.push(spannedString.slice(prevLineBreak));
+        yield spannedString.slice(prevLineBreak);
     }
-
-    return wrappedSpannedStrings;
 }
