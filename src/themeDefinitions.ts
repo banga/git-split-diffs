@@ -17,8 +17,14 @@ export const THEME_DEFINITIONS: { [key in string]: ThemeDefinition } = {
 
         HUNK_HEADER_COLOR: { modifiers: ['dim'] },
 
-        DELETED_WORD_COLOR: { color: '99000033', backgroundColor: 'cc000033' },
-        INSERTED_WORD_COLOR: { color: '00990033', backgroundColor: '00cc0033' },
+        DELETED_WORD_COLOR: {
+            color: 'ffcccc',
+            backgroundColor: 'cc000033',
+        },
+        INSERTED_WORD_COLOR: {
+            color: 'ccffcc',
+            backgroundColor: '00cc0033',
+        },
 
         DELETED_LINE_NO_COLOR: {
             color: '00000022',
