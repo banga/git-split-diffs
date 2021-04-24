@@ -59,7 +59,7 @@ git config split-diffs.highlight-line-changes false
 
 ### Syntax highlighting
 
-Syntax highlighting is enabled by default. It uses the same technology as vscode, via [shiki](https://github.com/shikijs/shiki/). Each theme specifies a default syntax highlighting theme to use, but that can be overridden by:
+Syntax highlighting is supported using the same grammars and themes as vscode, via [shiki](https://github.com/shikijs/shiki/). Each theme specifies a default syntax highlighting theme to use, but that can be overridden by:
 
 ```
 git config split-diffs.syntax-highlighting-theme <name>
@@ -67,7 +67,7 @@ git config split-diffs.syntax-highlighting-theme <name>
 
 Supported syntax highlighting theme names are mentioned here: https://github.com/shikijs/shiki/blob/master/docs/themes.md#all-themes
 
-Syntax highlighting is the slowest operation, so you can disable it for faster diffs:
+Note that syntax highlighting is the slowest operation, so you can disable it for faster diffs:
 
 ```
 git config split-diffs.syntax-highlighting-theme ''
