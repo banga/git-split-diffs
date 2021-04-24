@@ -16,13 +16,15 @@ const ANSI_COLOR_CODE_REGEX = ansiRegex();
  */
 const BINARY_FILES_DIFF_REGEX = /^Binary files (?:a\/(.*)|\/dev\/null) and (?:b\/(.*)|\/dev\/null) differ$/;
 
+type State = 'unknown' | 'commit' | 'diff' | 'hunk-header' | 'hunk-body';
+
 async function* iterSideBySideDiffsFormatted(
     context: Context,
     lines: AsyncIterable<string>
 ): AsyncIterable<FormattedString> {
     const { HORIZONTAL_SEPARATOR } = context;
 
-    let state: 'unknown' | 'commit' | 'diff' | 'hunk' = 'unknown';
+    let state: State = 'unknown';
 
     // File metadata
     let fileNameA: string = '';
@@ -52,87 +54,98 @@ async function* iterSideBySideDiffsFormatted(
         hunkLinesB = [];
     }
 
+    function* flushPending() {
+        if (state === 'diff') {
+            yield* yieldFileName();
+        } else if (state === 'hunk-body') {
+            yield* yieldHunk();
+        }
+    }
+
     for await (const rawLine of lines) {
         const line = rawLine.replace(ANSI_COLOR_CODE_REGEX, '');
 
-        // Handle state transitions
+        // Update state
+        let nextState: State | null = null;
         if (line.startsWith('commit ')) {
-            if (state === 'diff') {
-                yield* yieldFileName();
-            } else if (state === 'hunk') {
-                yield* yieldHunk();
-                yield HORIZONTAL_SEPARATOR;
-            }
-
-            state = 'commit';
+            nextState = 'commit';
         } else if (line.startsWith('diff --git')) {
-            if (state === 'diff') {
-                yield* yieldFileName();
-            } else if (state === 'hunk') {
-                yield* yieldHunk();
-            }
-
-            state = 'diff';
-            fileNameA = '';
-            fileNameB = '';
+            nextState = 'diff';
         } else if (line.startsWith('@@ ')) {
-            if (state === 'diff') {
-                yield* yieldFileName();
-            } else if (state === 'hunk') {
-                yield* yieldHunk();
+            nextState = 'hunk-header';
+        } else if (state === 'hunk-header') {
+            nextState = 'hunk-body';
+        }
+
+        // Handle state starts
+        if (nextState) {
+            yield* flushPending();
+
+            switch (nextState) {
+                case 'commit':
+                    if (state === 'hunk-header' || state === 'hunk-body') {
+                        yield HORIZONTAL_SEPARATOR;
+                    }
+                    break;
+                case 'diff':
+                    fileNameA = '';
+                    fileNameB = '';
+                    break;
             }
 
-            const hunkHeaderStart = line.indexOf('@@ ');
-            const hunkHeaderEnd = line.indexOf(' @@', hunkHeaderStart + 1);
-            assert.ok(hunkHeaderStart >= 0);
-            assert.ok(hunkHeaderEnd > hunkHeaderStart);
-            const hunkHeader = line.slice(hunkHeaderStart + 3, hunkHeaderEnd);
-            hunkHeaderLine = line;
-
-            const [aHeader, bHeader] = hunkHeader.split(' ');
-            const [startAString] = aHeader.split(',');
-            const [startBString] = bHeader.split(',');
-
-            assert.ok(startAString.startsWith('-'));
-            startA = parseInt(startAString.slice(1), 10);
-
-            assert.ok(startBString.startsWith('+'));
-            startB = parseInt(startBString.slice(1), 10);
-
-            state = 'hunk';
-
-            // Don't add the first line to hunkLines
-            continue;
+            state = nextState;
         }
 
         // Handle state
         switch (state) {
-            case 'unknown':
+            case 'unknown': {
                 yield T().appendString(rawLine);
                 break;
+            }
             case 'commit': {
                 yield* iterFormatCommitLine(context, line);
                 break;
             }
-            case 'diff':
-                {
-                    if (line.startsWith('--- a/')) {
-                        fileNameA = line.slice('--- a/'.length);
-                    } else if (line.startsWith('+++ b/')) {
-                        fileNameB = line.slice('+++ b/'.length);
-                    } else if (line.startsWith('rename from ')) {
-                        fileNameA = line.slice('rename from '.length);
-                    } else if (line.startsWith('rename to ')) {
-                        fileNameB = line.slice('rename to '.length);
-                    } else if (line.startsWith('Binary files')) {
-                        const match = line.match(BINARY_FILES_DIFF_REGEX);
-                        if (match) {
-                            [, fileNameA, fileNameB] = match;
-                        }
+            case 'diff': {
+                if (line.startsWith('--- a/')) {
+                    fileNameA = line.slice('--- a/'.length);
+                } else if (line.startsWith('+++ b/')) {
+                    fileNameB = line.slice('+++ b/'.length);
+                } else if (line.startsWith('rename from ')) {
+                    fileNameA = line.slice('rename from '.length);
+                } else if (line.startsWith('rename to ')) {
+                    fileNameB = line.slice('rename to '.length);
+                } else if (line.startsWith('Binary files')) {
+                    const match = line.match(BINARY_FILES_DIFF_REGEX);
+                    if (match) {
+                        [, fileNameA, fileNameB] = match;
                     }
                 }
                 break;
-            case 'hunk': {
+            }
+            case 'hunk-header': {
+                const hunkHeaderStart = line.indexOf('@@ ');
+                const hunkHeaderEnd = line.indexOf(' @@', hunkHeaderStart + 1);
+                assert.ok(hunkHeaderStart >= 0);
+                assert.ok(hunkHeaderEnd > hunkHeaderStart);
+                const hunkHeader = line.slice(
+                    hunkHeaderStart + 3,
+                    hunkHeaderEnd
+                );
+                hunkHeaderLine = line;
+
+                const [aHeader, bHeader] = hunkHeader.split(' ');
+                const [startAString] = aHeader.split(',');
+                const [startBString] = bHeader.split(',');
+
+                assert.ok(startAString.startsWith('-'));
+                startA = parseInt(startAString.slice(1), 10);
+
+                assert.ok(startBString.startsWith('+'));
+                startB = parseInt(startBString.slice(1), 10);
+                break;
+            }
+            case 'hunk-body': {
                 if (line.startsWith('-')) {
                     hunkLinesA.push(line);
                 } else if (line.startsWith('+')) {
@@ -152,11 +165,7 @@ async function* iterSideBySideDiffsFormatted(
         }
     }
 
-    if (state === 'diff') {
-        yield* yieldFileName();
-    } else if (state === 'hunk') {
-        yield* yieldHunk();
-    }
+    yield* flushPending();
 }
 
 export async function* iterSideBySideDiffs(
