@@ -74,8 +74,8 @@ export function* formatAndFitHunkLine(
 
     let isFirstLine = true;
     const formattedLine = T().appendString(lineText);
-    highlightSyntaxInLine(formattedLine, fileName, context.HIGHLIGHTER);
     highlightChangesInLine(formattedLine, changes, wordColor);
+    highlightSyntaxInLine(formattedLine, fileName, context.HIGHLIGHTER);
 
     for (const fittedLine of iterFitTextToWidth(
         context,
