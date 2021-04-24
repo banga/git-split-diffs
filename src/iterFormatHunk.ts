@@ -15,7 +15,7 @@ function* iterFormatHunkSplit(
     lineNoA: number,
     lineNoB: number
 ): Iterable<FormattedString> {
-    const { INSERTED_LINE_COLOR, DELETED_LINE_COLOR, BLANK_LINE } = context;
+    const { MISSING_LINE_COLOR, BLANK_LINE } = context;
 
     for (let i = 0; i < hunkLinesA.length || i < hunkLinesB.length; i++) {
         const lineA = i < hunkLinesA.length ? hunkLinesA[i] : null;
@@ -41,12 +41,12 @@ function* iterFormatHunkSplit(
         while (j < formattedLinesA.length) {
             yield T()
                 .appendSpannedString(formattedLinesA[j])
-                .appendString(BLANK_LINE, INSERTED_LINE_COLOR);
+                .appendString(BLANK_LINE, MISSING_LINE_COLOR);
             j++;
         }
         while (j < formattedLinesB.length) {
             yield T()
-                .appendString(BLANK_LINE, DELETED_LINE_COLOR)
+                .appendString(BLANK_LINE, MISSING_LINE_COLOR)
                 .appendSpannedString(formattedLinesB[j]);
             j++;
         }
