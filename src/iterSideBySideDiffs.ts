@@ -16,7 +16,13 @@ const ANSI_COLOR_CODE_REGEX = ansiRegex();
  */
 const BINARY_FILES_DIFF_REGEX = /^Binary files (?:a\/(.*)|\/dev\/null) and (?:b\/(.*)|\/dev\/null) differ$/;
 
-type State = 'unknown' | 'commit' | 'diff' | 'hunk-header' | 'hunk-body';
+type State =
+    | 'unknown'
+    | 'commit-header'
+    | 'commit-body'
+    | 'diff'
+    | 'hunk-header'
+    | 'hunk-body';
 
 async function* iterSideBySideDiffsFormatted(
     context: Context,
@@ -68,13 +74,21 @@ async function* iterSideBySideDiffsFormatted(
         // Update state
         let nextState: State | null = null;
         if (line.startsWith('commit ')) {
-            nextState = 'commit';
+            nextState = 'commit-header';
+        } else if (state === 'commit-header' && line.startsWith('    ')) {
+            nextState = 'commit-body';
         } else if (line.startsWith('diff --git')) {
             nextState = 'diff';
         } else if (line.startsWith('@@ ')) {
             nextState = 'hunk-header';
         } else if (state === 'hunk-header') {
             nextState = 'hunk-body';
+        } else if (
+            state === 'commit-body' &&
+            line.length > 0 &&
+            !line.startsWith('    ')
+        ) {
+            nextState = 'unknown';
         }
 
         // Handle state starts
@@ -82,7 +96,7 @@ async function* iterSideBySideDiffsFormatted(
             yield* flushPending();
 
             switch (nextState) {
-                case 'commit':
+                case 'commit-header':
                     if (state === 'hunk-header' || state === 'hunk-body') {
                         yield HORIZONTAL_SEPARATOR;
                     }
@@ -102,7 +116,8 @@ async function* iterSideBySideDiffsFormatted(
                 yield T().appendString(rawLine);
                 break;
             }
-            case 'commit': {
+            case 'commit-header':
+            case 'commit-body': {
                 yield* iterFormatCommitLine(context, line);
                 break;
             }
