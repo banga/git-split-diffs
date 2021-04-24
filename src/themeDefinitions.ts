@@ -19,11 +19,11 @@ export const THEME_DEFINITIONS: { [key in string]: ThemeDefinition } = {
 
         DELETED_WORD_COLOR: {
             color: 'ffcccc',
-            backgroundColor: 'cc000033',
+            backgroundColor: 'ff000033',
         },
         INSERTED_WORD_COLOR: {
             color: 'ccffcc',
-            backgroundColor: '00cc0033',
+            backgroundColor: '00ff0033',
         },
 
         DELETED_LINE_NO_COLOR: {
