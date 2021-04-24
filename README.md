@@ -8,7 +8,7 @@ GitHub style split diffs in your terminal.
 
 ![Screenshot of github-light theme](screenshots/github-light.png?raw=true)
 
-[Demo 1](https://asciinema.org/a/6MZ4GWjfIyODdts9tjnN0YPy8?t=3) | [Demo 2](https://asciinema.org/a/qqkVNGVX7WyL5PQ3rfXTTISMv?t=3)
+[Demo 1](https://asciinema.org/a/Bsk7CFtZkDZ4Ea89BwDcbD8LA) | [Demo 2](https://asciinema.org/a/7HrYqF2vjfrKXt28bv6BUAcym)
 
 ## Usage
 
