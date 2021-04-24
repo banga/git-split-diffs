@@ -29,7 +29,7 @@
 -   [x] Simplify operations with formatted strings using something like SpannableStringBuilder
 -   [ ] Highlight changes in unified mode
 -   [x] Make sure to pad wrapped lines in commits
--   [ ] Wrapped lines on the left with inline changes leak formatting to the right
+-   [x] Wrapped lines on the left with inline changes leak formatting to the right
 -   [x] Support alpha in colors
 -   [x] Keep colors from --stat
 -   [ ] Handle 3-way merge diffs (e.g. during merge conflicts)
