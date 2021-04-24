@@ -1,6 +1,6 @@
 {
     "name": "git-split-diffs",
-    "version": "0.5.0",
+    "version": "0.5.1",
     "description": "Split diffs, now in your terminal",
     "homepage": "https://github.com/banga/git-split-diffs",
     "repository": "github:banga/git-split-diffs",
