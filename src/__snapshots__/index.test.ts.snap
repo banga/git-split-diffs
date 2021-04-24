@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`inlineChangesHighlighted commit with a small diff 1`] = `
-"                                                                                                                        
+"
 commit 26ca49fb83758bace20a473e231d576aa1bbe115                                                                         
 Author: Shrey Banga <shrey@quip.com>                                                                                    
 Date:   Tue May 23 16:47:17 2017 -0700                                                                                  
@@ -23,7 +23,7 @@ Date:   Tue May 23 16:47:17 2017 -0700
 `;
 
 exports[`inlineChangesHighlighted commit with addition 1`] = `
-"                                                                                                                        
+"
 commit f735de7025c6d626c5ae1a291fe24f143dea0313                                                                         
 Author: Shrey Banga <banga.shrey@gmail.com>                                                                             
 Date:   Sun Apr 11 15:25:34 2021 -0700                                                                                  
@@ -42,7 +42,7 @@ Date:   Sun Apr 11 15:25:34 2021 -0700
 `;
 
 exports[`inlineChangesHighlighted commit with binary file addition 1`] = `
-"                                                                                                                        
+"
 commit c0ca4394fd55f1709430414f03db3d04cb9cc72c (HEAD -> main)                                                          
 Author: Shrey Banga <banga.shrey@gmail.com>                                                                             
 Date:   Wed Apr 14 18:24:29 2021 -0700                                                                                  
@@ -79,7 +79,7 @@ index a33d267..ae58a01 100644
 `;
 
 exports[`inlineChangesHighlighted commit with file addition 1`] = `
-"                                                                                                                        
+"
 commit e4951eee3b9a8fa471d01dd64075c5fd44879a26                                                                         
 Author: Shrey Banga <banga.shrey@gmail.com>                                                                             
 Date:   Sat Apr 10 14:35:42 2021 -0700                                                                                  
@@ -97,7 +97,7 @@ Date:   Sat Apr 10 14:35:42 2021 -0700
 `;
 
 exports[`inlineChangesHighlighted commit with file deletion 1`] = `
-"                                                                                                                        
+"
 commit 1e6ebaccc6fadf3390a749e7aa2cc6372b24325e                                                                         
 Author: Shrey Banga <banga.shrey@gmail.com>                                                                             
 Date:   Sun Apr 18 03:17:05 2021 -0700                                                                                  
@@ -123,7 +123,7 @@ Date:   Sun Apr 18 03:17:05 2021 -0700
 `;
 
 exports[`inlineChangesHighlighted commit with file move 1`] = `
-"                                                                                                                        
+"
 commit 1c76ed4bb05429741fd4a48896bb84b11bc661f5                                                                         
 Author: Shrey Banga <banga.shrey@gmail.com>                                                                             
 Date:   Sat Apr 10 22:26:15 2021 -0700                                                                                  
@@ -137,7 +137,7 @@ Date:   Sat Apr 10 22:26:15 2021 -0700
 `;
 
 exports[`inlineChangesHighlighted commit with inline line changes 1`] = `
-"                                                                                                                        
+"
 commit 9e424d329800e945e3003c9e275f80bdef69e591                                                                         
 Author: Shrey Banga <banga.shrey@gmail.com>                                                                             
 Date:   Sun Apr 4 19:04:26 2021 -0700                                                                                   
@@ -183,7 +183,7 @@ Date:   Sun Apr 4 19:04:26 2021 -0700
 `;
 
 exports[`inlineChangesHighlighted commit with tabs 1`] = `
-"                                                                                                                        
+"
 commit f735de7025c6d626c5ae1a291fe24f143dea0313                                                                         
 Author: Shrey Banga <banga.shrey@gmail.com>                                                                             
 Date:   Sun Apr 11 15:25:34 2021 -0700                                                                                  
@@ -202,7 +202,7 @@ Date:   Sun Apr 11 15:25:34 2021 -0700
 `;
 
 exports[`inlineChangesHighlighted commits without diffs 1`] = `
-"                                                                                                                        
+"
 commit e5f896655402f8cf2d947c528d45e1d56bbf5717 (HEAD -> main)                                                          
 Author: Shrey Banga <banga.shrey@gmail.com>                                                                             
 Date:   Sun Apr 11 16:23:54 2021 -0700                                                                                  
@@ -225,12 +225,12 @@ Date:   Sun Apr 11 10:39:17 2021 -0700
 `;
 
 exports[`inlineChangesHighlighted empty 1`] = `
-"                                                                                                                        
+"
 "
 `;
 
 exports[`inlineChangesHighlighted multiple inserts and deletes in the same hunk 1`] = `
-"                                                                                                                        
+"
 commit e5f896655402f8cf2d947c528d45e1d56bbf5717                                                                         
 Author: Shrey Banga <banga.shrey@gmail.com>                                                                             
 Date:   Sun Apr 11 16:23:54 2021 -0700                                                                                  
@@ -268,7 +268,7 @@ Date:   Sun Apr 11 16:23:54 2021 -0700
 `;
 
 exports[`inlineChangesHighlighted with ANSI color codes 1`] = `
-"                                                                                                                        
+"
 commit f735de7025c6d626c5ae1a291fe24f143dea0313                                                                         
 Author: Shrey Banga <banga.shrey@gmail.com>                                                                             
 Date:   Sun Apr 11 15:25:34 2021 -0700                                                                                  
@@ -292,7 +292,7 @@ Date:   Sun Apr 11 15:25:34 2021 -0700
 `;
 
 exports[`splitWithWrapping commit with a small diff 1`] = `
-"                                                                                
+"
 commit 26ca49fb83758bace20a473e231d576aa1bbe115                                 
 Author: Shrey Banga <shrey@quip.com>                                            
 Date:   Tue May 23 16:47:17 2017 -0700                                          
@@ -314,7 +314,7 @@ Date:   Tue May 23 16:47:17 2017 -0700
 `;
 
 exports[`splitWithWrapping commit with addition 1`] = `
-"                                                                                
+"
 commit f735de7025c6d626c5ae1a291fe24f143dea0313                                 
 Author: Shrey Banga <banga.shrey@gmail.com>                                     
 Date:   Sun Apr 11 15:25:34 2021 -0700                                          
@@ -334,7 +334,7 @@ Date:   Sun Apr 11 15:25:34 2021 -0700
 `;
 
 exports[`splitWithWrapping commit with binary file addition 1`] = `
-"                                                                                
+"
 commit c0ca4394fd55f1709430414f03db3d04cb9cc72c (HEAD -> main)                  
 Author: Shrey Banga <banga.shrey@gmail.com>                                     
 Date:   Wed Apr 14 18:24:29 2021 -0700                                          
@@ -371,7 +371,7 @@ index a33d267..ae58a01 100644
 `;
 
 exports[`splitWithWrapping commit with file addition 1`] = `
-"                                                                                
+"
 commit e4951eee3b9a8fa471d01dd64075c5fd44879a26                                 
 Author: Shrey Banga <banga.shrey@gmail.com>                                     
 Date:   Sat Apr 10 14:35:42 2021 -0700                                          
@@ -389,7 +389,7 @@ Date:   Sat Apr 10 14:35:42 2021 -0700
 `;
 
 exports[`splitWithWrapping commit with file deletion 1`] = `
-"                                                                                
+"
 commit 1e6ebaccc6fadf3390a749e7aa2cc6372b24325e                                 
 Author: Shrey Banga <banga.shrey@gmail.com>                                     
 Date:   Sun Apr 18 03:17:05 2021 -0700                                          
@@ -416,7 +416,7 @@ Date:   Sun Apr 18 03:17:05 2021 -0700
 `;
 
 exports[`splitWithWrapping commit with file move 1`] = `
-"                                                                                
+"
 commit 1c76ed4bb05429741fd4a48896bb84b11bc661f5                                 
 Author: Shrey Banga <banga.shrey@gmail.com>                                     
 Date:   Sat Apr 10 22:26:15 2021 -0700                                          
@@ -430,7 +430,7 @@ Date:   Sat Apr 10 22:26:15 2021 -0700
 `;
 
 exports[`splitWithWrapping commit with inline line changes 1`] = `
-"                                                                                
+"
 commit 9e424d329800e945e3003c9e275f80bdef69e591                                 
 Author: Shrey Banga <banga.shrey@gmail.com>                                     
 Date:   Sun Apr 4 19:04:26 2021 -0700                                           
@@ -503,7 +503,7 @@ Date:   Sun Apr 4 19:04:26 2021 -0700
 `;
 
 exports[`splitWithWrapping commit with tabs 1`] = `
-"                                                                                
+"
 commit f735de7025c6d626c5ae1a291fe24f143dea0313                                 
 Author: Shrey Banga <banga.shrey@gmail.com>                                     
 Date:   Sun Apr 11 15:25:34 2021 -0700                                          
@@ -523,7 +523,7 @@ Date:   Sun Apr 11 15:25:34 2021 -0700
 `;
 
 exports[`splitWithWrapping commits without diffs 1`] = `
-"                                                                                
+"
 commit e5f896655402f8cf2d947c528d45e1d56bbf5717 (HEAD -> main)                  
 Author: Shrey Banga <banga.shrey@gmail.com>                                     
 Date:   Sun Apr 11 16:23:54 2021 -0700                                          
@@ -546,12 +546,12 @@ Date:   Sun Apr 11 10:39:17 2021 -0700
 `;
 
 exports[`splitWithWrapping empty 1`] = `
-"                                                                                
+"
 "
 `;
 
 exports[`splitWithWrapping multiple inserts and deletes in the same hunk 1`] = `
-"                                                                                
+"
 commit e5f896655402f8cf2d947c528d45e1d56bbf5717                                 
 Author: Shrey Banga <banga.shrey@gmail.com>                                     
 Date:   Sun Apr 11 16:23:54 2021 -0700                                          
@@ -604,7 +604,7 @@ Date:   Sun Apr 11 16:23:54 2021 -0700
 `;
 
 exports[`splitWithWrapping with ANSI color codes 1`] = `
-"                                                                                
+"
 commit f735de7025c6d626c5ae1a291fe24f143dea0313                                 
 Author: Shrey Banga <banga.shrey@gmail.com>                                     
 Date:   Sun Apr 11 15:25:34 2021 -0700                                          
@@ -635,7 +635,7 @@ Date:   Sun Apr 11 15:25:34 2021 -0700
 `;
 
 exports[`splitWithoutWrapping commit with a small diff 1`] = `
-"                                                                                
+"
 commit 26ca49fb83758bace20a473e231d576aa1bbe115                                 
 Author: Shrey Banga <shrey@quip.com>                                            
 Date:   Tue May 23 16:47:17 2017 -0700                                          
@@ -657,7 +657,7 @@ Date:   Tue May 23 16:47:17 2017 -0700
 `;
 
 exports[`splitWithoutWrapping commit with addition 1`] = `
-"                                                                                
+"
 commit f735de7025c6d626c5ae1a291fe24f143dea0313                                 
 Author: Shrey Banga <banga.shrey@gmail.com>                                     
 Date:   Sun Apr 11 15:25:34 2021 -0700                                          
@@ -676,7 +676,7 @@ Date:   Sun Apr 11 15:25:34 2021 -0700
 `;
 
 exports[`splitWithoutWrapping commit with binary file addition 1`] = `
-"                                                                                
+"
 commit c0ca4394fd55f1709430414f03db3d04cb9cc72c (HEAD -> main)                  
 Author: Shrey Banga <banga.shrey@gmail.com>                                     
 Date:   Wed Apr 14 18:24:29 2021 -0700                                          
@@ -713,7 +713,7 @@ index a33d267..ae58a01 100644
 `;
 
 exports[`splitWithoutWrapping commit with file addition 1`] = `
-"                                                                                
+"
 commit e4951eee3b9a8fa471d01dd64075c5fd44879a26                                 
 Author: Shrey Banga <banga.shrey@gmail.com>                                     
 Date:   Sat Apr 10 14:35:42 2021 -0700                                          
@@ -731,7 +731,7 @@ Date:   Sat Apr 10 14:35:42 2021 -0700
 `;
 
 exports[`splitWithoutWrapping commit with file deletion 1`] = `
-"                                                                                
+"
 commit 1e6ebaccc6fadf3390a749e7aa2cc6372b24325e                                 
 Author: Shrey Banga <banga.shrey@gmail.com>                                     
 Date:   Sun Apr 18 03:17:05 2021 -0700                                          
@@ -757,7 +757,7 @@ Date:   Sun Apr 18 03:17:05 2021 -0700
 `;
 
 exports[`splitWithoutWrapping commit with file move 1`] = `
-"                                                                                
+"
 commit 1c76ed4bb05429741fd4a48896bb84b11bc661f5                                 
 Author: Shrey Banga <banga.shrey@gmail.com>                                     
 Date:   Sat Apr 10 22:26:15 2021 -0700                                          
@@ -771,7 +771,7 @@ Date:   Sat Apr 10 22:26:15 2021 -0700
 `;
 
 exports[`splitWithoutWrapping commit with inline line changes 1`] = `
-"                                                                                
+"
 commit 9e424d329800e945e3003c9e275f80bdef69e591                                 
 Author: Shrey Banga <banga.shrey@gmail.com>                                     
 Date:   Sun Apr 4 19:04:26 2021 -0700                                           
@@ -817,7 +817,7 @@ Date:   Sun Apr 4 19:04:26 2021 -0700
 `;
 
 exports[`splitWithoutWrapping commit with tabs 1`] = `
-"                                                                                
+"
 commit f735de7025c6d626c5ae1a291fe24f143dea0313                                 
 Author: Shrey Banga <banga.shrey@gmail.com>                                     
 Date:   Sun Apr 11 15:25:34 2021 -0700                                          
@@ -836,7 +836,7 @@ Date:   Sun Apr 11 15:25:34 2021 -0700
 `;
 
 exports[`splitWithoutWrapping commits without diffs 1`] = `
-"                                                                                
+"
 commit e5f896655402f8cf2d947c528d45e1d56bbf5717 (HEAD -> main)                  
 Author: Shrey Banga <banga.shrey@gmail.com>                                     
 Date:   Sun Apr 11 16:23:54 2021 -0700                                          
@@ -859,12 +859,12 @@ Date:   Sun Apr 11 10:39:17 2021 -0700
 `;
 
 exports[`splitWithoutWrapping empty 1`] = `
-"                                                                                
+"
 "
 `;
 
 exports[`splitWithoutWrapping multiple inserts and deletes in the same hunk 1`] = `
-"                                                                                
+"
 commit e5f896655402f8cf2d947c528d45e1d56bbf5717                                 
 Author: Shrey Banga <banga.shrey@gmail.com>                                     
 Date:   Sun Apr 11 16:23:54 2021 -0700                                          
@@ -902,7 +902,7 @@ Date:   Sun Apr 11 16:23:54 2021 -0700
 `;
 
 exports[`splitWithoutWrapping with ANSI color codes 1`] = `
-"                                                                                
+"
 commit f735de7025c6d626c5ae1a291fe24f143dea0313                                 
 Author: Shrey Banga <banga.shrey@gmail.com>                                     
 Date:   Sun Apr 11 15:25:34 2021 -0700                                          
@@ -926,7 +926,7 @@ Date:   Sun Apr 11 15:25:34 2021 -0700
 `;
 
 exports[`unifiedWithWrapping commit with a small diff 1`] = `
-"                                                                                
+"
 commit 26ca49fb83758bace20a473e231d576aa1bbe115                                 
 Author: Shrey Banga <shrey@quip.com>                                            
 Date:   Tue May 23 16:47:17 2017 -0700                                          
@@ -948,7 +948,7 @@ Date:   Tue May 23 16:47:17 2017 -0700
 `;
 
 exports[`unifiedWithWrapping commit with addition 1`] = `
-"                                                                                
+"
 commit f735de7025c6d626c5ae1a291fe24f143dea0313                                 
 Author: Shrey Banga <banga.shrey@gmail.com>                                     
 Date:   Sun Apr 11 15:25:34 2021 -0700                                          
@@ -967,7 +967,7 @@ Date:   Sun Apr 11 15:25:34 2021 -0700
 `;
 
 exports[`unifiedWithWrapping commit with binary file addition 1`] = `
-"                                                                                
+"
 commit c0ca4394fd55f1709430414f03db3d04cb9cc72c (HEAD -> main)                  
 Author: Shrey Banga <banga.shrey@gmail.com>                                     
 Date:   Wed Apr 14 18:24:29 2021 -0700                                          
@@ -1004,7 +1004,7 @@ index a33d267..ae58a01 100644
 `;
 
 exports[`unifiedWithWrapping commit with file addition 1`] = `
-"                                                                                
+"
 commit e4951eee3b9a8fa471d01dd64075c5fd44879a26                                 
 Author: Shrey Banga <banga.shrey@gmail.com>                                     
 Date:   Sat Apr 10 14:35:42 2021 -0700                                          
@@ -1022,7 +1022,7 @@ Date:   Sat Apr 10 14:35:42 2021 -0700
 `;
 
 exports[`unifiedWithWrapping commit with file deletion 1`] = `
-"                                                                                
+"
 commit 1e6ebaccc6fadf3390a749e7aa2cc6372b24325e                                 
 Author: Shrey Banga <banga.shrey@gmail.com>                                     
 Date:   Sun Apr 18 03:17:05 2021 -0700                                          
@@ -1048,7 +1048,7 @@ Date:   Sun Apr 18 03:17:05 2021 -0700
 `;
 
 exports[`unifiedWithWrapping commit with file move 1`] = `
-"                                                                                
+"
 commit 1c76ed4bb05429741fd4a48896bb84b11bc661f5                                 
 Author: Shrey Banga <banga.shrey@gmail.com>                                     
 Date:   Sat Apr 10 22:26:15 2021 -0700                                          
@@ -1062,7 +1062,7 @@ Date:   Sat Apr 10 22:26:15 2021 -0700
 `;
 
 exports[`unifiedWithWrapping commit with inline line changes 1`] = `
-"                                                                                
+"
 commit 9e424d329800e945e3003c9e275f80bdef69e591                                 
 Author: Shrey Banga <banga.shrey@gmail.com>                                     
 Date:   Sun Apr 4 19:04:26 2021 -0700                                           
@@ -1108,7 +1108,7 @@ Date:   Sun Apr 4 19:04:26 2021 -0700
 `;
 
 exports[`unifiedWithWrapping commit with tabs 1`] = `
-"                                                                                
+"
 commit f735de7025c6d626c5ae1a291fe24f143dea0313                                 
 Author: Shrey Banga <banga.shrey@gmail.com>                                     
 Date:   Sun Apr 11 15:25:34 2021 -0700                                          
@@ -1127,7 +1127,7 @@ Date:   Sun Apr 11 15:25:34 2021 -0700
 `;
 
 exports[`unifiedWithWrapping commits without diffs 1`] = `
-"                                                                                
+"
 commit e5f896655402f8cf2d947c528d45e1d56bbf5717 (HEAD -> main)                  
 Author: Shrey Banga <banga.shrey@gmail.com>                                     
 Date:   Sun Apr 11 16:23:54 2021 -0700                                          
@@ -1150,12 +1150,12 @@ Date:   Sun Apr 11 10:39:17 2021 -0700
 `;
 
 exports[`unifiedWithWrapping empty 1`] = `
-"                                                                                
+"
 "
 `;
 
 exports[`unifiedWithWrapping multiple inserts and deletes in the same hunk 1`] = `
-"                                                                                
+"
 commit e5f896655402f8cf2d947c528d45e1d56bbf5717                                 
 Author: Shrey Banga <banga.shrey@gmail.com>                                     
 Date:   Sun Apr 11 16:23:54 2021 -0700                                          
@@ -1200,7 +1200,7 @@ Date:   Sun Apr 11 16:23:54 2021 -0700
 `;
 
 exports[`unifiedWithWrapping with ANSI color codes 1`] = `
-"                                                                                
+"
 commit f735de7025c6d626c5ae1a291fe24f143dea0313                                 
 Author: Shrey Banga <banga.shrey@gmail.com>                                     
 Date:   Sun Apr 11 15:25:34 2021 -0700                                          

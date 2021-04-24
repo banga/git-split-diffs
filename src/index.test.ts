@@ -2,7 +2,6 @@ import chalk from 'chalk';
 import { Readable } from 'stream';
 import { Config } from './config';
 import { getContextForConfig } from './context';
-import { iterLinesWithoutAnsiColors } from './iterLinesWithoutAnsiColors';
 import { iterReplaceTabsWithSpaces } from './iterReplaceTabsWithSpaces';
 import { iterSideBySideDiffs } from './iterSideBySideDiffs';
 import { iterWithNewlines } from './iterWithNewlines';
@@ -78,12 +77,7 @@ for (const [configName, configOverride] of Object.entries(CONFIG_OVERRIDES)) {
         const transformedStream = transformStreamWithIterables(
             context,
             Readable.from(input),
-            [
-                iterLinesWithoutAnsiColors,
-                iterReplaceTabsWithSpaces,
-                iterSideBySideDiffs,
-                iterWithNewlines,
-            ]
+            [iterReplaceTabsWithSpaces, iterSideBySideDiffs, iterWithNewlines]
         );
         for await (const chunk of transformedStream) {
             string += chunk.toString();

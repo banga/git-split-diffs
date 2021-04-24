@@ -4,7 +4,6 @@ import stream from 'stream';
 import terminalSize from 'term-size';
 import { getContextForConfig } from './context';
 import { getGitConfig } from './getGitConfig';
-import { iterLinesWithoutAnsiColors } from './iterLinesWithoutAnsiColors';
 import { iterReplaceTabsWithSpaces } from './iterReplaceTabsWithSpaces';
 import { iterSideBySideDiffs } from './iterSideBySideDiffs';
 import { iterWithNewlines } from './iterWithNewlines';
@@ -16,7 +15,6 @@ async function main() {
 
     stream.pipeline(
         transformStreamWithIterables(context, process.stdin, [
-            iterLinesWithoutAnsiColors,
             iterReplaceTabsWithSpaces,
             iterSideBySideDiffs,
             iterWithNewlines,

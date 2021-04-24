@@ -1,9 +1,12 @@
+import ansiRegex from 'ansi-regex';
 import * as assert from 'assert';
 import { Context } from './context';
 import { applyFormatting, T, FormattedString } from './formattedString';
 import { iterFormatCommitLine } from './iterFormatCommitLine';
 import { iterFormatFileName } from './iterFormatFileName';
 import { iterFormatHunk } from './iterFormatHunk';
+
+const ANSI_COLOR_CODE_REGEX = ansiRegex();
 
 /**
  * Binary file diffs are hard to parse, because they are printed like:
@@ -19,7 +22,7 @@ async function* iterSideBySideDiffsFormatted(
 ): AsyncIterable<FormattedString> {
     const { HORIZONTAL_SEPARATOR } = context;
 
-    let state: 'commit' | 'diff' | 'hunk' = 'commit';
+    let state: 'unknown' | 'commit' | 'diff' | 'hunk' = 'unknown';
 
     // File metadata
     let fileNameA: string = '';
@@ -49,7 +52,9 @@ async function* iterSideBySideDiffsFormatted(
         hunkLinesB = [];
     }
 
-    for await (const line of lines) {
+    for await (const rawLine of lines) {
+        const line = rawLine.replace(ANSI_COLOR_CODE_REGEX, '');
+
         // Handle state transitions
         if (line.startsWith('commit ')) {
             if (state === 'diff') {
@@ -102,6 +107,9 @@ async function* iterSideBySideDiffsFormatted(
 
         // Handle state
         switch (state) {
+            case 'unknown':
+                yield T().appendString(rawLine);
+                break;
             case 'commit': {
                 yield* iterFormatCommitLine(context, line);
                 break;
