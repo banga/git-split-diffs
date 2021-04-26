@@ -116,3 +116,13 @@ git config split-diffs.theme github-dark-dim
 ```
 
 ![Screenshot of GitHub Dark (Dim) theme](screenshots/github-dark-dim.png?raw=true)
+
+#### Arctic
+
+Based on https://www.nordtheme.com/
+
+```
+git config split-diffs.theme arctic
+```
+
+![Screenshot of GitHub Dark (Dim) theme](screenshots/arctic.png?raw=true)

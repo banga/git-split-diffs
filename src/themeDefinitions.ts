@@ -143,4 +143,57 @@ export const THEME_DEFINITIONS: { [key in string]: ThemeDefinition } = {
         UNMODIFIED_LINE_COLOR: { color: '768390', backgroundColor: '22282d' },
         MISSING_LINE_COLOR: { backgroundColor: '2d333b' },
     },
+    arctic: {
+        SYNTAX_HIGHLIGHTING_THEME: 'nord',
+
+        COMMIT_HEADER_COLOR: '4C566A',
+        COMMIT_HEADER_LABEL_COLOR: '88C0D0',
+        COMMIT_SHA_COLOR: 'BF616A',
+        COMMIT_AUTHOR_COLOR: 'D08770',
+        COMMIT_DATE_COLOR: 'EBCB8B',
+        COMMIT_MESSAGE_COLOR: 'D8DEE9',
+        COMMIT_TITLE_COLOR: 'ECEFF4',
+
+        FILE_NAME_COLOR: 'EBCB8B',
+        BORDER_COLOR: { color: 'EBCB8B' },
+
+        HUNK_HEADER_COLOR: {
+            color: '4C566A',
+        },
+
+        DELETED_WORD_COLOR: {
+            color: 'EBCB8B',
+            backgroundColor: 'BF616A33',
+        },
+        INSERTED_WORD_COLOR: {
+            color: 'EBCB8B',
+            backgroundColor: 'A3BE8C33',
+        },
+
+        DELETED_LINE_NO_COLOR: {
+            color: 'BF616A',
+        },
+        INSERTED_LINE_NO_COLOR: {
+            color: 'A3BE8C',
+        },
+        UNMODIFIED_LINE_NO_COLOR: {
+            color: '4C566A',
+        },
+
+        DELETED_LINE_COLOR: {
+            color: 'BF616A',
+            backgroundColor: '2E3440',
+        },
+        INSERTED_LINE_COLOR: {
+            color: 'A3BE8C',
+            backgroundColor: '2E3440',
+        },
+        UNMODIFIED_LINE_COLOR: {
+            color: 'E5E9F0',
+        },
+
+        MISSING_LINE_COLOR: {
+            backgroundColor: '2E3440',
+        },
+    },
 };
