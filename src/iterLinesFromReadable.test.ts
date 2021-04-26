@@ -1,10 +1,10 @@
 import { Readable } from 'stream';
-import { iterlinesFromReadableAsync } from './iterLinesFromReadable';
+import { iterlinesFromReadable } from './iterLinesFromReadable';
 
 async function toLines(input: Iterable<string>): Promise<string[]> {
     const readable = Readable.from(input);
     const lines = [];
-    for await (const line of iterlinesFromReadableAsync(readable)) {
+    for await (const line of iterlinesFromReadable(readable)) {
         lines.push(line);
     }
     return lines;

@@ -1,11 +1,8 @@
-import { Readable } from 'stream';
+import { Readable, Writable } from 'stream';
 import { Config } from './config';
 import { getContextForConfig } from './context';
-import { iterReplaceTabsWithSpaces } from './iterReplaceTabsWithSpaces';
-import { iterSideBySideDiffs } from './iterSideBySideDiffs';
-import { iterWithNewlines } from './iterWithNewlines';
 import { THEME_COLOR_VARIABLE_NAMES } from './themes';
-import { transformStreamWithIterables } from './transformStreamWithIterables';
+import { transformContentsStreaming } from './transformContentsStreaming';
 
 const TEST_THEME = Object.fromEntries(
     THEME_COLOR_VARIABLE_NAMES.map((name) => [name, {}])
@@ -68,14 +65,16 @@ for (const [configName, configOverride] of Object.entries(CONFIG_OVERRIDES)) {
         const context = await getContextForConfig(testConfig);
 
         let string = '';
-        const transformedStream = transformStreamWithIterables(
+        await transformContentsStreaming(
             context,
             Readable.from(input),
-            [iterReplaceTabsWithSpaces, iterSideBySideDiffs, iterWithNewlines]
+            new (class extends Writable {
+                write(chunk: Buffer) {
+                    string += chunk.toString();
+                    return true;
+                }
+            })()
         );
-        for await (const chunk of transformedStream) {
-            string += chunk.toString();
-        }
         return string;
     }
 

@@ -31,8 +31,9 @@
         "test": "tsc && jest",
         "clean": "rimraf ./build",
         "build": "yarn clean && yarn esbuild --external:ansi-regex --external:chalk --external:diff --external:shiki --external:term-size --platform=node --target=node12 --outdir=build --bundle",
-        "build:dev": "yarn build src/index.ts src/benchmark.ts",
+        "build:dev": "yarn build src/index.ts src/benchmark.ts src/previewTheme.ts",
         "build:publish": "yarn build src/index.ts --minify",
+        "previewTheme": "nodemon -q build/previewTheme.js",
         "benchmark": "yarn build:dev && node build/benchmark.js",
         "prepublishOnly": "yarn test && yarn build:publish"
     },
@@ -44,6 +45,7 @@
         "benchmark": "^2.1.4",
         "esbuild": "^0.11.9",
         "jest": "^26.6.3",
+        "nodemon": "^2.0.7",
         "prettier": "^2.2.1",
         "rimraf": "^3.0.2",
         "ts-jest": "^26.5.4",
