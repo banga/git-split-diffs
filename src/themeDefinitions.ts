@@ -182,11 +182,11 @@ export const THEME_DEFINITIONS: { [key in string]: ThemeDefinition } = {
 
         DELETED_LINE_COLOR: {
             color: 'BF616A',
-            backgroundColor: '2E3440',
+            backgroundColor: '3a3035',
         },
         INSERTED_LINE_COLOR: {
             color: 'A3BE8C',
-            backgroundColor: '2E3440',
+            backgroundColor: '303a35',
         },
         UNMODIFIED_LINE_COLOR: {
             color: 'E5E9F0',
