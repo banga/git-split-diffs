@@ -81,43 +81,11 @@ git config split-diffs.min-line-width 40
 
 This defaults to `80`, so screens below `160` characters will display unified diffs. Set it to `0` to always show split diffs.
 
-### Themes
+## Themes
 
 You can pick between several [themes](themes/):
 
-#### Default
-
-```
-git config split-diffs.theme default
-```
-
-![Screenshot of default theme](screenshots/default.png?raw=true)
-
-#### Light
-
-```
-git config split-diffs.theme light
-```
-
-![Screenshot of light theme](screenshots/light.png?raw=true)
-
-#### GitHub Light
-
-```
-git config split-diffs.theme github-light
-```
-
-![Screenshot of GitHub Light theme](screenshots/github-light.png?raw=true)
-
-#### GitHub Dark (Dim)
-
-```
-git config split-diffs.theme github-dark-dim
-```
-
-![Screenshot of GitHub Dark (Dim) theme](screenshots/github-dark-dim.png?raw=true)
-
-#### Arctic
+### Arctic
 
 Based on https://www.nordtheme.com/
 
@@ -126,3 +94,35 @@ git config split-diffs.theme arctic
 ```
 
 ![Screenshot of GitHub Dark (Dim) theme](screenshots/arctic.png?raw=true)
+
+### Default
+
+```
+git config split-diffs.theme default
+```
+
+![Screenshot of default theme](screenshots/default.png?raw=true)
+
+### Light
+
+```
+git config split-diffs.theme light
+```
+
+![Screenshot of light theme](screenshots/light.png?raw=true)
+
+### GitHub Light
+
+```
+git config split-diffs.theme github-light
+```
+
+![Screenshot of GitHub Light theme](screenshots/github-light.png?raw=true)
+
+### GitHub Dark (Dim)
+
+```
+git config split-diffs.theme github-dark-dim
+```
+
+![Screenshot of GitHub Dark (Dim) theme](screenshots/github-dark-dim.png?raw=true)
