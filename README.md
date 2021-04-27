@@ -111,14 +111,6 @@ git config split-diffs.theme light
 
 ![Screenshot of light theme](screenshots/light.png?raw=true)
 
-### GitHub Light
-
-```
-git config split-diffs.theme github-light
-```
-
-![Screenshot of GitHub Light theme](screenshots/github-light.png?raw=true)
-
 ### GitHub Dark (Dim)
 
 ```
@@ -126,3 +118,11 @@ git config split-diffs.theme github-dark-dim
 ```
 
 ![Screenshot of GitHub Dark (Dim) theme](screenshots/github-dark-dim.png?raw=true)
+
+### GitHub Light
+
+```
+git config split-diffs.theme github-light
+```
+
+![Screenshot of GitHub Light theme](screenshots/github-light.png?raw=true)
