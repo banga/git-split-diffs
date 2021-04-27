@@ -2,7 +2,7 @@
 
 GitHub style split diffs with syntax highlighting in your terminal.
 
-![Screenshot of default theme](screenshots/default.png?raw=true)
+![Screenshot of dark theme](screenshots/dark.png?raw=true)
 
 ![Screenshot of github-light theme](screenshots/github-light.png?raw=true)
 
@@ -95,13 +95,15 @@ git config split-diffs.theme arctic
 
 ![Screenshot of GitHub Dark (Dim) theme](screenshots/arctic.png?raw=true)
 
-### Default
+### Dark
+
+This is the default theme.
 
 ```
-git config split-diffs.theme default
+git config split-diffs.theme dark
 ```
 
-![Screenshot of default theme](screenshots/default.png?raw=true)
+![Screenshot of dark theme](screenshots/dark.png?raw=true)
 
 ### Light
 

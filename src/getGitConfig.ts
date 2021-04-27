@@ -32,7 +32,8 @@ export async function getGitConfig(
 ): Promise<Config> {
     const rawConfig = await getRawGitConfig();
 
-    const themeName = rawConfig['theme-name'] ?? 'default';
+    // Defaults to "dark"
+    const themeName = rawConfig['theme-name'] ?? 'dark';
     const theme = loadTheme(themeName);
 
     // Defaults to the theme's setting
