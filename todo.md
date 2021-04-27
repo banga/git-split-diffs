@@ -36,3 +36,4 @@
 -   [ ] See why `less` occasionally goes into search mode
 -   [ ] Test on linux
 -   [ ] Support custom themes
+-   [ ] Calculate correct display widths, e.g. https://github.com/microsoft/MS-DOS/commit/29a0f9c130b6883080046b830e27403a289de72d
