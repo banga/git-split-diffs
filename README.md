@@ -83,7 +83,7 @@ This defaults to `80`, so screens below `160` characters will display unified di
 
 ### Themes
 
-You can pick between several [themes](src/themeDefinitions.ts):
+You can pick between several [themes](themes/):
 
 #### Default
 

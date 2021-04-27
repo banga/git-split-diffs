@@ -1,12 +1,10 @@
-import assert from 'assert';
 import chalk from 'chalk';
 import { execSync } from 'child_process';
 import { Readable, Writable } from 'stream';
 import terminalSize from 'term-size';
 import { Config } from './config';
 import { getContextForConfig } from './context';
-import { THEME_DEFINITIONS } from './themeDefinitions';
-import { parseThemeDefinition } from './themes';
+import { loadTheme } from './themes';
 import { transformContentsStreaming } from './transformContentsStreaming';
 
 const CONFIG = {
@@ -17,9 +15,7 @@ const CONFIG = {
 };
 
 async function previewTheme(themeName: string, content: string) {
-    const themeDefinition = THEME_DEFINITIONS[themeName];
-    assert.ok(themeDefinition);
-    const theme = parseThemeDefinition(themeDefinition);
+    const theme = loadTheme(themeName);
 
     const { rows, columns } = terminalSize();
     const config: Config = {

@@ -1,11 +1,11 @@
 import { Readable, Writable } from 'stream';
 import { Config } from './config';
 import { getContextForConfig } from './context';
-import { THEME_COLOR_VARIABLE_NAMES } from './themes';
+import { ThemeColorName } from './themes';
 import { transformContentsStreaming } from './transformContentsStreaming';
 
 const TEST_THEME = Object.fromEntries(
-    THEME_COLOR_VARIABLE_NAMES.map((name) => [name, {}])
+    Object.keys(ThemeColorName).map((name) => [name, {}])
 );
 
 const replaceColoredText = () => (text: string) => text.replace(/./g, '░');

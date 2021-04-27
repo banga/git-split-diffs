@@ -2,8 +2,7 @@ import { Chalk } from 'chalk';
 import { exec } from 'child_process';
 import * as util from 'util';
 import { Config } from './config';
-import { THEME_DEFINITIONS } from './themeDefinitions';
-import { parseThemeDefinition } from './themes';
+import { loadTheme } from './themes';
 const execAsync = util.promisify(exec);
 
 const GIT_CONFIG_KEY_PREFIX = 'split-diffs';
@@ -33,12 +32,8 @@ export async function getGitConfig(
 ): Promise<Config> {
     const rawConfig = await getRawGitConfig();
 
-    // Falls back to "default" if misssing/invalid
-    const themeName =
-        rawConfig['theme-name'] in THEME_DEFINITIONS
-            ? rawConfig['theme-name']
-            : 'default';
-    const theme = parseThemeDefinition(THEME_DEFINITIONS[themeName]);
+    const themeName = rawConfig['theme-name'] ?? 'default';
+    const theme = loadTheme(themeName);
 
     // Defaults to the theme's setting
     const syntaxHighlightingTheme =

@@ -1,27 +1,13 @@
 import * as assert from 'assert';
+import * as path from 'path';
+import * as fs from 'fs';
 
-type KeywordColor =
-    | 'black'
-    | 'red'
-    | 'green'
-    | 'yellow'
-    | 'blue'
-    | 'magenta'
-    | 'cyan'
-    | 'white'
-    | 'blackBright'
-    | 'redBright'
-    | 'greenBright'
-    | 'yellowBright'
-    | 'blueBright'
-    | 'magentaBright'
-    | 'cyanBright'
-    | 'whiteBright';
+const THEMES_DIR = path.resolve(__dirname, '..', 'themes');
 
-/** `#000000` to `#FFFFFF` */
-type HexColor = string;
-
-type Color = KeywordColor | HexColor;
+/**
+ * Colors are always specified as hex strings
+ */
+type Color = string;
 
 type ColorModifier =
     | 'reset'
@@ -34,42 +20,38 @@ type ColorModifier =
     | 'strikethrough'
     | 'visible';
 
-type ColorDefinition =
-    | Color
-    | {
-          color?: Color;
-          backgroundColor?: Color;
-          modifiers?: ColorModifier[];
-      };
+type ColorDefinition = {
+    color?: Color;
+    backgroundColor?: Color;
+    modifiers?: ColorModifier[];
+};
 
-export const THEME_COLOR_VARIABLE_NAMES = [
-    'COMMIT_HEADER_LABEL_COLOR',
-    'COMMIT_HEADER_COLOR',
-    'COMMIT_SHA_COLOR',
-    'COMMIT_AUTHOR_COLOR',
-    'COMMIT_DATE_COLOR',
-    'COMMIT_TITLE_COLOR',
-    'COMMIT_MESSAGE_COLOR',
-    'BORDER_COLOR',
-    'FILE_NAME_COLOR',
-    'HUNK_HEADER_COLOR',
-    'DELETED_WORD_COLOR',
-    'DELETED_LINE_COLOR',
-    'DELETED_LINE_NO_COLOR',
-    'INSERTED_WORD_COLOR',
-    'INSERTED_LINE_COLOR',
-    'INSERTED_LINE_NO_COLOR',
-    'UNMODIFIED_LINE_COLOR',
-    'UNMODIFIED_LINE_NO_COLOR',
-    'MISSING_LINE_COLOR',
-] as const;
-
-type ThemeColorVariables = typeof THEME_COLOR_VARIABLE_NAMES[number];
+export enum ThemeColorName {
+    COMMIT_HEADER_LABEL_COLOR = 'COMMIT_HEADER_LABEL_COLOR',
+    COMMIT_HEADER_COLOR = 'COMMIT_HEADER_COLOR',
+    COMMIT_SHA_COLOR = 'COMMIT_SHA_COLOR',
+    COMMIT_AUTHOR_COLOR = 'COMMIT_AUTHOR_COLOR',
+    COMMIT_DATE_COLOR = 'COMMIT_DATE_COLOR',
+    COMMIT_TITLE_COLOR = 'COMMIT_TITLE_COLOR',
+    COMMIT_MESSAGE_COLOR = 'COMMIT_MESSAGE_COLOR',
+    BORDER_COLOR = 'BORDER_COLOR',
+    FILE_NAME_COLOR = 'FILE_NAME_COLOR',
+    HUNK_HEADER_COLOR = 'HUNK_HEADER_COLOR',
+    DELETED_WORD_COLOR = 'DELETED_WORD_COLOR',
+    DELETED_LINE_COLOR = 'DELETED_LINE_COLOR',
+    DELETED_LINE_NO_COLOR = 'DELETED_LINE_NO_COLOR',
+    INSERTED_WORD_COLOR = 'INSERTED_WORD_COLOR',
+    INSERTED_LINE_COLOR = 'INSERTED_LINE_COLOR',
+    INSERTED_LINE_NO_COLOR = 'INSERTED_LINE_NO_COLOR',
+    UNMODIFIED_LINE_COLOR = 'UNMODIFIED_LINE_COLOR',
+    UNMODIFIED_LINE_NO_COLOR = 'UNMODIFIED_LINE_NO_COLOR',
+    MISSING_LINE_COLOR = 'MISSING_LINE_COLOR',
+}
 
 export type ThemeDefinition = {
     SYNTAX_HIGHLIGHTING_THEME?: string;
 } & {
-    [key in ThemeColorVariables]: ColorDefinition;
+    [key in ThemeColorName]: ColorDefinition;
 };
 
 type ColorRgba = {
@@ -85,15 +67,16 @@ export type ThemeColor = {
     modifiers?: ColorModifier[];
 };
 
+/**
+ * The hex string is of the format #rrggbb(aa)
+ */
 function hexToRgba(hex: string): ColorRgba {
-    if (hex[0] === '#') {
-        hex = hex.slice(1);
-    }
+    assert.ok(hex.length === 7 || hex.length === 9);
 
-    let hexNo = parseInt(hex, 16);
+    let hexNo = parseInt(hex.slice(1), 16);
 
     let a = 255;
-    if (hex.length === 8) {
+    if (hex.length === 9) {
         a = hexNo & 0xff;
         hexNo >>>= 8;
     }
@@ -160,13 +143,10 @@ export function reduceThemeColors(colors: ThemeColor[]): ThemeColor {
 export type Theme = {
     SYNTAX_HIGHLIGHTING_THEME?: string;
 } & {
-    [key in ThemeColorVariables]: ThemeColor;
+    [key in ThemeColorName]: ThemeColor;
 };
 
 export function parseColorDefinition(definition: ColorDefinition): ThemeColor {
-    if (typeof definition === 'string') {
-        return { color: hexToRgba(definition) };
-    }
     return {
         color: definition.color ? hexToRgba(definition.color) : undefined,
         backgroundColor: definition.backgroundColor
@@ -176,11 +156,21 @@ export function parseColorDefinition(definition: ColorDefinition): ThemeColor {
     };
 }
 
-export function parseThemeDefinition(themeDefinition: ThemeDefinition): Theme {
+function loadThemeDefinition(themeName: string): ThemeDefinition {
+    return JSON.parse(
+        fs.readFileSync(path.join(THEMES_DIR, `${themeName}.json`)).toString()
+    ) as ThemeDefinition;
+}
+
+export function loadTheme(themeName: string): Theme {
+    const themeDefinition = loadThemeDefinition(themeName);
+
     const theme: Partial<Theme> = {
         SYNTAX_HIGHLIGHTING_THEME: themeDefinition.SYNTAX_HIGHLIGHTING_THEME,
     };
-    for (const variableName of THEME_COLOR_VARIABLE_NAMES) {
+
+    const themeColorNames = Object.keys(ThemeColorName) as ThemeColorName[];
+    for (const variableName of themeColorNames) {
         const value = themeDefinition[variableName];
         if (!value) {
             assert.fail(`${variableName} is missing in theme`);
