@@ -1,7 +1,8 @@
 {
     "SYNTAX_HIGHLIGHTING_THEME": "dark-plus",
     "COMMIT_HEADER_COLOR": {
-        "color": "#cccccc"
+        "color": "#cccccc",
+        "backgroundColor": "#222222"
     },
     "COMMIT_HEADER_LABEL_COLOR": {
         "color": "#00000022"
@@ -16,19 +17,23 @@
         "color": "#cccccc"
     },
     "COMMIT_MESSAGE_COLOR": {
-        "color": "#cccccc"
+        "color": "#cccccc",
+        "backgroundColor": "#222222"
     },
     "COMMIT_TITLE_COLOR": {
         "modifiers": ["bold"]
     },
     "FILE_NAME_COLOR": {
-        "color": "#ffdd99"
+        "color": "#ffdd99",
+        "backgroundColor": "#222222"
     },
     "BORDER_COLOR": {
         "color": "#ffdd9966",
+        "backgroundColor": "#222222",
         "modifiers": ["dim"]
     },
     "HUNK_HEADER_COLOR": {
+        "backgroundColor": "#222222",
         "modifiers": ["dim"]
     },
     "DELETED_WORD_COLOR": {
@@ -59,7 +64,10 @@
         "backgroundColor": "#303a30"
     },
     "UNMODIFIED_LINE_COLOR": {
-        "color": "#ffffff"
+        "color": "#ffffff",
+        "backgroundColor": "#222222"
     },
-    "MISSING_LINE_COLOR": {}
+    "MISSING_LINE_COLOR": {
+        "backgroundColor": "#222222"
+    }
 }
