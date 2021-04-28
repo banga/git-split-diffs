@@ -31,8 +31,14 @@
         "color": "#586e75",
         "backgroundColor": "#073642"
     },
-    "DELETED_WORD_COLOR": {},
-    "INSERTED_WORD_COLOR": {},
+    "DELETED_WORD_COLOR": {
+        "color": "#839496",
+        "backgroundColor": "#dc322f33"
+    },
+    "INSERTED_WORD_COLOR": {
+        "color": "#839496",
+        "backgroundColor": "#85990033"
+    },
     "DELETED_LINE_NO_COLOR": {
         "color": "#dc322f"
     },
