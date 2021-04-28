@@ -128,3 +128,21 @@ git config split-diffs.theme github-light
 ```
 
 ![Screenshot of GitHub Light theme](screenshots/github-light.png?raw=true)
+
+### Solarized Dark
+
+As seen on https://github.com/altercation/solarized
+
+```
+git config split-diffs.theme solarized-dark
+```
+
+![Screenshot of Solarized Dark theme](screenshots/solarized-dark.png?raw=true)
+
+### Solarized Light
+
+```
+git config split-diffs.theme solarized-light
+```
+
+![Screenshot of Solarized Light theme](screenshots/solarized-light.png?raw=true)
