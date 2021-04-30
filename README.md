@@ -146,3 +146,19 @@ git config split-diffs.theme solarized-light
 ```
 
 ![Screenshot of Solarized Light theme](screenshots/solarized-light.png?raw=true)
+
+### Monochrome Dark
+
+```
+git config split-diffs.theme monochrome-dark
+```
+
+![Screenshot of Monochrome Dark theme](screenshots/monochrome-dark.png?raw=true)
+
+### Monochrome Light
+
+```
+git config split-diffs.theme monochrome-light
+```
+
+![Screenshot of Monochrome Light theme](screenshots/monochrome-light.png?raw=true)
