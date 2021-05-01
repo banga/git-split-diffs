@@ -32,7 +32,7 @@
 -   [x] Wrapped lines on the left with inline changes leak formatting to the right
 -   [x] Support alpha in colors
 -   [x] Keep colors from --stat
--   [ ] Handle 3-way merge diffs (e.g. during merge conflicts)
+-   [ ] Display 3-way merge diffs (e.g. during merge conflicts)
 -   [ ] See why `less` occasionally goes into search mode
 -   [ ] Test on linux
 -   [ ] Support custom themes
