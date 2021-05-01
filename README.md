@@ -89,7 +89,7 @@ You can pick between several [themes](themes/):
 Based on https://www.nordtheme.com/
 
 ```
-git config split-diffs.theme arctic
+git config split-diffs.theme-name arctic
 ```
 
 ![Screenshot of GitHub Dark (Dim) theme](screenshots/arctic.png?raw=true)
@@ -99,7 +99,7 @@ git config split-diffs.theme arctic
 This is the default theme.
 
 ```
-git config split-diffs.theme dark
+git config split-diffs.theme-name dark
 ```
 
 ![Screenshot of dark theme](screenshots/dark.png?raw=true)
@@ -107,7 +107,7 @@ git config split-diffs.theme dark
 ### Light
 
 ```
-git config split-diffs.theme light
+git config split-diffs.theme-name light
 ```
 
 ![Screenshot of light theme](screenshots/light.png?raw=true)
@@ -115,7 +115,7 @@ git config split-diffs.theme light
 ### GitHub Dark (Dim)
 
 ```
-git config split-diffs.theme github-dark-dim
+git config split-diffs.theme-name github-dark-dim
 ```
 
 ![Screenshot of GitHub Dark (Dim) theme](screenshots/github-dark-dim.png?raw=true)
@@ -123,7 +123,7 @@ git config split-diffs.theme github-dark-dim
 ### GitHub Light
 
 ```
-git config split-diffs.theme github-light
+git config split-diffs.theme-name github-light
 ```
 
 ![Screenshot of GitHub Light theme](screenshots/github-light.png?raw=true)
@@ -133,7 +133,7 @@ git config split-diffs.theme github-light
 As seen on https://github.com/altercation/solarized
 
 ```
-git config split-diffs.theme solarized-dark
+git config split-diffs.theme-name solarized-dark
 ```
 
 ![Screenshot of Solarized Dark theme](screenshots/solarized-dark.png?raw=true)
@@ -141,7 +141,7 @@ git config split-diffs.theme solarized-dark
 ### Solarized Light
 
 ```
-git config split-diffs.theme solarized-light
+git config split-diffs.theme-name solarized-light
 ```
 
 ![Screenshot of Solarized Light theme](screenshots/solarized-light.png?raw=true)
@@ -149,7 +149,7 @@ git config split-diffs.theme solarized-light
 ### Monochrome Dark
 
 ```
-git config split-diffs.theme monochrome-dark
+git config split-diffs.theme-name monochrome-dark
 ```
 
 ![Screenshot of Monochrome Dark theme](screenshots/monochrome-dark.png?raw=true)
@@ -157,7 +157,7 @@ git config split-diffs.theme monochrome-dark
 ### Monochrome Light
 
 ```
-git config split-diffs.theme monochrome-light
+git config split-diffs.theme-name monochrome-light
 ```
 
 ![Screenshot of Monochrome Light theme](screenshots/monochrome-light.png?raw=true)
