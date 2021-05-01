@@ -49,7 +49,7 @@ git config split-diffs.wrap-lines false
 By default, salient changes within lines are also highlighted:
 ![Screenshot of inline changes](screenshots/inline-changes.png?raw=true)
 
-This adds a small overhead to rendering. You can disable this with the `highlight-line-changes` setting:
+You can disable this with the `highlight-line-changes` setting:
 
 ```
 git config split-diffs.highlight-line-changes false
@@ -65,6 +65,7 @@ git config split-diffs.syntax-highlighting-theme <name>
 
 The supported syntax highlighting themes are listed at https://github.com/shikijs/shiki/blob/v0.9.3/docs/themes.md
 
+You can disable syntax highlighting by setting the name to empty:
 ```
 git config split-diffs.syntax-highlighting-theme ''
 ```
