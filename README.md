@@ -57,15 +57,13 @@ git config split-diffs.highlight-line-changes false
 
 ### Syntax highlighting
 
-Syntax highlighting is supported using the same grammars and themes as vscode, via [shiki](https://github.com/shikijs/shiki/). Each theme specifies a default syntax highlighting theme to use, but that can be overridden by:
+Syntax highlighting is supported via [shiki](https://github.com/shikijs/shiki/), which uses the same grammars and themes as vscode. Each theme specifies a default syntax highlighting theme to use, which can be overridden by:
 
 ```
 git config split-diffs.syntax-highlighting-theme <name>
 ```
 
-Supported syntax highlighting theme names are mentioned here: https://github.com/shikijs/shiki/blob/master/docs/themes.md#all-themes
-
-Note that syntax highlighting is the slowest operation, so you can disable it for faster diffs:
+The supported syntax highlighting themes are listed at https://github.com/shikijs/shiki/blob/v0.9.3/docs/themes.md
 
 ```
 git config split-diffs.syntax-highlighting-theme ''
@@ -73,7 +71,7 @@ git config split-diffs.syntax-highlighting-theme ''
 
 ### Narrow terminals
 
-Split diffs can be hard to read on narrow widths, so if we cannot fit two lines of `min-line-width` on screen, we revert to unified diffs. This value is configurable:
+Split diffs can be hard to read on narrow terminals, so we revert to unified diffs if we cannot fit two lines of `min-line-width` on screen. This value is configurable:
 
 ```
 git config split-diffs.min-line-width 40
@@ -162,3 +160,21 @@ git config split-diffs.theme monochrome-light
 ```
 
 ![Screenshot of Monochrome Light theme](screenshots/monochrome-light.png?raw=true)
+
+## Performance
+
+Tested by measuring the time it took to pipe the output `git log -p` to `/dev/null` via `git-split-diffs` with the default theme:
+
+| Features enabled                                               | ms/kloc  |
+| -------------------------------------------------------------- | -------- |
+| Everything                                                     | 466<sup>1</sup>     |
+| No syntax highlighting                                         | 40       |
+| No syntax highlighting, no inline change highlighting          | 34       |
+
+<sup>1</sup> https://github.com/shikijs/shiki/pull/151 improves this to 333ms/kloc
+
+
+## Acknowledgements
+* [diff-so-fancy](https://github.com/so-fancy/diff-so-fancy) for showing what's possible
+* [shikijs](https://github.com/shikijs/shiki) for making it easy to do high quality syntax highlighting
+* [chalk](https://github.com/chalk/chalk) for making it easy to do terminal styling reliably
