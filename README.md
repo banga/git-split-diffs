@@ -38,7 +38,7 @@ git diff | git-split-diffs --color | less
 
 ### Line wrapping
 
-By default, lines are wrapped to fit in the screen. If you prefer to truncate them update the `wrap-lines` setting:
+By default, lines are wrapped to fit in the screen. If you prefer to truncate them, update the `wrap-lines` setting:
 
 ```
 git config split-diffs.wrap-lines false
