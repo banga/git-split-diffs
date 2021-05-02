@@ -8,4 +8,5 @@ export type Config = Theme & {
     WRAP_LINES: boolean;
     HIGHLIGHT_LINE_CHANGES: boolean;
     SYNTAX_HIGHLIGHTING_THEME?: string;
+    HIDE_BACKGROUND: boolean;
 };

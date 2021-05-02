@@ -34,7 +34,8 @@ export async function getGitConfig(
 
     // Defaults to "dark"
     const themeName = rawConfig['theme-name'] ?? 'dark';
-    const theme = loadTheme(themeName);
+    const hideBackground = rawConfig['hide-background'] === 'true';
+    const theme = loadTheme(themeName, hideBackground);
 
     // Defaults to the theme's setting
     const syntaxHighlightingTheme =
@@ -65,5 +66,6 @@ export async function getGitConfig(
         WRAP_LINES: wrapLines,
         HIGHLIGHT_LINE_CHANGES: highlightLineChanges,
         SYNTAX_HIGHLIGHTING_THEME: syntaxHighlightingTheme,
+        HIDE_BACKGROUND: hideBackground,
     };
 }

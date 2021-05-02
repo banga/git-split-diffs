@@ -48,6 +48,15 @@ export enum ThemeColorName {
     MISSING_LINE_COLOR = 'MISSING_LINE_COLOR',
 }
 
+export const NO_BACKGROUND_THEME_COLORS: ThemeColorName[] = [
+    ThemeColorName.COMMIT_HEADER_COLOR,
+    ThemeColorName.COMMIT_MESSAGE_COLOR,
+    ThemeColorName.BORDER_COLOR,
+    ThemeColorName.FILE_NAME_COLOR,
+    ThemeColorName.UNMODIFIED_LINE_NO_COLOR,
+    ThemeColorName.UNMODIFIED_LINE_COLOR,
+];
+
 export type ThemeDefinition = {
     SYNTAX_HIGHLIGHTING_THEME?: string;
 } & {
@@ -162,7 +171,10 @@ function loadThemeDefinition(themeName: string): ThemeDefinition {
     ) as ThemeDefinition;
 }
 
-export function loadTheme(themeName: string): Theme {
+export function loadTheme(
+    themeName: string,
+    hideBackground: boolean = false
+): Theme {
     const themeDefinition = loadThemeDefinition(themeName);
 
     const theme: Partial<Theme> = {
@@ -176,6 +188,13 @@ export function loadTheme(themeName: string): Theme {
             assert.fail(`${variableName} is missing in theme`);
         }
         theme[variableName] = parseColorDefinition(value);
+
+        if (
+            hideBackground &&
+            NO_BACKGROUND_THEME_COLORS.includes(variableName)
+        ) {
+            (theme[variableName] as ThemeColor).backgroundColor = undefined;
+        }
     }
 
     return theme as Theme;
