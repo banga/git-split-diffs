@@ -17,7 +17,7 @@ This currently requires `node` version 12 or newer to run.
 ```sh
 npm install -g git-split-diffs
 
-git config --global core.pager git-split-diffs --color | less -RFX
+git config --global core.pager "git-split-diffs --color | less -RFX"
 ```
 
 ### Install locally
@@ -25,7 +25,7 @@ git config --global core.pager git-split-diffs --color | less -RFX
 ```sh
 npm install git-split-diffs
 
-git config core.pager npx git-split-diffs --color | less -RFX
+git config core.pager "npx git-split-diffs --color | less -RFX"
 ```
 
 ### Use manually
