@@ -55,6 +55,7 @@ export const NO_BACKGROUND_THEME_COLORS: ThemeColorName[] = [
     ThemeColorName.FILE_NAME_COLOR,
     ThemeColorName.UNMODIFIED_LINE_NO_COLOR,
     ThemeColorName.UNMODIFIED_LINE_COLOR,
+    ThemeColorName.MISSING_LINE_COLOR,
 ];
 
 export type ThemeDefinition = {
