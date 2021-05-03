@@ -31,7 +31,7 @@ git config core.pager "npx git-split-diffs --color | less -RFX"
 ### Use manually
 
 ```sh
-git diff | git-split-diffs --color | less
+git diff | git-split-diffs --color | less -RFX
 ```
 
 ## Customization
