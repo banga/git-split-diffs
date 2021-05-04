@@ -12,12 +12,12 @@ export function applyFormatting(
     context: Context,
     string: FormattedString
 ): string {
-    const { CHALK } = context;
+    const { CHALK, DEFAULT_COLOR } = context;
 
     let formattedString = '';
     for (const [substring, colors] of string.iterSubstrings()) {
         let formattedSubstring = substring;
-        const themeColor = reduceThemeColors(colors);
+        const themeColor = reduceThemeColors([...colors, DEFAULT_COLOR]);
 
         const { color, backgroundColor, modifiers } = themeColor;
         if (color) {
