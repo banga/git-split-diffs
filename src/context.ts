@@ -34,6 +34,7 @@ export async function getContextForConfig(config: Config): Promise<Context> {
     if (config.SYNTAX_HIGHLIGHTING_THEME) {
         HIGHLIGHTER = await getHighlighter({
             theme: config.SYNTAX_HIGHLIGHTING_THEME,
+            langs: ['git-commit'],
         });
     }
 
