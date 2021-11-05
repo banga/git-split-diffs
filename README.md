@@ -55,6 +55,14 @@ You can disable this with the `highlight-line-changes` setting:
 git config split-diffs.highlight-line-changes false
 ```
 
+### Enable scrolling in the terminal
+
+```sh
+git config --global core.pager "git-split-diffs --color | less -+LFX"
+```
+
+(note the difference from the main configuration with the added `+` to the `less` command)
+
 ### Syntax highlighting
 
 Syntax highlighting is supported via [shiki](https://github.com/shikijs/shiki/), which uses the same grammars and themes as vscode. Each theme specifies a default syntax highlighting theme to use, which can be overridden by:
