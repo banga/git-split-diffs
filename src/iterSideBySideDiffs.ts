@@ -139,8 +139,12 @@ async function* iterSideBySideDiffsFormatted(
             case 'diff': {
                 if (line.startsWith('--- a/')) {
                     fileNameA = line.slice('--- a/'.length);
+                } else if (line.startsWith('---')) {
+                    fileNameA = line.slice('---'.length);
                 } else if (line.startsWith('+++ b/')) {
                     fileNameB = line.slice('+++ b/'.length);
+                } else if (line.startsWith('+++')) {
+                    fileNameB = line.slice('+++'.length);
                 } else if (line.startsWith('rename from ')) {
                     fileNameA = line.slice('rename from '.length);
                 } else if (line.startsWith('rename to ')) {
