@@ -8,9 +8,9 @@ jobs:
         name: Test on node ${{ matrix.node_version }} and ${{ matrix.os }}
         runs-on: ${{ matrix.os }}
         strategy:
-          matrix:
-            node_version: ['12', '14']
-            os: [ubuntu-latest, windows-latest, macOS-latest]        
+            matrix:
+                node_version: ['14', '16', '18', '19']
+                os: [ubuntu-latest, windows-latest, macOS-latest]
         steps:
             - uses: actions/checkout@v2
             - uses: actions/setup-node@v2

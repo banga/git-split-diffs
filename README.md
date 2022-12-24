@@ -10,7 +10,7 @@ GitHub style split diffs with syntax highlighting in your terminal.
 
 ## Usage
 
-This currently requires `node` version 12 or newer to run. 
+This currently requires `node` version 14 or newer to run.
 
 ### Install globally
 
@@ -74,6 +74,7 @@ git config split-diffs.syntax-highlighting-theme <name>
 The supported syntax highlighting themes are listed at https://github.com/shikijs/shiki/blob/v0.9.3/docs/themes.md
 
 You can disable syntax highlighting by setting the name to empty:
+
 ```
 git config split-diffs.syntax-highlighting-theme ''
 ```
@@ -174,11 +175,11 @@ git config split-diffs.theme-name monochrome-light
 
 Tested by measuring the time it took to pipe the output `git log -p` to `/dev/null` via `git-split-diffs` with the default theme:
 
-| Features enabled                                               | ms/kloc  |
-| -------------------------------------------------------------- | -------- |
-| Everything                                                     | 466<sup>1</sup>     |
-| No syntax highlighting                                         | 40       |
-| No syntax highlighting, no inline change highlighting          | 34       |
+| Features enabled                                      | ms/kloc         |
+| ----------------------------------------------------- | --------------- |
+| Everything                                            | 466<sup>1</sup> |
+| No syntax highlighting                                | 40              |
+| No syntax highlighting, no inline change highlighting | 34              |
 
 <sup>1</sup> https://github.com/shikijs/shiki/pull/151 improves this to 333ms/kloc
 
@@ -193,7 +194,8 @@ See [#narrow-terminals](#narrow-terminals)
 Text coloring is implemented using Chalk which supports [various levels of color](https://github.com/chalk/chalk#supportscolor). If Chalk is producing fewer colors than your terminal supports, try overriding Chalk's detection using a variation of the `--color` flag, e.g. `--color=16m` for true color. See Chalk's documentation or [this useful gist on terminal support](https://gist.github.com/XVilka/8346728) if issues persist.
 
 ## Acknowledgements
-* [diff-so-fancy](https://github.com/so-fancy/diff-so-fancy) for showing what's possible
-* [shikijs](https://github.com/shikijs/shiki) for making it easy to do high quality syntax highlighting
-* [chalk](https://github.com/chalk/chalk) for making it easy to do terminal styling reliably
-* [delta](https://github.com/dandavison/delta) which approaches the same problem in Rust
+
+-   [diff-so-fancy](https://github.com/so-fancy/diff-so-fancy) for showing what's possible
+-   [shikijs](https://github.com/shikijs/shiki) for making it easy to do high quality syntax highlighting
+-   [chalk](https://github.com/chalk/chalk) for making it easy to do terminal styling reliably
+-   [delta](https://github.com/dandavison/delta) which approaches the same problem in Rust
