@@ -15,7 +15,8 @@ const ANSI_COLOR_CODE_REGEX = ansiRegex();
  * but spaces in file names are not escaped, so the " and " could appear in
  * a path. So we use a regex to hopefully find the right match.
  */
-const BINARY_FILES_DIFF_REGEX = /^Binary files (?:a\/(.*)|\/dev\/null) and (?:b\/(.*)|\/dev\/null) differ$/;
+const BINARY_FILES_DIFF_REGEX =
+    /^Binary files (?:a\/(.*)|\/dev\/null) and (?:b\/(.*)|\/dev\/null) differ$/;
 
 type State =
     | 'unknown'
@@ -141,6 +142,19 @@ async function* iterSideBySideDiffsFormatted(
                     fileNameA = line.slice('--- a/'.length);
                 } else if (line.startsWith('+++ b/')) {
                     fileNameB = line.slice('+++ b/'.length);
+                } else if (line.startsWith('--- ')) {
+                    fileNameA = line.slice('--- '.length);
+                    // https://git-scm.com/docs/diff-format says that
+                    // `/dev/null` is used to indicate creations and deletions,
+                    // so we can special case it.
+                    if (fileNameA === '/dev/null') {
+                        fileNameA = '';
+                    }
+                } else if (line.startsWith('+++ ')) {
+                    fileNameB = line.slice('+++ '.length);
+                    if (fileNameB === '/dev/null') {
+                        fileNameB = '';
+                    }
                 } else if (line.startsWith('rename from ')) {
                     fileNameA = line.slice('rename from '.length);
                 } else if (line.startsWith('rename to ')) {

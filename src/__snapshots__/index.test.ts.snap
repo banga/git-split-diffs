@@ -22,6 +22,28 @@ Date:   Tue May 23 16:47:17 2017 -0700
 "
 `;
 
+exports[`inlineChangesHighlighted commit with a small diff without a/ and b/ prefixs 1`] = `
+"
+commit 26ca49fb83758bace20a473e231d576aa1bbe115                                                                         
+Author: Shrey Banga <shrey@quip.com>                                                                                    
+Date:   Tue May 23 16:47:17 2017 -0700                                                                                  
+                                                                                                                        
+    sonos to brew                                                                                                       
+                                                                                                                        
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ ■■ Brewfile                                                                                                            
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+@@ -19,2 +19,3 @@ brew 'python3'                                                                                        
+   19    brew 'socat'                                          19    brew 'socat'                                       
+                                                               20  + brew 'sonos'                                       
+   20    brew 'terminal-notifier'                              21    brew 'terminal-notifier'                           
+@@ -42,3 +43,2 @@ cask 'rescuetime'                                                                                     
+   42    cask 'slate'                                          43    cask 'slate'                                       
+   43  - cask 'sonos'                                                                                                   
+   44    cask 'spotify'                                        44    cask 'spotify'                                     
+"
+`;
+
 exports[`inlineChangesHighlighted commit with addition 1`] = `
 "
 commit f735de7025c6d626c5ae1a291fe24f143dea0313                                                                         
@@ -292,6 +314,28 @@ Date:   Sun Apr 11 15:25:34 2021 -0700
 `;
 
 exports[`splitWithWrapping commit with a small diff 1`] = `
+"
+commit 26ca49fb83758bace20a473e231d576aa1bbe115                                 
+Author: Shrey Banga <shrey@quip.com>                                            
+Date:   Tue May 23 16:47:17 2017 -0700                                          
+                                                                                
+    sonos to brew                                                               
+                                                                                
+────────────────────────────────────────────────────────────────────────────────
+ ■■ Brewfile                                                                    
+────────────────────────────────────────────────────────────────────────────────
+@@ -19,2 +19,3 @@ brew 'python3'                                                
+   19    brew 'socat'                      19    brew 'socat'                   
+                                           20  + brew 'sonos'                   
+   20    brew 'terminal-notifier'          21    brew 'terminal-notifier'       
+@@ -42,3 +43,2 @@ cask 'rescuetime'                                             
+   42    cask 'slate'                      43    cask 'slate'                   
+   43  - cask 'sonos'                                                           
+   44    cask 'spotify'                    44    cask 'spotify'                 
+"
+`;
+
+exports[`splitWithWrapping commit with a small diff without a/ and b/ prefixs 1`] = `
 "
 commit 26ca49fb83758bace20a473e231d576aa1bbe115                                 
 Author: Shrey Banga <shrey@quip.com>                                            
@@ -656,6 +700,28 @@ Date:   Tue May 23 16:47:17 2017 -0700
 "
 `;
 
+exports[`splitWithoutWrapping commit with a small diff without a/ and b/ prefixs 1`] = `
+"
+commit 26ca49fb83758bace20a473e231d576aa1bbe115                                 
+Author: Shrey Banga <shrey@quip.com>                                            
+Date:   Tue May 23 16:47:17 2017 -0700                                          
+                                                                                
+    sonos to brew                                                               
+                                                                                
+────────────────────────────────────────────────────────────────────────────────
+ ■■ Brewfile                                                                    
+────────────────────────────────────────────────────────────────────────────────
+@@ -19,2 +19,3 @@ brew 'python3'                                                
+   19    brew 'socat'                      19    brew 'socat'                   
+                                           20  + brew 'sonos'                   
+   20    brew 'terminal-notifier'          21    brew 'terminal-notifier'       
+@@ -42,3 +43,2 @@ cask 'rescuetime'                                             
+   42    cask 'slate'                      43    cask 'slate'                   
+   43  - cask 'sonos'                                                           
+   44    cask 'spotify'                    44    cask 'spotify'                 
+"
+`;
+
 exports[`splitWithoutWrapping commit with addition 1`] = `
 "
 commit f735de7025c6d626c5ae1a291fe24f143dea0313                                 
@@ -947,6 +1013,28 @@ Date:   Tue May 23 16:47:17 2017 -0700
 "
 `;
 
+exports[`unifiedWithInlineChangesHighlighted commit with a small diff without a/ and b/ prefixs 1`] = `
+"
+commit 26ca49fb83758bace20a473e231d576aa1bbe115                                 
+Author: Shrey Banga <shrey@quip.com>                                            
+Date:   Tue May 23 16:47:17 2017 -0700                                          
+                                                                                
+    sonos to brew                                                               
+                                                                                
+────────────────────────────────────────────────────────────────────────────────
+ ■■ Brewfile                                                                    
+────────────────────────────────────────────────────────────────────────────────
+@@ -19,2 +19,3 @@ brew 'python3'                                                
+   19    brew 'socat'                                                           
+   20  + brew 'sonos'                                                           
+   20    brew 'terminal-notifier'                                               
+@@ -42,3 +43,2 @@ cask 'rescuetime'                                             
+   42    cask 'slate'                                                           
+   43  - cask 'sonos'                                                           
+   44    cask 'spotify'                                                         
+"
+`;
+
 exports[`unifiedWithInlineChangesHighlighted commit with addition 1`] = `
 "
 commit f735de7025c6d626c5ae1a291fe24f143dea0313                                 
@@ -1215,6 +1303,28 @@ Date:   Sun Apr 11 15:25:34 2021 -0700
 `;
 
 exports[`unifiedWithWrapping commit with a small diff 1`] = `
+"
+commit 26ca49fb83758bace20a473e231d576aa1bbe115                                 
+Author: Shrey Banga <shrey@quip.com>                                            
+Date:   Tue May 23 16:47:17 2017 -0700                                          
+                                                                                
+    sonos to brew                                                               
+                                                                                
+────────────────────────────────────────────────────────────────────────────────
+ ■■ Brewfile                                                                    
+────────────────────────────────────────────────────────────────────────────────
+@@ -19,2 +19,3 @@ brew 'python3'                                                
+   19    brew 'socat'                                                           
+   20  + brew 'sonos'                                                           
+   20    brew 'terminal-notifier'                                               
+@@ -42,3 +43,2 @@ cask 'rescuetime'                                             
+   42    cask 'slate'                                                           
+   43  - cask 'sonos'                                                           
+   44    cask 'spotify'                                                         
+"
+`;
+
+exports[`unifiedWithWrapping commit with a small diff without a/ and b/ prefixs 1`] = `
 "
 commit 26ca49fb83758bace20a473e231d576aa1bbe115                                 
 Author: Shrey Banga <shrey@quip.com>                                            

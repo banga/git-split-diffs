@@ -198,6 +198,30 @@ index 5a38bdb..ef4ff52 100644
             ).toMatchSnapshot();
         });
 
+        test('commit with a small diff without a/ and b/ prefixs', async function () {
+            expect(
+                await transform(`
+commit 26ca49fb83758bace20a473e231d576aa1bbe115
+Author: Shrey Banga <shrey@quip.com>
+Date:   Tue May 23 16:47:17 2017 -0700
+
+    sonos to brew
+
+diff --git Brewfile Brewfile
+index 5a38bdb..ef4ff52 100644
+--- Brewfile
++++ Brewfile
+@@ -19,2 +19,3 @@ brew 'python3'
+ brew 'socat'
++brew 'sonos'
+ brew 'terminal-notifier'
+@@ -42,3 +43,2 @@ cask 'rescuetime'
+ cask 'slate'
+-cask 'sonos'
+ cask 'spotify'`)
+            ).toMatchSnapshot();
+        });
+
         test('commit with tabs', async function () {
             expect(
                 await transform(`
