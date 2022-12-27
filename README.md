@@ -1,6 +1,6 @@
 # git-split-diffs
 
-GitHub style split diffs with syntax highlighting in your terminal.
+GitHub style split (side by side) diffs with syntax highlighting in your terminal.
 
 ![Screenshot of dark theme](screenshots/dark.png?raw=true)
 
