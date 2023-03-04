@@ -54,6 +54,12 @@ const CONFIG_OVERRIDES: Record<string, Partial<Config>> = {
         DELETED_WORD_COLOR: { color: { r: 255, g: 0, b: 0, a: 255 } },
         INSERTED_WORD_COLOR: { color: { r: 0, g: 255, b: 0, a: 255 } },
     },
+    syntaxHighlighted: {
+        SCREEN_WIDTH: 80,
+        MIN_LINE_WIDTH: 40,
+        WRAP_LINES: false,
+        SYNTAX_HIGHLIGHTING_THEME: 'dark-plus',
+    },
 };
 
 for (const [configName, configOverride] of Object.entries(CONFIG_OVERRIDES)) {

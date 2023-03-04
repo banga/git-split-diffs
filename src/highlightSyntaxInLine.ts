@@ -1,28 +1,20 @@
 import path from 'path';
-import { BUNDLED_LANGUAGES, Highlighter, IThemedToken, Lang } from 'shiki';
+import shiki from 'shiki';
 import { FormattedString } from './formattedString';
 import { parseColorDefinition, ThemeColor } from './themes';
 export type HighlightedText = [string, ThemeColor | null];
 
-const _seenLanguages = new Set<string>();
-
 export function highlightSyntaxInLine(
     line: FormattedString,
     fileName: string,
-    highlighter?: Highlighter
+    highlighter?: shiki.Highlighter
 ): void {
     if (!highlighter) {
         return;
     }
     const language = path.extname(fileName).slice(1);
-    if (!_seenLanguages.has(language)) {
-        if (BUNDLED_LANGUAGES.some((l) => l.id === language)) {
-            highlighter.loadLanguage(language as Lang);
-        }
-        _seenLanguages.add(language);
-    }
 
-    let tokens: IThemedToken[];
+    let tokens: shiki.IThemedToken[];
     try {
         [tokens] = highlighter.codeToThemedTokens(
             line.getString(),

@@ -32,6 +32,9 @@
 -   [x] Wrapped lines on the left with inline changes leak formatting to the right
 -   [x] Support alpha in colors
 -   [x] Keep colors from --stat
+-   [x] Tests for syntax highlighting
+-   [ ] Load shiki languages on-demand when https://github.com/shikijs/shiki/issues/438 is fixed
+-   [ ] Benchmark for syntax highlighting
 -   [ ] Display 3-way merge diffs (e.g. during merge conflicts)
 -   [ ] See why `less` occasionally goes into search mode
 -   [ ] Test on linux
