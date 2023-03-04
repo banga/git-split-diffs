@@ -34,8 +34,7 @@ export async function getContextForConfig(config: Config): Promise<Context> {
     if (config.SYNTAX_HIGHLIGHTING_THEME) {
         HIGHLIGHTER = await shiki.getHighlighter({
             theme: config.SYNTAX_HIGHLIGHTING_THEME,
-            // Load all languages, until https://github.com/shikijs/shiki/issues/438 is fixed
-            // langs: ['git-commit'],
+            langs: ['git-commit'],
         });
     }
 

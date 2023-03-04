@@ -50,7 +50,7 @@ async function* iterSideBySideDiffsFormatted(
     let hunkHeaderLine: string = '';
     let hunkLinesA: (string | null)[] = [];
     let hunkLinesB: (string | null)[] = [];
-    function* yieldHunk() {
+    async function* yieldHunk() {
         yield* iterFormatHunk(
             context,
             hunkHeaderLine,
@@ -65,7 +65,7 @@ async function* iterSideBySideDiffsFormatted(
         hunkLinesB = [];
     }
 
-    function* flushPending() {
+    async function* flushPending() {
         if (state === 'diff') {
             yield* yieldFileName();
         } else if (state === 'hunk-body') {

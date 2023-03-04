@@ -9,13 +9,13 @@ import { ThemeColor } from './themes';
 // Assuming people aren't editing lines >=100k lines
 const LINE_NUMBER_WIDTH = 5;
 
-export function* formatAndFitHunkLine(
+export async function* formatAndFitHunkLine(
     context: Context,
     fileName: string,
     lineNo: number,
     line: string | null,
     changes: Change[] | null
-): Iterable<FormattedString> {
+): AsyncIterable<FormattedString> {
     const {
         BLANK_LINE,
         LINE_WIDTH,
@@ -66,7 +66,7 @@ export function* formatAndFitHunkLine(
     let isFirstLine = true;
     const formattedLine = T().appendString(lineText);
     highlightChangesInLine(context, linePrefix, formattedLine, changes);
-    highlightSyntaxInLine(formattedLine, fileName, context.HIGHLIGHTER);
+    await highlightSyntaxInLine(formattedLine, fileName, context.HIGHLIGHTER);
 
     for (const fittedLine of iterFitTextToWidth(
         context,

@@ -34,7 +34,8 @@
 -   [x] Keep colors from --stat
 -   [x] Tests for syntax highlighting
 -   [ ] Load shiki languages on-demand when https://github.com/shikijs/shiki/issues/438 is fixed
--   [ ] Benchmark for syntax highlighting
+-   [ ] Add a linter and check for https://eslint.org/docs/latest/rules/require-await
+-   [ ] Add a benchmark for syntax highlighting
 -   [ ] Display 3-way merge diffs (e.g. during merge conflicts)
 -   [ ] See why `less` occasionally goes into search mode
 -   [ ] Test on linux
