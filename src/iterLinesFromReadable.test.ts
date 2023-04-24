@@ -1,5 +1,6 @@
 import { Readable } from 'stream';
 import { iterlinesFromReadable } from './iterLinesFromReadable';
+import chalk from 'chalk';
 
 async function toLines(input: Iterable<string>): Promise<string[]> {
     const readable = Readable.from(input);
@@ -39,6 +40,25 @@ test('line separated across yields', async () => {
 
 test('mixed', async () => {
     expect(await toLines(['0\n', '1'])).toEqual(['0', '1']);
+});
+
+test('lines with ascii colors', async () => {
+    expect(await toLines(chalk.red('one\r\ntwo'))).toEqual([
+        chalk.red('one'),
+        chalk.red('two'),
+    ]);
+    expect(await toLines(chalk.red('one\r') + '\ntwo')).toEqual([
+        chalk.red('one'),
+        'two',
+    ]);
+    expect(await toLines(chalk.red('one\ntwo'))).toEqual([
+        chalk.red('one'),
+        chalk.red('two'),
+    ]);
+    expect(await toLines(chalk.red('one') + '\ntwo')).toEqual([
+        chalk.red('one'),
+        'two',
+    ]);
 });
 
 test('fuzz', async () => {
