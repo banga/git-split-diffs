@@ -18,14 +18,14 @@ export function* iterFitTextToWidth(
             formattedString,
             width
         )) {
-            wrappedLine.padEnd(width);
+            wrappedLine.fillWidth(width);
             if (backgroundColor) {
                 wrappedLine.addSpan(0, width, backgroundColor);
             }
             yield wrappedLine;
         }
     } else {
-        const truncatedLine = formattedString.slice(0, width).padEnd(width);
+        const truncatedLine = formattedString.slice(0, width).fillWidth(width);
         if (backgroundColor) {
             truncatedLine.addSpan(0, width, backgroundColor);
         }

@@ -2,7 +2,19 @@ import { SpannedString } from './SpannedString';
 
 const SPACE_REGEX = /\s/;
 
-function getLineBreaksForString(string: string, width: number): number[] {
+/**
+ * Returns an array of indices where the string should be broken to fit in lines
+ * of up to `width` characters.
+ *
+ * This handles double-width CJK characters
+ * (https://en.wikipedia.org/wiki/Duospaced_font), and will break words if they
+ * cannot fit in a line.
+ */
+function getLineBreaksForString(
+    string: string,
+    charWidths: number[],
+    width: number
+): number[] {
     const lineBreaks: number[] = [];
     let budget = width;
     let curLineEnd = 0;
@@ -13,32 +25,35 @@ function getLineBreaksForString(string: string, width: number): number[] {
     }
 
     function pushWord(startIndex: number, endIndex: number) {
-        const wordLength = endIndex - startIndex;
+        let wordWidth = 0;
+        for (let i = startIndex; i < endIndex; i++) {
+            wordWidth += charWidths[i];
+        }
+
         // word can fit on current line
-        if (wordLength <= budget) {
+        if (wordWidth <= budget) {
             curLineEnd = endIndex;
-            budget -= wordLength;
+            budget -= wordWidth;
             return;
         }
 
         // word can fit in the new line, so start a new one
-        if (wordLength <= width) {
+        if (wordWidth <= width) {
             flushLine();
             curLineEnd = endIndex;
-            budget -= wordLength;
+            budget -= wordWidth;
             return;
         }
 
         // word is too long to fit in any line, so lets break it and push each
         // part
-        while (startIndex < endIndex) {
-            if (budget === 0) {
+        for (let i = startIndex; i < endIndex; i++) {
+            const charLength = charWidths[i];
+            if (budget < charLength) {
                 flushLine();
             }
-            let remainingLengthInLine = Math.min(budget, endIndex - startIndex);
-            curLineEnd += remainingLengthInLine;
-            startIndex += remainingLengthInLine;
-            flushLine();
+            budget -= charLength;
+            curLineEnd++;
         }
     }
 
@@ -75,18 +90,20 @@ export function* wrapSpannedStringByWord<T>(
 ): Iterable<SpannedString<T>> {
     // Short circuit if no wrapping is required
     const string = spannedString.getString();
-    if (string.length < width) {
+    const charWidths = spannedString.getCharWidths();
+    const stringWidth = charWidths.reduce((a, b) => a + b, 0);
+    if (stringWidth < width) {
         yield spannedString;
         return;
     }
 
-    const lineBreaks = getLineBreaksForString(string, width);
+    const lineBreaks = getLineBreaksForString(string, charWidths, width);
     let prevLineBreak = 0;
     for (const lineBreak of lineBreaks) {
         yield spannedString.slice(prevLineBreak, lineBreak);
         prevLineBreak = lineBreak;
     }
-    if (prevLineBreak < string.length - 1) {
+    if (prevLineBreak < stringWidth - 1) {
         yield spannedString.slice(prevLineBreak);
     }
 }

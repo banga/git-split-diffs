@@ -79,11 +79,14 @@ export function* formatAndFitHunkLine(
         const wrappedLinePrefix = (isFirstLine ? linePrefix : '')
             .padStart(2)
             .padEnd(3);
-        yield T()
+
+        const hunkLine = T()
             .appendString(lineNoText, lineNoColor)
             .appendString(wrappedLinePrefix)
-            .appendSpannedString(fittedLine)
-            .addSpan(0, LINE_WIDTH, lineColor);
+            .appendSpannedString(fittedLine);
+        hunkLine.addSpan(0, hunkLine.getString().length, lineColor);
+        yield hunkLine;
+
         isFirstLine = false;
     }
 }

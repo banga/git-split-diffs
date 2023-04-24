@@ -27,7 +27,7 @@ export async function getContextForConfig(config: Config): Promise<Context> {
 
     const BLANK_LINE = ''.padStart(LINE_WIDTH);
     const HORIZONTAL_SEPARATOR = T()
-        .padEnd(config.SCREEN_WIDTH, '─')
+        .fillWidth(config.SCREEN_WIDTH, '─')
         .addSpan(0, config.SCREEN_WIDTH, config.BORDER_COLOR);
 
     let HIGHLIGHTER = undefined;

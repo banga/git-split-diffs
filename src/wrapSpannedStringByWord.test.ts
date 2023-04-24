@@ -74,23 +74,23 @@ test('snapshot tests', () => {
     ).toMatchInlineSnapshot(`
         "export function defaultTheme(chalkInstance: Chalk): Theme {
             return {
-               
-         COMMIT_SHA_COLOR: chalkInstance.green,
+                
+        COMMIT_SHA_COLOR: chalkInstance.green,
                 COMMIT_AUTHOR_COLOR: 
         chalkInstance.blueBright,
                 COMMIT_DATE_COLOR: chalkInstance.white,
-              
-          FILE_NAME_COLOR: chalkInstance.yellowBright,
+                
+        FILE_NAME_COLOR: chalkInstance.yellowBright,
                 FILE_NAME_BORDER_COLOR: 
         chalkInstance.yellow,
                 HUNK_HEADER_COLOR: chalkInstance.white.dim,
-              
-          DELETED_LINE_COLOR: chalkInstance.redBright,
+                
+        DELETED_LINE_COLOR: chalkInstance.redBright,
                 INSERTED_LINE_COLOR: 
         chalkInstance.greenBright,
                 UNMODIFIED_LINE_COLOR: chalkInstance.white,
-         
-               MISSING_LINE_COLOR: chalkInstance.white,
+           
+             MISSING_LINE_COLOR: chalkInstance.white,
             };
         }"
     `);
@@ -114,6 +114,18 @@ test('snapshot tests', () => {
         eleven o’clock, to Duncan Ross, at the 
         offices of the League, 7 Pope’s Court, 
         Fleet Street.”"
+    `);
+});
+
+test('wide characters', () => {
+    expect(wrapString('のオリジナルのソース', 5).join('\n'))
+        .toMatchInlineSnapshot(`
+        "のオ
+        リジ
+        ナル
+        のソ
+        ース
+        "
     `);
 });
 

@@ -437,5 +437,19 @@ index ecb417f..f412f84 100644
                 )
             ).toMatchSnapshot();
         });
+
+        test('commit with double-spaced characters', async function () {
+            expect(
+                await transform(`
+diff --git a/README.ja-JP.md b/README.ja-JP.md
+index 5ff5244..b48cf46 100644
+--- a/README.ja-JP.md
++++ b/README.ja-JP.md
+@@ -4 +4 @@
+-このリポジトリは、MS-DOS v1.25 及び MS-DOS v2.0 のオリジナルのソースコード及びコンパイルされたバイナリを含んでいます。
++このリポジトリは、MS-DOS 及び MS-DOS v2.0 のオリジナルのソースコード及びコンパイルされたバイナリを含んでいます。
+`)
+            ).toMatchSnapshot();
+        });
     });
 }

@@ -1,3 +1,5 @@
+import wcwidth from 'wcwidth';
+
 /**
  * A string whose substrings can be marked by arbitrary objects.
  *
@@ -157,8 +159,8 @@ export class SpannedString<T> {
         );
     }
 
-    padEnd(maxLength: number, fillString?: string) {
-        const paddingLength = maxLength - this._string.length;
+    fillWidth(width: number, fillString?: string) {
+        const paddingLength = width - this.getWidth();
         if (paddingLength > 0) {
             this.appendString(''.padEnd(paddingLength, fillString));
         }
@@ -167,6 +169,25 @@ export class SpannedString<T> {
 
     getString(): string {
         return this._string;
+    }
+
+    /**
+     * Returns the screen width of the string in columns, i.e. accounting for
+     * characters that may occupy more than one character width in the terminal.
+     */
+    getWidth(): number {
+        return wcwidth(this._string);
+    }
+
+    /**
+     * Returns the screen width per character.
+     */
+    getCharWidths(): number[] {
+        const charWidths: number[] = [];
+        for (const char of this._string) {
+            charWidths.push(wcwidth(char));
+        }
+        return charWidths;
     }
 
     *iterSubstrings(): IterableIterator<[string, T[]]> {
