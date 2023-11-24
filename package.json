@@ -4,7 +4,10 @@
     "description": "Split diffs, now in your terminal",
     "homepage": "https://github.com/banga/git-split-diffs",
     "repository": "github:banga/git-split-diffs",
-    "bin": "./bin/git-split-diffs",
+    "type": "module",
+    "bin": {
+        "git-split-diffs": "./build/index.mjs"
+    },
     "files": [
         "bin/*",
         "build/*.js",
@@ -12,7 +15,7 @@
     ],
     "license": "MIT",
     "engines": {
-        "node": ">=14"
+        "node": ">=18"
     },
     "keywords": [
         "git",
@@ -26,17 +29,17 @@
         "chalk": "^4.1.0",
         "diff": "^5.0.0",
         "shiki": "^0.14.5",
-        "term-size": "^2.2.1",
+        "terminal-size": "^4.0.0",
         "wcwidth": "^1.0.1"
     },
     "scripts": {
         "test": "tsc && jest",
         "clean": "rimraf ./build/*",
-        "build": "yarn clean && yarn esbuild --external:ansi-regex --external:chalk --external:diff --external:shiki --external:term-size --platform=node --target=node14 --outdir=build --bundle",
+        "build": "yarn clean && yarn esbuild --external:ansi-regex --external:chalk --external:diff --external:shiki --external:terminal-size --platform=node --target=node18 --bundle --format=esm --outdir=build --out-extension:.js=.mjs --banner:js='#!/usr/bin/env node'",
         "build:dev": "yarn build src/index.ts src/benchmark.ts src/previewTheme.ts",
         "build:publish": "yarn build src/index.ts --minify",
         "previewTheme": "nodemon -q build/previewTheme.js",
-        "benchmark": "yarn build:dev && node build/benchmark.js",
+        "benchmark": "yarn build:dev && node build/benchmark.mjs",
         "prepublishOnly": "yarn test && yarn build:publish"
     },
     "devDependencies": {

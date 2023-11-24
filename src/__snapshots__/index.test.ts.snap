@@ -277,9 +277,9 @@ Date:   Sun Apr 11 16:23:54 2021 -0700
     1    import chalk from 'chalk';                             1    import chalk from 'chalk';                         
     2    import * as process from 'process';                    2    import * as process from 'process';                
                                                                 3  + import stream from 'stream';                       
-    3    import terminalSize from 'term-size';                  4    import terminalSize from 'term-size';              
-    4    import { iterlinesFromReadableAsync } from './iterL    5    import { iterlinesFromReadableAsync } from './iterL
-    5    import { iterLinesWithoutAnsiColors } from './iterL    6    import { iterLinesWithoutAnsiColors } from './iterL
+    3    import terminalSize from 'terminal-size';              4    import terminalSize from 'terminal-size';          
+    4    import { iterlinesFromReadableAsync } from './iterL    5    import { iterlinesFromReadableAsync } from .mts'./iterL
+    5    import { iterLinesWithoutAnsiColors } from './iterL    6    import { iterLinesWithoutAnsiColors } from .mts'./iterL
 @@ -12,15 +13,16 @@ function main() {                                                                                   
    12        const screenWidth = terminalSize().columns;       13        const screenWidth = terminalSize().columns;    
    13        const theme = defaultTheme(chalk, screenWidth);   14        const theme = defaultTheme(chalk, screenWidth);
@@ -637,7 +637,7 @@ Date:   Sun Apr 11 16:23:54 2021 -0700
          'process';                              'process';                     
                                             3  + import stream from 'stream';   
     3    import terminalSize from           4    import terminalSize from       
-         'term-size';                            'term-size';                   
+         'terminal-size';                        'terminal-size';               
     4    import {                           5    import {                       
          iterlinesFromReadableAsync }            iterlinesFromReadableAsync }   
          from './iterLinesFromReadable';         from './iterLinesFromReadable';
@@ -981,7 +981,7 @@ Date:   Sun Apr 11 16:23:54 2021 -0700
     1    import chalk from 'chalk';         1    import chalk from 'chalk';     
     2    import * as process from 'proce    2    import * as process from 'proce
                                             3  + import stream from 'stream';   
-    3    import terminalSize from 'term-    4    import terminalSize from 'term-
+    3    import terminalSize from 'termi    4    import terminalSize from 'termi
     4    import { iterlinesFromReadableA    5    import { iterlinesFromReadableA
     5    import { iterLinesWithoutAnsiCo    6    import { iterLinesWithoutAnsiCo
 @@ -12,15 +13,16 @@ function main() {                                           
@@ -1622,7 +1622,7 @@ Date:   Sun Apr 11 16:23:54 2021 -0700
     1    import chalk from 'chalk';                                             
     2    import * as process from 'process';                                    
     3  + import stream from 'stream';                                           
-    3    import terminalSize from 'term-size';                                  
+    3    import terminalSize from 'terminal-size';                              
     4    import { iterlinesFromReadableAsync } from './iterLinesFromReadable';  
     5    import { iterLinesWithoutAnsiColors } from './iterLinesWithoutAnsiColor
 @@ -12,15 +13,16 @@ function main() {                                           
@@ -1957,7 +1957,7 @@ Date:   Sun Apr 11 16:23:54 2021 -0700
     1    import chalk from 'chalk';                                             
     2    import * as process from 'process';                                    
     3  + import stream from 'stream';                                           
-    3    import terminalSize from 'term-size';                                  
+    3    import terminalSize from 'terminal-size';                              
     4    import { iterlinesFromReadableAsync } from './iterLinesFromReadable';  
     5    import { iterLinesWithoutAnsiColors } from                             
          './iterLinesWithoutAnsiColors';                                        

@@ -72,11 +72,8 @@ export function highlightChangesInLine(
         return;
     }
 
-    const {
-        DELETED_WORD_COLOR,
-        INSERTED_WORD_COLOR,
-        UNMODIFIED_LINE_COLOR,
-    } = context;
+    const { DELETED_WORD_COLOR, INSERTED_WORD_COLOR, UNMODIFIED_LINE_COLOR } =
+        context;
 
     let wordColor: ThemeColor;
     switch (linePrefix) {
