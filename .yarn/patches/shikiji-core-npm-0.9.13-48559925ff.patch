@@ -1,0 +1,25 @@
+diff --git a/dist/index.mjs b/dist/index.mjs
+index 971ac9e0a682c1014c91698b497a3c85abbfbb89..cb081a1e6f9e84a34fd800c8beedc3fc38e04e12 100644
+--- a/dist/index.mjs
++++ b/dist/index.mjs
+@@ -4866,6 +4866,7 @@ async function getShikiInternal(options = {}) {
+     const _registry = new Registry(resolver, themes, langs);
+     Object.assign(_registry.alias, options.langAlias);
+     await _registry.init();
++    let lastTheme;
+     function getLangGrammar(name) {
+         const _lang = _registry.getGrammar(name);
+         if (!_lang)
+@@ -4880,7 +4881,11 @@ async function getShikiInternal(options = {}) {
+     }
+     function setTheme(name) {
+         const theme = getTheme(name);
+-        _registry.setTheme(theme);
++        if (lastTheme !== name) {
++          console.log({lastTheme, name});
++          _registry.setTheme(theme);
++          lastTheme = name;
++        }
+         const colorMap = _registry.getColorMap();
+         return {
+             theme,
