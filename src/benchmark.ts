@@ -1,4 +1,4 @@
-import { wrapSpannedStringByWord } from './wrapSpannedStringByWord';
+import { wrapSpannedStringByWord } from './wrapSpannedStringByWord.js';
 
 import Benchmark, { Event } from 'benchmark';
 import { SpannedString } from './SpannedString';
