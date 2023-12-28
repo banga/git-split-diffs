@@ -3,6 +3,7 @@ import { exec } from 'child_process';
 import * as util from 'util';
 import { Config } from './config';
 import { loadTheme } from './themes';
+import * as shikiji from 'shikiji';
 const execAsync = util.promisify(exec);
 
 const GIT_CONFIG_KEY_PREFIX = 'split-diffs';
@@ -37,9 +38,8 @@ export async function getGitConfig(
     const theme = loadTheme(themeName);
 
     // Defaults to the theme's setting
-    const syntaxHighlightingTheme =
-        rawConfig['syntax-highlighting-theme'] ??
-        theme.SYNTAX_HIGHLIGHTING_THEME;
+    const syntaxHighlightingTheme = (rawConfig['syntax-highlighting-theme'] ??
+        theme.SYNTAX_HIGHLIGHTING_THEME) as shikiji.BundledTheme;
 
     // Defaults to true
     const wrapLines = rawConfig['wrap-lines'] === 'false' ? false : true;

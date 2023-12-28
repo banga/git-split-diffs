@@ -1,4 +1,4 @@
-import shiki from 'shiki';
+import * as shikiji from 'shikiji';
 import { Config } from './config';
 import { FormattedString, T } from './formattedString';
 
@@ -11,7 +11,7 @@ export type Context = Config & {
     LINE_WIDTH: number;
     BLANK_LINE: string;
     HORIZONTAL_SEPARATOR: FormattedString;
-    HIGHLIGHTER?: shiki.Highlighter;
+    HIGHLIGHTER?: shikiji.Highlighter;
 };
 
 export async function getContextForConfig(config: Config): Promise<Context> {
@@ -32,13 +32,11 @@ export async function getContextForConfig(config: Config): Promise<Context> {
 
     let HIGHLIGHTER = undefined;
     if (config.SYNTAX_HIGHLIGHTING_THEME) {
-        HIGHLIGHTER = await shiki.getHighlighter({
-            theme: config.SYNTAX_HIGHLIGHTING_THEME,
-            // Load all languages, until https://github.com/shikijs/shiki/issues/438 is fixed
-            // langs: ['git-commit'],
+        HIGHLIGHTER = await shikiji.getHighlighter({
+            themes: [config.SYNTAX_HIGHLIGHTING_THEME],
+            langs: [],
         });
     }
-
     return {
         ...config,
         SPLIT_DIFFS,

@@ -4,9 +4,9 @@ import { formatAndFitHunkLine } from './formatAndFitHunkLine';
 import { T, FormattedString } from './formattedString';
 import { getChangesInLines } from './highlightChangesInLine';
 import { iterFitTextToWidth } from './iterFitTextToWidth';
-import { zip } from './zip';
+import { zip, zipAsync } from './zip';
 
-function* iterFormatHunkSplit(
+async function* iterFormatHunkSplit(
     context: Context,
     fileNameA: string,
     fileNameB: string,
@@ -15,7 +15,7 @@ function* iterFormatHunkSplit(
     lineNoA: number,
     lineNoB: number,
     lineChanges: (Change[] | null)[]
-): Iterable<FormattedString> {
+): AsyncIterable<FormattedString> {
     const { MISSING_LINE_COLOR, BLANK_LINE } = context;
 
     for (const [lineA, lineB, changes] of zip(
@@ -40,7 +40,7 @@ function* iterFormatHunkSplit(
 
         const missingLine = T().appendString(BLANK_LINE, MISSING_LINE_COLOR);
 
-        for (const [formattedLineA, formattedLineB] of zip(
+        for await (const [formattedLineA, formattedLineB] of zipAsync(
             formattedLinesA,
             formattedLinesB
         )) {
@@ -58,7 +58,7 @@ function* iterFormatHunkSplit(
     }
 }
 
-function* iterFormatHunkUnified(
+async function* iterFormatHunkUnified(
     context: Context,
     fileNameA: string,
     fileNameB: string,
@@ -67,7 +67,7 @@ function* iterFormatHunkUnified(
     lineNoA: number,
     lineNoB: number,
     lineChanges: (Change[] | null)[]
-): Iterable<FormattedString> {
+): AsyncIterable<FormattedString> {
     for (let indexA = 0, indexB = 0; indexA < hunkLinesA.length; indexA++) {
         const hunkLineA = hunkLinesA[indexA];
         const prefixA = hunkLineA?.slice(0, 1) ?? null;
@@ -118,7 +118,7 @@ function* iterFormatHunkUnified(
     }
 }
 
-export function* iterFormatHunk(
+export async function* iterFormatHunk(
     context: Context,
     hunkHeaderLine: string,
     fileNameA: string,
@@ -127,7 +127,7 @@ export function* iterFormatHunk(
     hunkLinesB: (string | null)[],
     lineNoA: number,
     lineNoB: number
-): Iterable<FormattedString> {
+): AsyncIterable<FormattedString> {
     const { HUNK_HEADER_COLOR, SCREEN_WIDTH, SPLIT_DIFFS } = context;
 
     yield* iterFitTextToWidth(

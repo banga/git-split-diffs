@@ -2,6 +2,7 @@ import * as assert from 'assert';
 import * as path from 'path';
 import * as fs from 'fs';
 import { fileURLToPath } from 'url';
+import * as shikiji from 'shikiji';
 
 const THEMES_DIR = path.resolve(
     path.dirname(fileURLToPath(import.meta.url)),
@@ -54,7 +55,7 @@ export enum ThemeColorName {
 }
 
 export type ThemeDefinition = {
-    SYNTAX_HIGHLIGHTING_THEME?: string;
+    SYNTAX_HIGHLIGHTING_THEME?: shikiji.BundledTheme;
 } & {
     [key in ThemeColorName]: ColorDefinition;
 };
@@ -146,7 +147,7 @@ export function reduceThemeColors(colors: ThemeColor[]): ThemeColor {
 }
 
 export type Theme = {
-    SYNTAX_HIGHLIGHTING_THEME?: string;
+    SYNTAX_HIGHLIGHTING_THEME?: shikiji.BundledTheme;
 } & {
     [key in ThemeColorName]: ThemeColor;
 };

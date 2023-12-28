@@ -28,13 +28,13 @@
         "ansi-regex": "^5.0.0",
         "chalk": "^4.1.0",
         "diff": "^5.0.0",
-        "shiki": "^0.14.5",
+        "shikiji": "^0.9.13",
         "terminal-size": "^4.0.0",
         "wcwidth": "^1.0.1"
     },
     "scripts": {
         "clean": "rimraf ./build/*",
-        "build": "yarn clean && yarn esbuild --external:ansi-regex --external:chalk --external:diff --external:shiki --external:terminal-size --external:benchmark --platform=node --target=node18 --bundle --format=esm --outdir=build --out-extension:.js=.mjs --banner:js='#!/usr/bin/env node'",
+        "build": "yarn clean && yarn esbuild --external:ansi-regex --external:chalk --external:diff --external:shikiji --external:terminal-size --external:benchmark --platform=node --target=node18 --bundle --format=esm --outdir=build --out-extension:.js=.mjs --banner:js='#!/usr/bin/env node'",
         "build:dev": "yarn build src/index.ts src/benchmark.ts src/previewTheme.ts",
         "build:publish": "yarn build src/index.ts --minify",
         "test": "yarn build:dev && NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest",

@@ -1,29 +1,17 @@
-import shiki from 'shiki';
+import * as shikiji from 'shikiji';
 import { T } from './formattedString';
 import { highlightSyntaxInLine } from './highlightSyntaxInLine';
 
-// TODO: load languages on-demand
-test.skip('highlighting should load languages on-demand', async () => {
-    const string = 'one `two` three';
+test('highlighting should load languages on-demand', async () => {
+    const string = 'int main {}';
     const referenceString = T().appendString(string);
-    const testString = T().appendString(string);
 
-    {
-        const referenceHighlighter = await shiki.getHighlighter({
-            theme: 'nord',
-        });
-        highlightSyntaxInLine(referenceString, 'test.md', referenceHighlighter);
-    }
+    const highlighter = await shikiji.getHighlighter({
+        themes: ['dark-plus'],
+        langs: [],
+    });
+    expect(highlighter.getLoadedLanguages()).toEqual([]);
 
-    {
-        const highlighter2 = await shiki.getHighlighter({
-            theme: 'nord',
-            langs: [],
-        });
-        highlightSyntaxInLine(testString, 'test.md', highlighter2);
-    }
-
-    expect([...testString.iterSubstrings()]).toEqual([
-        ...referenceString.iterSubstrings(),
-    ]);
+    await highlightSyntaxInLine(referenceString, 'test.c', highlighter);
+    expect(highlighter.getLoadedLanguages()).toEqual(['c']);
 });
