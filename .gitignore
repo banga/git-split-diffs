@@ -2,12 +2,3 @@ node_modules/**
 build/**
 git-test
 .DS_Store
-
-# yarn
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/sdks
-!.yarn/versions

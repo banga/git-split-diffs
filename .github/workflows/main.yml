@@ -16,6 +16,4 @@ jobs:
             - uses: actions/setup-node@v4
               with:
                   node-version: ${{ matrix.node_version }}
-            - run: corepack enable
-            - run: yarn install
-            - run: yarn test
+            - run: pnpm run test
