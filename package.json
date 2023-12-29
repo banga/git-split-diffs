@@ -31,7 +31,7 @@
         "wcwidth": "^1.0.1"
     },
     "scripts": {
-        "clean": "rimraf './build/*'",
+        "clean": "rimraf './build'",
         "build": "yarn clean && yarn esbuild --external:benchmark --platform=node --target=node18 --bundle --format=esm --outdir=build --out-extension:.js=.mjs --banner:js='#!/usr/bin/env node'",
         "build:dev": "yarn build src/index.ts src/benchmark.ts src/previewTheme.ts",
         "build:publish": "yarn build src/index.ts --minify",
@@ -52,7 +52,7 @@
         "jest": "^29.7.0",
         "nodemon": "^2.0.7",
         "prettier": "^2.2.1",
-        "rimraf": "^5.0.0",
+        "rimraf": "^5.0.5",
         "ts-jest": "^29.1.0",
         "typescript": "^5.0.4"
     },
