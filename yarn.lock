@@ -5149,8 +5149,8 @@ __metadata:
 
 "shikiji-core@patch:shikiji-core@npm%3A0.9.13#~/.yarn/patches/shikiji-core-npm-0.9.13-48559925ff.patch":
   version: 0.9.13
-  resolution: "shikiji-core@patch:shikiji-core@npm%3A0.9.13#~/.yarn/patches/shikiji-core-npm-0.9.13-48559925ff.patch::version=0.9.13&hash=f5e30c"
-  checksum: f30c59ba155a22f81992976f9ca195fb8fb9725e92cb89f521e62eacbbd13c27c4cf0b1f09ff4c17681a5aa51a54f6c94e1fad8c230a7ddd38ff67e050f1b392
+  resolution: "shikiji-core@patch:shikiji-core@npm%3A0.9.13#~/.yarn/patches/shikiji-core-npm-0.9.13-48559925ff.patch::version=0.9.13&hash=c01fd6"
+  checksum: e9c9431d3e168a5989993d7f6f3b7f6c4d76b78d2f8446271f9f8fbf660f0d5489fe518fa1551fd91bfcaf52f91ede764b583cca399514b6f678d70cb859a49d
   languageName: node
   linkType: hard
 
