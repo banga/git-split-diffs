@@ -55,5 +55,6 @@
         "rimraf": "^5.0.5",
         "ts-jest": "^29.1.0",
         "typescript": "^5.0.4"
-    }
+    },
+    "packageManager": "pnpm@8.13.1"
 }
