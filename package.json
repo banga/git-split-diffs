@@ -32,13 +32,13 @@
     },
     "scripts": {
         "clean": "rimraf './build'",
-        "build": "pnpm clean && pnpm esbuild --external:benchmark --platform=node --target=node18 --bundle --format=esm --outdir=build --out-extension:.js=.mjs --banner:js='#!/usr/bin/env node'",
-        "build:dev": "pnpm build src/index.ts src/benchmark.ts src/previewTheme.ts",
-        "build:publish": "pnpm build src/index.ts --minify",
-        "test": "pnpm build:dev && NODE_OPTIONS='--experimental-vm-modules --no-warnings' pnpm jest",
+        "build": "npm run clean && ./node_modules/.bin/esbuild --external:benchmark --platform=node --target=node18 --bundle --format=esm --outdir=build --out-extension:.js=.mjs --banner:js='#!/usr/bin/env node'",
+        "build:dev": "npm run build src/index.ts src/benchmark.ts src/previewTheme.ts",
+        "build:publish": "npm run build src/index.ts --minify",
+        "test": "npm run build:dev && NODE_OPTIONS='--experimental-vm-modules --no-warnings' ./node_modules/.bin/jest",
         "previewTheme": "nodemon -q build/previewTheme.js",
-        "benchmark": "pnpm build:dev && node build/benchmark.mjs",
-        "prepublishOnly": "pnpm test && pnpm build:publish"
+        "benchmark": "npm run build:dev && node build/benchmark.mjs",
+        "prepublishOnly": "npm run test && npm run build:publish"
     },
     "devDependencies": {
         "@types/benchmark": "^2.1.0",
@@ -56,5 +56,5 @@
         "ts-jest": "^29.1.0",
         "typescript": "^5.0.4"
     },
-    "packageManager": "pnpm@8.13.1"
+    "packageManager": "pnpm@9.8.1"
 }
