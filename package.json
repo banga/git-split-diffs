@@ -32,7 +32,7 @@
     },
     "scripts": {
         "clean": "rimraf './build'",
-        "build": "yarn clean && yarn esbuild --external:benchmark --platform=node --target=node18 --bundle --format=esm --outdir=build --out-extension:.js=.mjs --banner:js='#!/usr/bin/env node'",
+        "build": "yarn clean && yarn esbuild --external:ansi-regex --external:benchmark --external:chalk --external:diff --external:shikiji --external:terminal-size --external:wcwidth --platform=node --target=node18 --bundle --format=esm --outdir=build --out-extension:.js=.mjs --banner:js='#!/usr/bin/env node'",
         "build:dev": "yarn build src/index.ts src/benchmark.ts src/previewTheme.ts",
         "build:publish": "yarn build src/index.ts --minify",
         "test": "yarn build:dev && NODE_OPTIONS='--experimental-vm-modules --no-warnings' yarn jest",
