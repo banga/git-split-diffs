@@ -177,11 +177,9 @@ Tested by measuring the time it took to pipe the output `git log -p` to `/dev/nu
 
 | Features enabled                                      | ms/kloc         |
 | ----------------------------------------------------- | --------------- |
-| Everything                                            | 466<sup>1</sup> |
-| No syntax highlighting                                | 40              |
-| No syntax highlighting, no inline change highlighting | 34              |
-
-<sup>1</sup> https://github.com/shikijs/shiki/pull/151 improves this to 333ms/kloc
+| Everything                                            | 45              |
+| No syntax highlighting                                | 15              |
+| No syntax highlighting, no inline change highlighting | 13              |
 
 ## Troubleshooting
 
