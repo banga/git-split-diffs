@@ -33,7 +33,7 @@
 -   [x] Support alpha in colors
 -   [x] Keep colors from --stat
 -   [x] Tests for syntax highlighting
--   [ ] Load shiki languages on-demand when https://github.com/shikijs/shiki/issues/438 is fixed
+-   [x] Load shiki languages on-demand (by switching to shikiji)
 -   [ ] Benchmark for syntax highlighting
 -   [ ] Display 3-way merge diffs (e.g. during merge conflicts)
 -   [ ] See why `less` occasionally goes into search mode
@@ -41,3 +41,4 @@
 -   [ ] Support custom themes
 -   [x] Calculate correct display widths, e.g. https://github.com/microsoft/MS-DOS/commit/29a0f9c130b6883080046b830e27403a289de72d
 -   [ ] Add a theme without background colors
+-   [ ] Add eslint rule to check for async/await gotchas

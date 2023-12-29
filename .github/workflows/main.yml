@@ -9,20 +9,12 @@ jobs:
         runs-on: ${{ matrix.os }}
         strategy:
             matrix:
-                node_version: ['14', '16', '18', '19']
+                node_version: ['18', '19', '20']
                 os: [ubuntu-latest, windows-latest, macOS-latest]
         steps:
-            - uses: actions/checkout@v2
-            - uses: actions/setup-node@v2
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
               with:
                   node-version: ${{ matrix.node_version }}
-            - name: Cache dependencies
-              uses: actions/cache@v2
-              with:
-                  path: ./node_modules
-                  key: npm-${{ hashFiles('yarn.lock') }}-${{ matrix.os }}-${{ matrix.node_version }}
-                  restore-keys: npm-
-            - name: Install dependencies
-              if: steps.cache.outputs.cache-hit != 'true'
-              run: yarn install --frozen-lockfile
-            - run: yarn test
+            - run: npm install --frozen-lockfile
+            - run: npm test

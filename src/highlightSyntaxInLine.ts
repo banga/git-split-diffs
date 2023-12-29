@@ -1,31 +1,25 @@
 import path from 'path';
-import shiki from 'shiki';
+import * as shikiji from 'shikiji';
 import { FormattedString } from './formattedString';
 import { parseColorDefinition, ThemeColor } from './themes';
 export type HighlightedText = [string, ThemeColor | null];
 
-export function highlightSyntaxInLine(
+export async function highlightSyntaxInLine(
     line: FormattedString,
     fileName: string,
-    highlighter?: shiki.Highlighter
-): void {
-    if (!highlighter) {
+    highlighter: shikiji.Highlighter
+): Promise<void> {
+    const language = path.extname(fileName).slice(1) as shikiji.BundledLanguage;
+    if (!shikiji.bundledLanguages[language]) {
         return;
     }
-    const language = path.extname(fileName).slice(1);
 
-    let tokens: shiki.IThemedToken[];
-    try {
-        [tokens] = highlighter.codeToThemedTokens(
-            line.getString(),
-            language,
-            undefined,
-            { includeExplanation: false }
-        );
-    } catch (e) {
-        // Highlighting fails if a language grammar or theme is missing
-        return;
-    }
+    await highlighter.loadLanguage(language);
+
+    const [tokens] = highlighter.codeToThemedTokens(line.getString(), {
+        includeExplanation: false,
+        lang: language,
+    });
 
     let index = 0;
     for (const { content, color } of tokens) {

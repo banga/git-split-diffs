@@ -266,7 +266,7 @@ index 149981d..fb507a4 100644
  import chalk from 'chalk';
  import * as process from 'process';
 +import stream from 'stream';
- import terminalSize from 'term-size';
+ import terminalSize from 'terminal-size';
  import { iterlinesFromReadableAsync } from './iterLinesFromReadable';
  import { iterLinesWithoutAnsiColors } from './iterLinesWithoutAnsiColors';
 @@ -12,15 +13,16 @@ function main() {

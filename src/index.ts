@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 import * as process from 'process';
-import terminalSize from 'term-size';
+import terminalSize from 'terminal-size';
 import { getContextForConfig } from './context';
 import { getGitConfig } from './getGitConfig';
 import { transformContentsStreaming } from './transformContentsStreaming';

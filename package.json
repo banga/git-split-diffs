@@ -4,7 +4,8 @@
     "description": "Split diffs, now in your terminal",
     "homepage": "https://github.com/banga/git-split-diffs",
     "repository": "github:banga/git-split-diffs",
-    "bin": "./bin/git-split-diffs",
+    "type": "module",
+    "bin": "./build/index.mjs",
     "files": [
         "bin/*",
         "build/*.js",
@@ -12,7 +13,7 @@
     ],
     "license": "MIT",
     "engines": {
-        "node": ">=14"
+        "node": ">=18"
     },
     "keywords": [
         "git",
@@ -22,22 +23,22 @@
         "diffs"
     ],
     "dependencies": {
-        "ansi-regex": "^5.0.0",
-        "chalk": "^4.1.0",
-        "diff": "^5.0.0",
-        "shiki": "^0.14.5",
-        "term-size": "^2.2.1",
+        "ansi-regex": "^6.0.1",
+        "chalk": "^5.3.0",
+        "diff": "^5.1.0",
+        "shikiji": "^0.9.13",
+        "terminal-size": "^4.0.0",
         "wcwidth": "^1.0.1"
     },
     "scripts": {
-        "test": "tsc && jest",
-        "clean": "rimraf ./build/*",
-        "build": "yarn clean && yarn esbuild --external:ansi-regex --external:chalk --external:diff --external:shiki --external:term-size --platform=node --target=node14 --outdir=build --bundle",
-        "build:dev": "yarn build src/index.ts src/benchmark.ts src/previewTheme.ts",
-        "build:publish": "yarn build src/index.ts --minify",
+        "clean": "rimraf './build'",
+        "build": "./node_modules/.bin/esbuild --external:benchmark --platform=node --target=node18 --bundle --format=esm --outdir=build --out-extension:.js=.mjs --banner:js='#!/usr/bin/env node'",
+        "build:dev": "npm run build src/index.ts src/benchmark.ts src/previewTheme.ts",
+        "build:publish": "npm run build src/index.ts --minify",
+        "test": "cross-env NODE_OPTIONS=\"--experimental-vm-modules --no-warnings\" ./node_modules/.bin/jest",
         "previewTheme": "nodemon -q build/previewTheme.js",
-        "benchmark": "yarn build:dev && node build/benchmark.js",
-        "prepublishOnly": "yarn test && yarn build:publish"
+        "benchmark": "node build/benchmark.mjs",
+        "prepublishOnly": "npm run clean && npm run build:publish && npm run test"
     },
     "devDependencies": {
         "@types/benchmark": "^2.1.0",
@@ -46,12 +47,14 @@
         "@types/node": "18.16.2",
         "@types/wcwidth": "^1.0.0",
         "benchmark": "^2.1.4",
+        "cross-env": "^7.0.3",
         "esbuild": "^0.17.18",
-        "jest": "^29.5.0",
+        "jest": "^29.7.0",
         "nodemon": "^2.0.7",
         "prettier": "^2.2.1",
-        "rimraf": "^5.0.0",
+        "rimraf": "^5.0.5",
         "ts-jest": "^29.1.0",
         "typescript": "^5.0.4"
-    }
+    },
+    "packageManager": "npm@9.8.1"
 }

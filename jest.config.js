@@ -1,7 +1,8 @@
-module.exports = {
+/** @type {import('jest').Config} */
+const jestConfig = {
+    preset: 'ts-jest/presets/default-esm',
     roots: ['<rootDir>/src'],
     testMatch: ['**/?(*.)+(spec|test).+(ts|tsx|js)'],
-    transform: {
-        '^.+\\.(ts|tsx)$': 'ts-jest',
-    },
 };
+
+export default jestConfig;
