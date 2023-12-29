@@ -1,9 +1,9 @@
-import { Chalk } from 'chalk';
+import { ChalkInstance } from 'chalk';
 import { Theme } from './themes';
 import * as shikiji from 'shikiji';
 
 export type Config = Theme & {
-    CHALK: Chalk;
+    CHALK: ChalkInstance;
     SCREEN_WIDTH: number;
     MIN_LINE_WIDTH: number;
     WRAP_LINES: boolean;

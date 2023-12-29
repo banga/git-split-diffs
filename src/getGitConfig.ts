@@ -1,4 +1,4 @@
-import { Chalk } from 'chalk';
+import { ChalkInstance } from 'chalk';
 import { exec } from 'child_process';
 import * as util from 'util';
 import { Config } from './config';
@@ -29,7 +29,7 @@ async function getRawGitConfig() {
 // TODO: Make this less manual
 export async function getGitConfig(
     screenWidth: number,
-    chalk: Chalk
+    chalk: ChalkInstance
 ): Promise<Config> {
     const rawConfig = await getRawGitConfig();
 
