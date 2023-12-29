@@ -1,14 +1,18 @@
 {
     "name": "git-split-diffs",
-    "version": "0.17.0",
+    "version": "1.0.0",
     "description": "Split diffs, now in your terminal",
     "homepage": "https://github.com/banga/git-split-diffs",
-    "repository": "github:banga/git-split-diffs",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/banga/git-split-diffs.git"
+    },
     "type": "module",
-    "bin": "./build/index.mjs",
+    "bin": {
+        "git-split-diffs": "build/index.mjs"
+    },
     "files": [
-        "bin/*",
-        "build/*.js",
+        "build/*",
         "themes/*.json"
     ],
     "license": "MIT",
@@ -32,7 +36,7 @@
     },
     "scripts": {
         "clean": "rimraf './build'",
-        "build": "./node_modules/.bin/esbuild --external:benchmark --platform=node --target=node18 --bundle --format=esm --outdir=build --out-extension:.js=.mjs --banner:js='#!/usr/bin/env node'",
+        "build": "esbuild --external:benchmark --platform=node --target=node18 --bundle --format=esm --outdir=build --out-extension:.js=.mjs --banner:js='#!/usr/bin/env node'",
         "build:dev": "npm run build src/index.ts src/benchmark.ts src/previewTheme.ts",
         "build:publish": "npm run build src/index.ts --minify",
         "test": "cross-env NODE_OPTIONS=\"--experimental-vm-modules --no-warnings\" ./node_modules/.bin/jest",
