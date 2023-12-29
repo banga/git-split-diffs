@@ -35,7 +35,7 @@
         "build": "./node_modules/.bin/esbuild --external:benchmark --platform=node --target=node18 --bundle --format=esm --outdir=build --out-extension:.js=.mjs --banner:js='#!/usr/bin/env node'",
         "build:dev": "npm run build src/index.ts src/benchmark.ts src/previewTheme.ts",
         "build:publish": "npm run build src/index.ts --minify",
-        "test": "cross-env NODE_OPTIONS=\\\"--experimental-vm-modules --no-warnings\\\" ./node_modules/.bin/jest",
+        "test": "cross-env NODE_OPTIONS=\"--experimental-vm-modules --no-warnings\" ./node_modules/.bin/jest",
         "previewTheme": "nodemon -q build/previewTheme.js",
         "benchmark": "node build/benchmark.mjs",
         "prepublishOnly": "npm run clean && npm run build:publish && npm run test"
