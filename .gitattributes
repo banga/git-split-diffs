@@ -1,0 +1,3 @@
+# exclude lock files from git diff
+package-lock.json -diff
+yarn.lock -diff
