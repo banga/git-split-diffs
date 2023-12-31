@@ -1,34 +1,43 @@
 import * as shikiji from 'shikiji';
-import { Config } from './config';
+import { Config } from './getConfig';
 import { FormattedString, T } from './formattedString';
+import { ChalkInstance } from 'chalk';
 
 /**
  * Internal context object used to pass around config and config-derived
  * constants.
  */
 export type Context = Config & {
+    CHALK: ChalkInstance;
     SPLIT_DIFFS: boolean;
+    SCREEN_WIDTH: number;
     LINE_WIDTH: number;
     BLANK_LINE: string;
     HORIZONTAL_SEPARATOR: FormattedString;
     HIGHLIGHTER?: shikiji.Highlighter;
 };
 
-export async function getContextForConfig(config: Config): Promise<Context> {
+export async function getContextForConfig(
+    config: Config,
+    chalk: ChalkInstance,
+    screenWidth: number
+): Promise<Context> {
+    const SCREEN_WIDTH = screenWidth;
+
     // Only split diffs if there's enough room
-    const SPLIT_DIFFS = config.SCREEN_WIDTH >= config.MIN_LINE_WIDTH * 2;
+    const SPLIT_DIFFS = SCREEN_WIDTH >= config.MIN_LINE_WIDTH * 2;
 
     let LINE_WIDTH: number;
     if (SPLIT_DIFFS) {
-        LINE_WIDTH = Math.floor(config.SCREEN_WIDTH / 2);
+        LINE_WIDTH = Math.floor(SCREEN_WIDTH / 2);
     } else {
-        LINE_WIDTH = config.SCREEN_WIDTH;
+        LINE_WIDTH = SCREEN_WIDTH;
     }
 
     const BLANK_LINE = ''.padStart(LINE_WIDTH);
     const HORIZONTAL_SEPARATOR = T()
-        .fillWidth(config.SCREEN_WIDTH, '─')
-        .addSpan(0, config.SCREEN_WIDTH, config.BORDER_COLOR);
+        .fillWidth(SCREEN_WIDTH, '─')
+        .addSpan(0, SCREEN_WIDTH, config.BORDER_COLOR);
 
     let HIGHLIGHTER = undefined;
     if (config.SYNTAX_HIGHLIGHTING_THEME) {
@@ -39,6 +48,8 @@ export async function getContextForConfig(config: Config): Promise<Context> {
     }
     return {
         ...config,
+        CHALK: chalk,
+        SCREEN_WIDTH,
         SPLIT_DIFFS,
         LINE_WIDTH,
         BLANK_LINE,

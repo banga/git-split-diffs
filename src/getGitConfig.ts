@@ -1,21 +1,22 @@
-import { ChalkInstance } from 'chalk';
-import { exec } from 'child_process';
-import * as util from 'util';
-import { Config } from './config';
-import { loadTheme } from './themes';
-import * as shikiji from 'shikiji';
-const execAsync = util.promisify(exec);
+export type GitConfig = {
+    MIN_LINE_WIDTH: number;
+    WRAP_LINES: boolean;
+    HIGHLIGHT_LINE_CHANGES: boolean;
+    THEME_NAME: string;
+    SYNTAX_HIGHLIGHTING_THEME?: string;
+};
+
+export const DEFAULT_MIN_LINE_WIDTH = 80;
+export const DEFAULT_THEME_NAME = 'dark';
 
 const GIT_CONFIG_KEY_PREFIX = 'split-diffs';
 const GIT_CONFIG_LINE_REGEX = new RegExp(
     `${GIT_CONFIG_KEY_PREFIX}\.([^=]+)=(.*)`
 );
 
-async function getRawGitConfig() {
-    const { stdout } = await execAsync('git config -l');
-
+function extractFromGitConfigString(configString: string) {
     const rawConfig: Record<string, string> = {};
-    for (const line of stdout.trim().split('\n')) {
+    for (const line of configString.trim().split('\n')) {
         const match = line.match(GIT_CONFIG_LINE_REGEX);
         if (!match) {
             continue;
@@ -26,30 +27,10 @@ async function getRawGitConfig() {
     return rawConfig;
 }
 
-// TODO: Make this less manual
-export async function getGitConfig(
-    screenWidth: number,
-    chalk: ChalkInstance
-): Promise<Config> {
-    const rawConfig = await getRawGitConfig();
+export function getGitConfig(configString: string): GitConfig {
+    const rawConfig = extractFromGitConfigString(configString);
 
-    // Defaults to "dark"
-    const themeName = rawConfig['theme-name'] ?? 'dark';
-    const theme = loadTheme(themeName);
-
-    // Defaults to the theme's setting
-    const syntaxHighlightingTheme = (rawConfig['syntax-highlighting-theme'] ??
-        theme.SYNTAX_HIGHLIGHTING_THEME) as shikiji.BundledTheme;
-
-    // Defaults to true
-    const wrapLines = rawConfig['wrap-lines'] === 'false' ? false : true;
-
-    // Defaults to true
-    const highlightLineChanges =
-        rawConfig['highlight-line-changes'] === 'false' ? false : true;
-
-    // Defaults to 80
-    let minLineWidth = 80;
+    let minLineWidth = DEFAULT_MIN_LINE_WIDTH;
     try {
         const parsedMinLineWidth = parseInt(rawConfig['min-line-width'], 10);
         if (!isNaN(parsedMinLineWidth)) {
@@ -58,12 +39,10 @@ export async function getGitConfig(
     } catch {}
 
     return {
-        ...theme,
-        CHALK: chalk,
-        SCREEN_WIDTH: screenWidth,
         MIN_LINE_WIDTH: minLineWidth,
-        WRAP_LINES: wrapLines,
-        HIGHLIGHT_LINE_CHANGES: highlightLineChanges,
-        SYNTAX_HIGHLIGHTING_THEME: syntaxHighlightingTheme,
+        WRAP_LINES: rawConfig['wrap-lines'] !== 'false',
+        HIGHLIGHT_LINE_CHANGES: rawConfig['highlight-line-changes'] !== 'false',
+        THEME_NAME: rawConfig['theme-name'] ?? DEFAULT_THEME_NAME,
+        SYNTAX_HIGHLIGHTING_THEME: rawConfig['syntax-highlighting-theme'],
     };
 }

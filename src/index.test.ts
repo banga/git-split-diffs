@@ -1,74 +1,95 @@
 import { Readable, Writable } from 'stream';
-import { Config } from './config';
+import { Config } from './getConfig';
 import { getContextForConfig } from './context';
-import { ThemeColorName } from './themes';
+import { Theme, ThemeColorName } from './themes';
 import { transformContentsStreaming } from './transformContentsStreaming';
+import { ChalkInstance } from 'chalk';
 
 const TEST_THEME = Object.fromEntries(
     Object.keys(ThemeColorName).map((name) => [name, {}])
-);
+) as Theme;
 
 const replaceColoredText = () => (text: string) => text.replace(/./g, '░');
 
+// Provide a fake chalk implementation to make it easier to read snapshots
+// @ts-expect-error
+const TEST_CHALK = {
+    rgb: replaceColoredText,
+    bgRgb: replaceColoredText,
+} as ChalkInstance;
+
 const TEST_CONFIG: Config = {
-    // Provide a fake chalk implementation to make it easier to read snapshots
-    CHALK: {
-        // @ts-expect-error
-        rgb: replaceColoredText,
-        // @ts-expect-error
-        bgRgb: replaceColoredText,
-    },
-    SCREEN_WIDTH: 120,
     MIN_LINE_WIDTH: 60,
     WRAP_LINES: false,
     HIGHLIGHT_LINE_CHANGES: false,
     ...TEST_THEME,
 };
 
-const CONFIG_OVERRIDES: Record<string, Partial<Config>> = {
+type TestOverrides = { screenWidth: number; config: Partial<Config> };
+
+const CONFIG_OVERRIDES: Record<string, TestOverrides> = {
     splitWithoutWrapping: {
-        SCREEN_WIDTH: 80,
-        MIN_LINE_WIDTH: 40,
-        WRAP_LINES: false,
+        screenWidth: 80,
+        config: {
+            MIN_LINE_WIDTH: 40,
+            WRAP_LINES: false,
+        },
     },
     splitWithWrapping: {
-        SCREEN_WIDTH: 80,
-        MIN_LINE_WIDTH: 40,
-        WRAP_LINES: true,
+        screenWidth: 80,
+        config: {
+            MIN_LINE_WIDTH: 40,
+            WRAP_LINES: true,
+        },
     },
     unifiedWithWrapping: {
-        SCREEN_WIDTH: 80,
-        MIN_LINE_WIDTH: 80,
-        WRAP_LINES: true,
+        screenWidth: 80,
+        config: {
+            MIN_LINE_WIDTH: 80,
+            WRAP_LINES: true,
+        },
     },
     // This is in split mode
     inlineChangesHighlighted: {
-        HIGHLIGHT_LINE_CHANGES: true,
-        DELETED_WORD_COLOR: { color: { r: 255, g: 0, b: 0, a: 255 } },
-        INSERTED_WORD_COLOR: { color: { r: 0, g: 255, b: 0, a: 255 } },
+        screenWidth: 120,
+        config: {
+            HIGHLIGHT_LINE_CHANGES: true,
+            DELETED_WORD_COLOR: { color: { r: 255, g: 0, b: 0, a: 255 } },
+            INSERTED_WORD_COLOR: { color: { r: 0, g: 255, b: 0, a: 255 } },
+        },
     },
     unifiedWithInlineChangesHighlighted: {
-        SCREEN_WIDTH: 80,
-        MIN_LINE_WIDTH: 80,
-        HIGHLIGHT_LINE_CHANGES: true,
-        DELETED_WORD_COLOR: { color: { r: 255, g: 0, b: 0, a: 255 } },
-        INSERTED_WORD_COLOR: { color: { r: 0, g: 255, b: 0, a: 255 } },
+        screenWidth: 80,
+        config: {
+            MIN_LINE_WIDTH: 80,
+            HIGHLIGHT_LINE_CHANGES: true,
+            DELETED_WORD_COLOR: { color: { r: 255, g: 0, b: 0, a: 255 } },
+            INSERTED_WORD_COLOR: { color: { r: 0, g: 255, b: 0, a: 255 } },
+        },
     },
     syntaxHighlighted: {
-        SCREEN_WIDTH: 80,
-        MIN_LINE_WIDTH: 40,
-        WRAP_LINES: false,
-        SYNTAX_HIGHLIGHTING_THEME: 'dark-plus',
+        screenWidth: 80,
+        config: {
+            MIN_LINE_WIDTH: 40,
+            WRAP_LINES: false,
+            SYNTAX_HIGHLIGHTING_THEME: 'dark-plus',
+        },
     },
 };
 
-for (const [configName, configOverride] of Object.entries(CONFIG_OVERRIDES)) {
+for (const [configName, { screenWidth, config }] of Object.entries(
+    CONFIG_OVERRIDES
+)) {
     async function transform(input: string): Promise<string> {
         const testConfig: Config = {
             ...TEST_CONFIG,
-            ...configOverride,
+            ...config,
         };
-        const context = await getContextForConfig(testConfig);
+        const context = await getContextForConfig(
+            testConfig,
+            TEST_CHALK,
+            screenWidth
+        );
 
         let string = '';
         await transformContentsStreaming(

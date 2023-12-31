@@ -2,13 +2,12 @@ import chalk from 'chalk';
 import { execSync } from 'child_process';
 import { Readable, Writable } from 'stream';
 import terminalSize from 'terminal-size';
-import { Config } from './config';
+import { Config } from './getConfig';
 import { getContextForConfig } from './context';
 import { loadTheme } from './themes';
 import { transformContentsStreaming } from './transformContentsStreaming';
 
 const CONFIG = {
-    CHALK: chalk,
     MIN_LINE_WIDTH: 40,
     WRAP_LINES: true,
     HIGHLIGHT_LINE_CHANGES: true,
@@ -21,10 +20,9 @@ async function previewTheme(themeName: string, content: string) {
     const config: Config = {
         ...CONFIG,
         ...theme,
-        SCREEN_WIDTH: columns,
     };
 
-    const context = await getContextForConfig(config);
+    const context = await getContextForConfig(config, chalk, columns);
 
     let linesWritten = 0;
     await transformContentsStreaming(
