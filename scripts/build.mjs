@@ -1,4 +1,5 @@
 import * as esbuild from 'esbuild';
+import fs from 'fs';
 
 /** @type {esbuild.BuildOptions} */
 const commonOptions = {
@@ -7,7 +8,12 @@ const commonOptions = {
     platform: 'node',
     target: 'node18',
     format: 'esm',
-    external: ['benchmark'],
+    external: [
+        'benchmark',
+        ...Object.keys(
+            JSON.parse(fs.readFileSync('package.json', 'utf-8')).dependencies
+        ),
+    ],
     banner: { js: '#!/usr/bin/env node' },
     outExtension: { '.js': '.mjs' },
     sourcemap: false,
