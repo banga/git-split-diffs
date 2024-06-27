@@ -472,5 +472,27 @@ index 5ff5244..b48cf46 100644
 `)
             ).toMatchSnapshot();
         });
+
+        test('diff from issue #50', async function () {
+            expect(
+                await transform(`
+diff --git a/file1 b/file1
+index d88c464..6901818 100644
+--- a/file1
++++ b/file1
+@@ -1 +1,2 @@
+-This is file1
+\ No newline at end of file
++This is file1
++Experimental change
+diff --git a/file2 b/file2
+index 095ee29..439621e 100644
+--- a/file2
++++ b/file2
+@@ -1 +1,2 @@
++All good
+ This is file2`)
+            ).toMatchSnapshot();
+        });
     });
 }

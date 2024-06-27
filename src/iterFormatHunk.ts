@@ -68,53 +68,76 @@ async function* iterFormatHunkUnified(
     lineNoB: number,
     lineChanges: (Change[] | null)[]
 ): AsyncIterable<FormattedString> {
-    for (let indexA = 0, indexB = 0; indexA < hunkLinesA.length; indexA++) {
+    let indexA = 0,
+        indexB = 0;
+    while (indexA < hunkLinesA.length) {
         const hunkLineA = hunkLinesA[indexA];
         const prefixA = hunkLineA?.slice(0, 1) ?? null;
         const changes = lineChanges[indexA];
 
-        if (prefixA === null) {
-            // Ignore the missing lines we insert to match up indexes
-            continue;
-        } else if (prefixA === '-') {
-            yield* formatAndFitHunkLine(
-                context,
-                fileNameA,
-                lineNoA,
-                hunkLineA,
-                changes
-            );
-            lineNoA++;
-        } else {
-            // indexA is pointing to an unmodified line, so yield all the
-            // inserted lines from indexB up to this line
-            while (indexB < indexA) {
-                const hunkLineB = hunkLinesB[indexB];
-                if (hunkLineB !== null) {
-                    yield* formatAndFitHunkLine(
-                        context,
-                        fileNameB,
-                        lineNoB,
-                        hunkLineB,
-                        changes
-                    );
-                    lineNoB++;
+        switch (prefixA) {
+            case null:
+                // Ignore the missing lines we insert to match up indexes
+                break;
+            case '-':
+                yield* formatAndFitHunkLine(
+                    context,
+                    fileNameA,
+                    lineNoA,
+                    hunkLineA,
+                    changes
+                );
+                lineNoA++;
+                break;
+            default:
+                // indexA is pointing to an unmodified line, so yield all the
+                // inserted lines from indexB up to this line
+                while (indexB < indexA) {
+                    const hunkLineB = hunkLinesB[indexB];
+                    if (hunkLineB !== null) {
+                        yield* formatAndFitHunkLine(
+                            context,
+                            fileNameB,
+                            lineNoB,
+                            hunkLineB,
+                            changes
+                        );
+                        lineNoB++;
+                    }
+                    indexB++;
                 }
-                indexB++;
-            }
 
-            // now yield the unmodified line, which should be present in both
+                // now yield the unmodified line, which should be present in both
+                yield* formatAndFitHunkLine(
+                    context,
+                    fileNameA,
+                    lineNoA,
+                    hunkLineA,
+                    changes
+                );
+                lineNoA++;
+                lineNoB++;
+                indexB++;
+        }
+
+        indexA++;
+    }
+
+    // yield any remaining lines in hunk B, which can happen if there were more
+    // insertions at the end of the hunk
+    while (indexB < hunkLinesB.length) {
+        const hunkLineB = hunkLinesB[indexB];
+        if (hunkLineB !== null) {
             yield* formatAndFitHunkLine(
                 context,
-                fileNameA,
-                lineNoA,
-                hunkLineA,
-                changes
+                fileNameB,
+                lineNoB,
+                hunkLineB,
+                lineChanges[indexB]
             );
-            lineNoA++;
             lineNoB++;
-            indexB++;
         }
+        indexB++;
     }
 }
 
