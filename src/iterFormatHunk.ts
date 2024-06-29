@@ -6,70 +6,67 @@ import { getChangesInLines } from './highlightChangesInLine';
 import { iterFitTextToWidth } from './iterFitTextToWidth';
 import { zip, zipAsync } from './zip';
 
+export type HunkPart = {
+    fileName: string;
+    startLineNo: number;
+    lines: (string | null)[];
+};
+
 async function* iterFormatHunkSplit(
     context: Context,
-    fileNameA: string,
-    fileNameB: string,
-    hunkLinesA: (string | null)[],
-    hunkLinesB: (string | null)[],
-    lineNoA: number,
-    lineNoB: number,
+    hunkParts: HunkPart[],
     lineChanges: (Change[] | null)[]
 ): AsyncIterable<FormattedString> {
     const { MISSING_LINE_COLOR, BLANK_LINE } = context;
 
-    for (const [lineA, lineB, changes] of zip(
-        hunkLinesA,
-        hunkLinesB,
-        lineChanges
+    const lineNos = hunkParts.map((part) => part.startLineNo);
+
+    for (const [changes, ...hunkPartLines] of zip(
+        lineChanges,
+        ...hunkParts.map((part) => part.lines)
     )) {
-        const formattedLinesA = formatAndFitHunkLine(
-            context,
-            fileNameA,
-            lineNoA,
-            lineA ?? null,
-            changes ?? null
-        );
-        const formattedLinesB = formatAndFitHunkLine(
-            context,
-            fileNameB,
-            lineNoB,
-            lineB ?? null,
-            changes ?? null
+        const formattedLineIterables = hunkPartLines.map((hunkPartLine, i) =>
+            formatAndFitHunkLine(
+                context,
+                hunkParts[i].fileName,
+                lineNos[i],
+                hunkPartLine ?? null,
+                changes ?? null
+            )
         );
 
         const missingLine = T().appendString(BLANK_LINE, MISSING_LINE_COLOR);
 
-        for await (const [formattedLineA, formattedLineB] of zipAsync(
-            formattedLinesA,
-            formattedLinesB
+        for await (const formattedLines of zipAsync(
+            ...formattedLineIterables
         )) {
-            yield T()
-                .appendSpannedString(formattedLineA ?? missingLine)
-                .appendSpannedString(formattedLineB ?? missingLine);
+            const formattedLine = T();
+            for (const line of formattedLines) {
+                formattedLine.appendSpannedString(line ?? missingLine);
+            }
+            yield formattedLine;
         }
 
-        if (lineA !== null) {
-            lineNoA++;
-        }
-        if (lineB !== null) {
-            lineNoB++;
-        }
+        hunkPartLines.forEach((hunkPartLine, i) => {
+            if (hunkPartLine !== null && hunkPartLine !== undefined) {
+                lineNos[i]++;
+            }
+        });
     }
 }
 
 async function* iterFormatHunkUnified(
     context: Context,
-    fileNameA: string,
-    fileNameB: string,
-    hunkLinesA: (string | null)[],
-    hunkLinesB: (string | null)[],
-    lineNoA: number,
-    lineNoB: number,
+    hunkParts: HunkPart[],
     lineChanges: (Change[] | null)[]
 ): AsyncIterable<FormattedString> {
-    let indexA = 0,
-        indexB = 0;
+    let [{ fileName: fileNameA, lines: hunkLinesA }, ...restHunkParts] =
+        hunkParts;
+    let [indexA, ...restIndexes] = hunkParts.map(() => 0);
+    let [lineNoA, ...restLineNos] = hunkParts.map(
+        ({ startLineNo }) => startLineNo
+    );
+
     while (indexA < hunkLinesA.length) {
         const hunkLineA = hunkLinesA[indexA];
         const prefixA = hunkLineA?.slice(0, 1) ?? null;
@@ -92,21 +89,27 @@ async function* iterFormatHunkUnified(
             default:
                 // indexA is pointing to an unmodified line, so yield all the
                 // inserted lines from indexB up to this line
-                while (indexB < indexA) {
-                    const hunkLineB = hunkLinesB[indexB];
-                    if (hunkLineB !== null) {
-                        yield* formatAndFitHunkLine(
-                            context,
-                            fileNameB,
-                            lineNoB,
-                            hunkLineB,
-                            lineChanges[indexB]
-                        );
-                        lineNoB++;
+                for (let i = 0; i < restIndexes.length; i++) {
+                    let indexB = restIndexes[i];
+                    let lineNoB = restLineNos[i];
+                    let hunkPartB = restHunkParts[i];
+                    while (indexB < indexA) {
+                        const hunkLineB = hunkPartB.lines[indexB];
+                        if (hunkLineB !== null) {
+                            yield* formatAndFitHunkLine(
+                                context,
+                                hunkPartB.fileName,
+                                lineNoB,
+                                hunkLineB,
+                                lineChanges[indexB]
+                            );
+                            lineNoB++;
+                        }
+                        indexB++;
                     }
-                    indexB++;
+                    restIndexes[i] = indexB;
+                    restLineNos[i] = lineNoB;
                 }
-
                 // now yield the unmodified line, which should be present in both
                 yield* formatAndFitHunkLine(
                     context,
@@ -116,8 +119,10 @@ async function* iterFormatHunkUnified(
                     changes
                 );
                 lineNoA++;
-                lineNoB++;
-                indexB++;
+                for (let i = 0; i < restIndexes.length; i++) {
+                    restIndexes[i]++;
+                    restLineNos[i]++;
+                }
         }
 
         indexA++;
@@ -125,31 +130,31 @@ async function* iterFormatHunkUnified(
 
     // yield any remaining lines in hunk B, which can happen if there were more
     // insertions at the end of the hunk
-    while (indexB < hunkLinesB.length) {
-        const hunkLineB = hunkLinesB[indexB];
-        if (hunkLineB !== null) {
-            yield* formatAndFitHunkLine(
-                context,
-                fileNameB,
-                lineNoB,
-                hunkLineB,
-                lineChanges[indexB]
-            );
-            lineNoB++;
+    for (let i = 0; i < restIndexes.length; i++) {
+        let indexB = restIndexes[i];
+        let lineNoB = restLineNos[i];
+        let hunkPartB = restHunkParts[i];
+        while (indexB < hunkPartB.lines.length) {
+            const hunkLineB = hunkPartB.lines[indexB];
+            if (hunkLineB !== null) {
+                yield* formatAndFitHunkLine(
+                    context,
+                    restHunkParts[i].fileName,
+                    lineNoB,
+                    hunkLineB,
+                    lineChanges[indexB]
+                );
+                lineNoB++;
+            }
+            indexB++;
         }
-        indexB++;
     }
 }
 
 export async function* iterFormatHunk(
     context: Context,
     hunkHeaderLine: string,
-    fileNameA: string,
-    fileNameB: string,
-    hunkLinesA: (string | null)[],
-    hunkLinesB: (string | null)[],
-    lineNoA: number,
-    lineNoB: number
+    hunkParts: HunkPart[]
 ): AsyncIterable<FormattedString> {
     const { HUNK_HEADER_COLOR, SCREEN_WIDTH, SPLIT_DIFFS } = context;
 
@@ -160,29 +165,16 @@ export async function* iterFormatHunk(
         HUNK_HEADER_COLOR
     );
 
-    const changes = getChangesInLines(context, hunkLinesA, hunkLinesB);
+    // TODO: Fix to handle multiple hunk parts
+    const changes = getChangesInLines(
+        context,
+        hunkParts[0].lines,
+        hunkParts[1].lines
+    );
 
     if (SPLIT_DIFFS) {
-        yield* iterFormatHunkSplit(
-            context,
-            fileNameA,
-            fileNameB,
-            hunkLinesA,
-            hunkLinesB,
-            lineNoA,
-            lineNoB,
-            changes
-        );
+        yield* iterFormatHunkSplit(context, hunkParts, changes);
     } else {
-        yield* iterFormatHunkUnified(
-            context,
-            fileNameA,
-            fileNameB,
-            hunkLinesA,
-            hunkLinesB,
-            lineNoA,
-            lineNoB,
-            changes
-        );
+        yield* iterFormatHunkUnified(context, hunkParts, changes);
     }
 }

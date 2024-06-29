@@ -5,7 +5,7 @@ import { applyFormatting, FormattedString, T } from './formattedString';
 import { iterFormatCommitBodyLine } from './iterFormatCommitBodyLine';
 import { iterFormatCommitHeaderLine } from './iterFormatCommitHeaderLine';
 import { iterFormatFileName } from './iterFormatFileName';
-import { iterFormatHunk } from './iterFormatHunk';
+import { HunkPart, iterFormatHunk } from './iterFormatHunk';
 
 const ANSI_COLOR_CODE_REGEX = ansiRegex();
 
@@ -22,9 +22,10 @@ type State =
     | 'unknown'
     | 'commit-header'
     | 'commit-body'
-    | 'diff'
-    | 'hunk-header'
-    | 'hunk-body';
+    // "Unified" diffs (normal diffs)
+    | 'unified-diff'
+    | 'unified-diff-hunk-header'
+    | 'unified-diff-hunk-body';
 
 async function* iterSideBySideDiffsFormatted(
     context: Context,
@@ -45,30 +46,20 @@ async function* iterSideBySideDiffsFormatted(
     }
 
     // Hunk metadata
-    let startA: number = -1;
-    let startB: number = -1;
+    let hunkParts: HunkPart[] = [];
     let hunkHeaderLine: string = '';
-    let hunkLinesA: (string | null)[] = [];
-    let hunkLinesB: (string | null)[] = [];
     async function* yieldHunk() {
-        yield* iterFormatHunk(
-            context,
-            hunkHeaderLine,
-            fileNameA,
-            fileNameB,
-            hunkLinesA,
-            hunkLinesB,
-            startA,
-            startB
-        );
-        hunkLinesA = [];
-        hunkLinesB = [];
+        yield* iterFormatHunk(context, hunkHeaderLine, hunkParts);
+        for (const hunkPart of hunkParts) {
+            hunkPart.startLineNo = -1;
+            hunkPart.lines = [];
+        }
     }
 
     async function* flushPending() {
-        if (state === 'diff') {
+        if (state === 'unified-diff') {
             yield* yieldFileName();
-        } else if (state === 'hunk-body') {
+        } else if (state === 'unified-diff-hunk-body') {
             yield* yieldHunk();
         }
     }
@@ -83,11 +74,11 @@ async function* iterSideBySideDiffsFormatted(
         } else if (state === 'commit-header' && line.startsWith('    ')) {
             nextState = 'commit-body';
         } else if (line.startsWith('diff --git')) {
-            nextState = 'diff';
+            nextState = 'unified-diff';
         } else if (line.startsWith('@@ ')) {
-            nextState = 'hunk-header';
-        } else if (state === 'hunk-header') {
-            nextState = 'hunk-body';
+            nextState = 'unified-diff-hunk-header';
+        } else if (state === 'unified-diff-hunk-header') {
+            nextState = 'unified-diff-hunk-body';
         } else if (
             state === 'commit-body' &&
             line.length > 0 &&
@@ -102,13 +93,22 @@ async function* iterSideBySideDiffsFormatted(
 
             switch (nextState) {
                 case 'commit-header':
-                    if (state === 'hunk-header' || state === 'hunk-body') {
+                    if (
+                        state === 'unified-diff-hunk-header' ||
+                        state === 'unified-diff-hunk-body'
+                    ) {
                         yield HORIZONTAL_SEPARATOR;
                     }
                     break;
-                case 'diff':
+                case 'unified-diff':
                     fileNameA = '';
                     fileNameB = '';
+                    break;
+                case 'unified-diff-hunk-header':
+                    hunkParts = [
+                        { fileName: fileNameA, startLineNo: -1, lines: [] },
+                        { fileName: fileNameB, startLineNo: -1, lines: [] },
+                    ];
                     break;
                 case 'commit-body':
                     isFirstCommitBodyLine = true;
@@ -137,7 +137,7 @@ async function* iterSideBySideDiffsFormatted(
                 isFirstCommitBodyLine = false;
                 break;
             }
-            case 'diff': {
+            case 'unified-diff': {
                 if (line.startsWith('--- a/')) {
                     fileNameA = line.slice('--- a/'.length);
                 } else if (line.startsWith('+++ b/')) {
@@ -167,7 +167,7 @@ async function* iterSideBySideDiffsFormatted(
                 }
                 break;
             }
-            case 'hunk-header': {
+            case 'unified-diff-hunk-header': {
                 const hunkHeaderStart = line.indexOf('@@ ');
                 const hunkHeaderEnd = line.indexOf(' @@', hunkHeaderStart + 1);
                 assert.ok(hunkHeaderStart >= 0);
@@ -183,13 +183,15 @@ async function* iterSideBySideDiffsFormatted(
                 const [startBString] = bHeader.split(',');
 
                 assert.ok(startAString.startsWith('-'));
-                startA = parseInt(startAString.slice(1), 10);
+                hunkParts[0].startLineNo = parseInt(startAString.slice(1), 10);
 
                 assert.ok(startBString.startsWith('+'));
-                startB = parseInt(startBString.slice(1), 10);
+                hunkParts[1].startLineNo = parseInt(startBString.slice(1), 10);
                 break;
             }
-            case 'hunk-body': {
+            case 'unified-diff-hunk-body': {
+                const [{ lines: hunkLinesA }, { lines: hunkLinesB }] =
+                    hunkParts;
                 if (line.startsWith('-')) {
                     hunkLinesA.push(line);
                 } else if (line.startsWith('+')) {
