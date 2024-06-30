@@ -17,7 +17,9 @@ async function* iterFormatHunkSplit(
     hunkParts: HunkPart[],
     lineChanges: (Change[] | null)[]
 ): AsyncIterable<FormattedString> {
-    const { MISSING_LINE_COLOR, BLANK_LINE } = context;
+    const { MISSING_LINE_COLOR } = context;
+    const lineWidth = context.SCREEN_WIDTH / hunkParts.length;
+    const blankLine = ''.padStart(lineWidth);
 
     const lineNos = hunkParts.map((part) => part.startLineNo);
 
@@ -28,6 +30,7 @@ async function* iterFormatHunkSplit(
         const formattedLineIterables = hunkPartLines.map((hunkPartLine, i) =>
             formatAndFitHunkLine(
                 context,
+                lineWidth,
                 hunkParts[i].fileName,
                 lineNos[i],
                 hunkPartLine ?? null,
@@ -35,7 +38,7 @@ async function* iterFormatHunkSplit(
             )
         );
 
-        const missingLine = T().appendString(BLANK_LINE, MISSING_LINE_COLOR);
+        const missingLine = T().appendString(blankLine, MISSING_LINE_COLOR);
 
         for await (const formattedLines of zipAsync(
             ...formattedLineIterables
@@ -60,6 +63,8 @@ async function* iterFormatHunkUnified(
     hunkParts: HunkPart[],
     lineChanges: (Change[] | null)[]
 ): AsyncIterable<FormattedString> {
+    const lineWidth = context.SCREEN_WIDTH;
+
     let [{ fileName: fileNameA, lines: hunkLinesA }, ...restHunkParts] =
         hunkParts;
     let [indexA, ...restIndexes] = hunkParts.map(() => 0);
@@ -79,6 +84,7 @@ async function* iterFormatHunkUnified(
             case '-':
                 yield* formatAndFitHunkLine(
                     context,
+                    lineWidth,
                     fileNameA,
                     lineNoA,
                     hunkLineA,
@@ -98,6 +104,7 @@ async function* iterFormatHunkUnified(
                         if (hunkLineB !== null) {
                             yield* formatAndFitHunkLine(
                                 context,
+                                lineWidth,
                                 hunkPartB.fileName,
                                 lineNoB,
                                 hunkLineB,
@@ -113,6 +120,7 @@ async function* iterFormatHunkUnified(
                 // now yield the unmodified line, which should be present in both
                 yield* formatAndFitHunkLine(
                     context,
+                    lineWidth,
                     fileNameA,
                     lineNoA,
                     hunkLineA,
@@ -139,6 +147,7 @@ async function* iterFormatHunkUnified(
             if (hunkLineB !== null) {
                 yield* formatAndFitHunkLine(
                     context,
+                    lineWidth,
                     restHunkParts[i].fileName,
                     lineNoB,
                     hunkLineB,

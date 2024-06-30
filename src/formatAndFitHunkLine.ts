@@ -11,14 +11,13 @@ const LINE_NUMBER_WIDTH = 5;
 
 export async function* formatAndFitHunkLine(
     context: Context,
+    lineWidth: number,
     fileName: string,
     lineNo: number,
     line: string | null,
     changes: Change[] | null
 ): AsyncIterable<FormattedString> {
     const {
-        BLANK_LINE,
-        LINE_WIDTH,
         MISSING_LINE_COLOR,
         DELETED_LINE_COLOR,
         DELETED_LINE_NO_COLOR,
@@ -28,10 +27,12 @@ export async function* formatAndFitHunkLine(
         UNMODIFIED_LINE_NO_COLOR,
     } = context;
 
+    const blankLine = ''.padStart(lineWidth);
+
     // A line number of 0 happens when we read the "No newline at end of file"
     // message as a line at the end of a deleted/inserted file.
     if (line === null || lineNo === 0) {
-        yield T().appendString(BLANK_LINE, MISSING_LINE_COLOR);
+        yield T().appendString(blankLine, MISSING_LINE_COLOR);
         return;
     }
 
@@ -59,9 +60,9 @@ export async function* formatAndFitHunkLine(
         Each line is rendered as follows: 
         <lineNo>  <linePrefix> <lineText>
 
-        So (LINE_NUMBER_WIDTH + 2 + 1 + 1 + lineTextWidth) * 2 = LINE_WIDTH
+        So (LINE_NUMBER_WIDTH + 2 + 1 + 1 + lineTextWidth) * 2 = lineWidth
     */
-    const lineTextWidth = LINE_WIDTH - 2 - 1 - 1 - LINE_NUMBER_WIDTH;
+    const lineTextWidth = lineWidth - 2 - 1 - 1 - LINE_NUMBER_WIDTH;
 
     let isFirstLine = true;
     const formattedLine = T().appendString(lineText);
