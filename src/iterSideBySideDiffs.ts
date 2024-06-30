@@ -25,7 +25,11 @@ type State =
     // "Unified" diffs (normal diffs)
     | 'unified-diff'
     | 'unified-diff-hunk-header'
-    | 'unified-diff-hunk-body';
+    | 'unified-diff-hunk-body'
+    // "Combined" diffs (diffs with multiple parents)
+    | 'combined-diff'
+    | 'combined-diff-hunk-header'
+    | 'combined-diff-hunk-body';
 
 async function* iterSideBySideDiffsFormatted(
     context: Context,
@@ -57,9 +61,12 @@ async function* iterSideBySideDiffsFormatted(
     }
 
     async function* flushPending() {
-        if (state === 'unified-diff') {
+        if (state === 'unified-diff' || state === 'combined-diff') {
             yield* yieldFileName();
-        } else if (state === 'unified-diff-hunk-body') {
+        } else if (
+            state === 'unified-diff-hunk-body' ||
+            state === 'combined-diff-hunk-body'
+        ) {
             yield* yieldHunk();
         }
     }
@@ -79,6 +86,15 @@ async function* iterSideBySideDiffsFormatted(
             nextState = 'unified-diff-hunk-header';
         } else if (state === 'unified-diff-hunk-header') {
             nextState = 'unified-diff-hunk-body';
+        } else if (
+            line.startsWith('diff --cc') ||
+            line.startsWith('diff --combined')
+        ) {
+            nextState = 'combined-diff';
+        } else if (line.startsWith('@@@ ')) {
+            nextState = 'combined-diff-hunk-header';
+        } else if (state === 'combined-diff-hunk-header') {
+            nextState = 'combined-diff-hunk-body';
         } else if (
             state === 'commit-body' &&
             line.length > 0 &&
@@ -137,7 +153,8 @@ async function* iterSideBySideDiffsFormatted(
                 isFirstCommitBodyLine = false;
                 break;
             }
-            case 'unified-diff': {
+            case 'unified-diff':
+            case 'combined-diff': {
                 if (line.startsWith('--- a/')) {
                     fileNameA = line.slice('--- a/'.length);
                 } else if (line.startsWith('+++ b/')) {
@@ -206,6 +223,85 @@ async function* iterSideBySideDiffsFormatted(
                     hunkLinesA.push(line);
                     hunkLinesB.push(line);
                 }
+                break;
+            }
+            case 'combined-diff-hunk-header': {
+                const hunkHeaderStart = line.indexOf('@@@ ');
+                const hunkHeaderEnd = line.indexOf(' @@@', hunkHeaderStart + 1);
+                assert.ok(hunkHeaderStart >= 0);
+                assert.ok(hunkHeaderEnd > hunkHeaderStart);
+                const hunkHeader = line.slice(
+                    hunkHeaderStart + 4,
+                    hunkHeaderEnd
+                );
+                hunkHeaderLine = line;
+
+                const fileRanges = hunkHeader.split(' ');
+                hunkParts = [];
+                for (let i = 0; i < fileRanges.length; i++) {
+                    const fileRange = fileRanges[i];
+                    const [fileRangeStart] = fileRange.slice(1).split(',');
+                    hunkParts.push({
+                        fileName:
+                            i === fileRanges.length - 1 ? fileNameB : fileNameA,
+                        startLineNo: parseInt(fileRangeStart, 10),
+                        lines: [],
+                    });
+                }
+                break;
+            }
+            case 'combined-diff-hunk-body': {
+                // A combined diff works differently from a unified diff. See
+                // https://git-scm.com/docs/git-diff#_combined_diff_format for
+                // details, but essentially we get a row of prefixes in each
+                // line indicating whether the line is present on the parent,
+                // the current commit, or both. We convert this into N+1 parts
+                // (for N parents) where the first part shows the current state
+                // and the rest show changes made in the corresponding parent.
+                const linePrefix = line.slice(0, hunkParts.length - 1);
+                const lineSuffix = line.slice(hunkParts.length - 1);
+                const isLineAdded = linePrefix.includes('+');
+                const isLineRemoved = linePrefix.includes('-');
+
+                // First N parts show changes made in the corresponding parent
+                // Either the line is going to be:
+                // 1. In the current commit and missing in some parents, which
+                //    will have + prefixes, or
+                // 2. Missing in the current commit and present in some parents,
+                //    which will have - prefixes.
+                // 3. Present in all commits, which will all have a space
+                //    prefix.
+                let i = 0;
+                while (i < hunkParts.length - 1) {
+                    const hunkPart = hunkParts[i];
+                    const partPrefix = linePrefix[i];
+                    if (isLineAdded) {
+                        if (partPrefix === '+') {
+                            hunkPart.lines.push(null);
+                        } else {
+                            hunkPart.lines.push('+' + lineSuffix);
+                        }
+                    } else if (isLineRemoved) {
+                        if (partPrefix === '-') {
+                            hunkPart.lines.push(' ' + lineSuffix);
+                        } else {
+                            hunkPart.lines.push('-' + lineSuffix);
+                        }
+                    } else {
+                        hunkPart.lines.push(' ' + lineSuffix);
+                    }
+                    i++;
+                }
+                // Final part shows the current state, so we just display the
+                // lines that exist in it without any highlighting.
+                if (isLineRemoved) {
+                    hunkParts[i].lines.push(null);
+                } else if (isLineAdded) {
+                    hunkParts[i].lines.push('+' + lineSuffix);
+                } else {
+                    hunkParts[i].lines.push(' ' + lineSuffix);
+                }
+
                 break;
             }
         }
