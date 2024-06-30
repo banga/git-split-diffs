@@ -100,7 +100,7 @@ async function* iterFormatHunkUnified(
                             fileNameB,
                             lineNoB,
                             hunkLineB,
-                            changes
+                            lineChanges[indexB]
                         );
                         lineNoB++;
                     }
