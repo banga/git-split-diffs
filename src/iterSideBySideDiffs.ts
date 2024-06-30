@@ -52,8 +52,8 @@ async function* iterSideBySideDiffsFormatted(
     // Hunk metadata
     let hunkParts: HunkPart[] = [];
     let hunkHeaderLine: string = '';
-    async function* yieldHunk() {
-        yield* iterFormatHunk(context, hunkHeaderLine, hunkParts);
+    async function* yieldHunk(diffType: 'unified-diff' | 'combined-diff') {
+        yield* iterFormatHunk(context, diffType, hunkHeaderLine, hunkParts);
         for (const hunkPart of hunkParts) {
             hunkPart.startLineNo = -1;
             hunkPart.lines = [];
@@ -63,11 +63,10 @@ async function* iterSideBySideDiffsFormatted(
     async function* flushPending() {
         if (state === 'unified-diff' || state === 'combined-diff') {
             yield* yieldFileName();
-        } else if (
-            state === 'unified-diff-hunk-body' ||
-            state === 'combined-diff-hunk-body'
-        ) {
-            yield* yieldHunk();
+        } else if (state === 'unified-diff-hunk-body') {
+            yield* yieldHunk('unified-diff');
+        } else if (state === 'combined-diff-hunk-body') {
+            yield* yieldHunk('combined-diff');
         }
     }
 
@@ -295,7 +294,7 @@ async function* iterSideBySideDiffsFormatted(
                 // Final part shows the current state, so we just display the
                 // lines that exist in it without any highlighting.
                 if (isLineRemoved) {
-                    hunkParts[i].lines.push(null);
+                    hunkParts[i].lines.push('-' + lineSuffix);
                 } else if (isLineAdded) {
                     hunkParts[i].lines.push('+' + lineSuffix);
                 } else {
