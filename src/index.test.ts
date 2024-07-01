@@ -494,5 +494,124 @@ index 095ee29..439621e 100644
  This is file2`)
             ).toMatchSnapshot();
         });
+
+        test('merge commit with 2 parents', async function () {
+            // Source: the TypeScript repo
+            expect(
+                await transform(`
+commit 3f504f4fbc1caf9c10814d48d8897a34f8a34dec
+Merge: 2439767601 fbcdb8cf4f
+Author: Gabriela Araujo Britto <gabrielaa@microsoft.com>
+Date:   Thu Dec 21 17:57:42 2023 -0800
+
+    Merge branch 'main' into gabritto/d2
+
+diff --cc src/compiler/binder.ts
+index b2f0d9f384,6ea9b82695..c638984e3b
+--- a/src/compiler/binder.ts
++++ b/src/compiler/binder.ts
+@@@ -137,9 -136,9 +137,10 @@@ import 
+      isBlock,
+      isBlockOrCatchScoped,
+      IsBlockScopedContainer,
++     isBooleanLiteral,
+      isCallExpression,
+      isClassStaticBlockDeclaration,
+ +    isConditionalExpression,
+      isConditionalTypeNode,
+      IsContainer,
+      isDeclaration,
+diff --cc src/compiler/types.ts
+index 2e204671f7,e56bba5ab4..ab6229d1b6
+--- a/src/compiler/types.ts
++++ b/src/compiler/types.ts
+@@@ -5985,8 -6063,7 +6063,8 @@@ export interface NodeLinks 
+      decoratorSignature?: Signature;     // Signature for decorator as if invoked by the runtime.
+      spreadIndices?: { first: number | undefined, last: number | undefined }; // Indices of first and last spread elements in array literal
+      parameterInitializerContainsUndefined?: boolean; // True if this is a parameter declaration whose type annotation contains "undefined".
+-     fakeScopeForSignatureDeclaration?: boolean; // True if this is a fake scope injected into an enclosing declaration chain.
+ +    contextualReturnType?: Type;        // If the node is a return statement's expression, then this is the contextual return type.
++     fakeScopeForSignatureDeclaration?: "params" | "typeParams"; // If present, this is a fake scope injected into an enclosing declaration chain.
+      assertionExpressionType?: Type;     // Cached type of the expression of a type assertion
+  }`)
+            ).toMatchSnapshot();
+        });
+
+        test('merge commit with 3 parents', async function () {
+            // Source: the TypeScript repo
+            expect(
+                await transform(`
+commit d6d6a4aedfa78794c1b611c13d2ed1d3a66e1798
+Merge: 0dc976df1e 5f16a48236 3eadbf6c96
+Author: Andy Hanson <anhans@microsoft.com>
+Date:   Thu Sep 1 12:52:42 2016 -0700
+
+    Merge branch 'goto_definition_super', remote-tracking branch 'origin' into constructor_references
+
+diff --cc src/services/services.ts
+index b95feb9207,c19eb487d7,83a2192659..7e9a356e73
+--- a/src/services/services.ts
++++ b/src/services/services.ts
+@@@@ -2788,26 -2792,18 -2788,34 +2792,42 @@@@ namespace ts 
+           return node && node.parent && node.parent.kind === SyntaxKind.PropertyAccessExpression && (<PropertyAccessExpression>node.parent).name === node;
+       }
+   
+ +     function climbPastPropertyAccess(node: Node) {
+ +         return isRightSideOfPropertyAccess(node) ? node.parent : node;
+ +     }
+ + 
+  -    function climbPastManyPropertyAccesses(node: Node): Node {
+  -        return isRightSideOfPropertyAccess(node) ? climbPastManyPropertyAccesses(node.parent) : node;
++++    /** Get \`C\` given \`N\` if \`N\` is in the position \`class C extends N\` or \`class C extends foo.N\` where \`N\` is an identifier. */
++++    function tryGetClassExtendingIdentifier(node: Node): ClassLikeDeclaration | undefined {
++++        return tryGetClassExtendingExpressionWithTypeArguments(climbPastPropertyAccess(node).parent);
+++     }
+++ 
+       function isCallExpressionTarget(node: Node): boolean {
+ -         if (isRightSideOfPropertyAccess(node)) {
+ -             node = node.parent;
+ -         }
+  -        node = climbPastPropertyAccess(node);
+ --        return node && node.parent && node.parent.kind === SyntaxKind.CallExpression && (<CallExpression>node.parent).expression === node;
+ ++        return isCallOrNewExpressionTarget(node, SyntaxKind.CallExpression);
+       }
+   
+       function isNewExpressionTarget(node: Node): boolean {
+ -         if (isRightSideOfPropertyAccess(node)) {
+ -             node = node.parent;
+ -         }
+  -        node = climbPastPropertyAccess(node);
+ --        return node && node.parent && node.parent.kind === SyntaxKind.NewExpression && (<CallExpression>node.parent).expression === node;
+ ++        return isCallOrNewExpressionTarget(node, SyntaxKind.NewExpression);
+ ++    }
+ ++
+ ++    function isCallOrNewExpressionTarget(node: Node, kind: SyntaxKind) {
+ ++        const target = climbPastPropertyAccess(node);
+ ++        return target && target.parent && target.parent.kind === kind && (<CallExpression>target.parent).expression === target;
+ ++    }
+ ++
+-      /** Get \`C\` given \`N\` if \`N\` is in the position \`class C extends N\` or \`class C extends foo.N\` where \`N\` is an identifier. */
+-      function tryGetClassExtendingIdentifier(node: Node): ClassLikeDeclaration | undefined {
+-          return tryGetClassExtendingExpressionWithTypeArguments(climbPastPropertyAccess(node).parent);
++++    function climbPastManyPropertyAccesses(node: Node): Node {
++++        return isRightSideOfPropertyAccess(node) ? climbPastManyPropertyAccesses(node.parent) : node;
+++     }
+++ 
+++     /** Returns a CallLikeExpression where \`node\` is the target being invoked. */
+++     function getAncestorCallLikeExpression(node: Node): CallLikeExpression | undefined {
+++         const target = climbPastManyPropertyAccesses(node);
+++         const callLike = target.parent;
+++         return callLike && isCallLikeExpression(callLike) && getInvokedExpression(callLike) === target && callLike;
+++     }
+++ 
+++     function tryGetSignatureDeclaration(typeChecker: TypeChecker, node: Node): SignatureDeclaration | undefined {
+++         const callLike = getAncestorCallLikeExpression(node);
+++         return callLike && typeChecker.getResolvedSignature(callLike).declaration;
+       }
+   
+       function isNameOfModuleDeclaration(node: Node) {
+`)
+            ).toMatchSnapshot();
+        });
     });
 }
