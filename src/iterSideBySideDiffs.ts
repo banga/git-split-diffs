@@ -284,9 +284,9 @@ async function* iterSideBySideDiffsFormatted(
                         }
                     } else if (isLineRemoved) {
                         if (partPrefix === '-') {
-                            hunkPart.lines.push(' ' + lineSuffix);
-                        } else {
                             hunkPart.lines.push('-' + lineSuffix);
+                        } else {
+                            hunkPart.lines.push(null);
                         }
                     } else {
                         hunkPart.lines.push(' ' + lineSuffix);
