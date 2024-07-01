@@ -11,7 +11,7 @@ export async function* iterFormatHunkSplit(
     lineChanges: (Change[] | null)[]
 ): AsyncIterable<FormattedString> {
     const { MISSING_LINE_COLOR } = context;
-    const lineWidth = context.SCREEN_WIDTH / hunkParts.length;
+    const lineWidth = Math.floor(context.SCREEN_WIDTH / hunkParts.length);
     const blankLine = ''.padStart(lineWidth);
 
     const lineNos = hunkParts.map((part) => part.startLineNo);
