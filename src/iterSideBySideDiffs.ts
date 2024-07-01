@@ -5,7 +5,7 @@ import { applyFormatting, FormattedString, T } from './formattedString';
 import { iterFormatCommitBodyLine } from './iterFormatCommitBodyLine';
 import { iterFormatCommitHeaderLine } from './iterFormatCommitHeaderLine';
 import { iterFormatFileName } from './iterFormatFileName';
-import { iterFormatHunk } from './iterFormatHunk';
+import { HunkPart, iterFormatHunk } from './iterFormatHunk';
 
 const ANSI_COLOR_CODE_REGEX = ansiRegex();
 
@@ -18,13 +18,21 @@ const ANSI_COLOR_CODE_REGEX = ansiRegex();
 const BINARY_FILES_DIFF_REGEX =
     /^Binary files (?:a\/(.*)|\/dev\/null) and (?:b\/(.*)|\/dev\/null) differ$/;
 
+// Combined hunk headers begin with N+1 @ characters for N parents
+const COMBINED_HUNK_HEADER_START_REGEX = /^(@{2,}) /;
+
 type State =
     | 'unknown'
     | 'commit-header'
     | 'commit-body'
-    | 'diff'
-    | 'hunk-header'
-    | 'hunk-body';
+    // "Unified" diffs (normal diffs)
+    | 'unified-diff'
+    | 'unified-diff-hunk-header'
+    | 'unified-diff-hunk-body'
+    // "Combined" diffs (diffs with multiple parents)
+    | 'combined-diff'
+    | 'combined-diff-hunk-header'
+    | 'combined-diff-hunk-body';
 
 async function* iterSideBySideDiffsFormatted(
     context: Context,
@@ -45,31 +53,23 @@ async function* iterSideBySideDiffsFormatted(
     }
 
     // Hunk metadata
-    let startA: number = -1;
-    let startB: number = -1;
+    let hunkParts: HunkPart[] = [];
     let hunkHeaderLine: string = '';
-    let hunkLinesA: (string | null)[] = [];
-    let hunkLinesB: (string | null)[] = [];
-    async function* yieldHunk() {
-        yield* iterFormatHunk(
-            context,
-            hunkHeaderLine,
-            fileNameA,
-            fileNameB,
-            hunkLinesA,
-            hunkLinesB,
-            startA,
-            startB
-        );
-        hunkLinesA = [];
-        hunkLinesB = [];
+    async function* yieldHunk(diffType: 'unified-diff' | 'combined-diff') {
+        yield* iterFormatHunk(context, diffType, hunkHeaderLine, hunkParts);
+        for (const hunkPart of hunkParts) {
+            hunkPart.startLineNo = -1;
+            hunkPart.lines = [];
+        }
     }
 
     async function* flushPending() {
-        if (state === 'diff') {
+        if (state === 'unified-diff' || state === 'combined-diff') {
             yield* yieldFileName();
-        } else if (state === 'hunk-body') {
-            yield* yieldHunk();
+        } else if (state === 'unified-diff-hunk-body') {
+            yield* yieldHunk('unified-diff');
+        } else if (state === 'combined-diff-hunk-body') {
+            yield* yieldHunk('combined-diff');
         }
     }
 
@@ -83,11 +83,20 @@ async function* iterSideBySideDiffsFormatted(
         } else if (state === 'commit-header' && line.startsWith('    ')) {
             nextState = 'commit-body';
         } else if (line.startsWith('diff --git')) {
-            nextState = 'diff';
+            nextState = 'unified-diff';
         } else if (line.startsWith('@@ ')) {
-            nextState = 'hunk-header';
-        } else if (state === 'hunk-header') {
-            nextState = 'hunk-body';
+            nextState = 'unified-diff-hunk-header';
+        } else if (state === 'unified-diff-hunk-header') {
+            nextState = 'unified-diff-hunk-body';
+        } else if (
+            line.startsWith('diff --cc') ||
+            line.startsWith('diff --combined')
+        ) {
+            nextState = 'combined-diff';
+        } else if (COMBINED_HUNK_HEADER_START_REGEX.test(line)) {
+            nextState = 'combined-diff-hunk-header';
+        } else if (state === 'combined-diff-hunk-header') {
+            nextState = 'combined-diff-hunk-body';
         } else if (
             state === 'commit-body' &&
             line.length > 0 &&
@@ -102,13 +111,22 @@ async function* iterSideBySideDiffsFormatted(
 
             switch (nextState) {
                 case 'commit-header':
-                    if (state === 'hunk-header' || state === 'hunk-body') {
+                    if (
+                        state === 'unified-diff-hunk-header' ||
+                        state === 'unified-diff-hunk-body'
+                    ) {
                         yield HORIZONTAL_SEPARATOR;
                     }
                     break;
-                case 'diff':
+                case 'unified-diff':
                     fileNameA = '';
                     fileNameB = '';
+                    break;
+                case 'unified-diff-hunk-header':
+                    hunkParts = [
+                        { fileName: fileNameA, startLineNo: -1, lines: [] },
+                        { fileName: fileNameB, startLineNo: -1, lines: [] },
+                    ];
                     break;
                 case 'commit-body':
                     isFirstCommitBodyLine = true;
@@ -137,7 +155,8 @@ async function* iterSideBySideDiffsFormatted(
                 isFirstCommitBodyLine = false;
                 break;
             }
-            case 'diff': {
+            case 'unified-diff':
+            case 'combined-diff': {
                 if (line.startsWith('--- a/')) {
                     fileNameA = line.slice('--- a/'.length);
                 } else if (line.startsWith('+++ b/')) {
@@ -167,7 +186,7 @@ async function* iterSideBySideDiffsFormatted(
                 }
                 break;
             }
-            case 'hunk-header': {
+            case 'unified-diff-hunk-header': {
                 const hunkHeaderStart = line.indexOf('@@ ');
                 const hunkHeaderEnd = line.indexOf(' @@', hunkHeaderStart + 1);
                 assert.ok(hunkHeaderStart >= 0);
@@ -183,13 +202,15 @@ async function* iterSideBySideDiffsFormatted(
                 const [startBString] = bHeader.split(',');
 
                 assert.ok(startAString.startsWith('-'));
-                startA = parseInt(startAString.slice(1), 10);
+                hunkParts[0].startLineNo = parseInt(startAString.slice(1), 10);
 
                 assert.ok(startBString.startsWith('+'));
-                startB = parseInt(startBString.slice(1), 10);
+                hunkParts[1].startLineNo = parseInt(startBString.slice(1), 10);
                 break;
             }
-            case 'hunk-body': {
+            case 'unified-diff-hunk-body': {
+                const [{ lines: hunkLinesA }, { lines: hunkLinesB }] =
+                    hunkParts;
                 if (line.startsWith('-')) {
                     hunkLinesA.push(line);
                 } else if (line.startsWith('+')) {
@@ -204,6 +225,84 @@ async function* iterSideBySideDiffsFormatted(
                     hunkLinesA.push(line);
                     hunkLinesB.push(line);
                 }
+                break;
+            }
+            case 'combined-diff-hunk-header': {
+                const match = COMBINED_HUNK_HEADER_START_REGEX.exec(line);
+                assert.ok(match);
+                const hunkHeaderStart = match.index + match[0].length; // End of the opening "@@@ "
+                const hunkHeaderEnd = line.lastIndexOf(' ' + match[1]); // Start of the closing " @@@"
+                assert.ok(hunkHeaderStart >= 0);
+                assert.ok(hunkHeaderEnd > hunkHeaderStart);
+                const hunkHeader = line.slice(hunkHeaderStart, hunkHeaderEnd);
+                hunkHeaderLine = line;
+
+                const fileRanges = hunkHeader.split(' ');
+                hunkParts = [];
+                for (let i = 0; i < fileRanges.length; i++) {
+                    const fileRange = fileRanges[i];
+                    const [fileRangeStart] = fileRange.slice(1).split(',');
+                    hunkParts.push({
+                        fileName:
+                            i === fileRanges.length - 1 ? fileNameB : fileNameA,
+                        startLineNo: parseInt(fileRangeStart, 10),
+                        lines: [],
+                    });
+                }
+                break;
+            }
+            case 'combined-diff-hunk-body': {
+                // A combined diff works differently from a unified diff. See
+                // https://git-scm.com/docs/git-diff#_combined_diff_format for
+                // details, but essentially we get a row of prefixes in each
+                // line indicating whether the line is present on the parent,
+                // the current commit, or both. We convert this into N+1 parts
+                // (for N parents) where the first part shows the current state
+                // and the rest show changes made in the corresponding parent.
+                const linePrefix = line.slice(0, hunkParts.length - 1);
+                const lineSuffix = line.slice(hunkParts.length - 1);
+                const isLineAdded = linePrefix.includes('+');
+                const isLineRemoved = linePrefix.includes('-');
+
+                // First N parts show changes made in the corresponding parent
+                // Either the line is going to be:
+                // 1. In the current commit and missing in some parents, which
+                //    will have + prefixes, or
+                // 2. Missing in the current commit and present in some parents,
+                //    which will have - prefixes.
+                // 3. Present in all commits, which will all have a space
+                //    prefix.
+                let i = 0;
+                while (i < hunkParts.length - 1) {
+                    const hunkPart = hunkParts[i];
+                    const partPrefix = linePrefix[i];
+                    if (isLineAdded) {
+                        if (partPrefix === '+') {
+                            hunkPart.lines.push(null);
+                        } else {
+                            hunkPart.lines.push('+' + lineSuffix);
+                        }
+                    } else if (isLineRemoved) {
+                        if (partPrefix === '-') {
+                            hunkPart.lines.push('-' + lineSuffix);
+                        } else {
+                            hunkPart.lines.push(null);
+                        }
+                    } else {
+                        hunkPart.lines.push(' ' + lineSuffix);
+                    }
+                    i++;
+                }
+                // Final part shows the current state, so we just display the
+                // lines that exist in it without any highlighting.
+                if (isLineRemoved) {
+                    hunkParts[i].lines.push('-' + lineSuffix);
+                } else if (isLineAdded) {
+                    hunkParts[i].lines.push('+' + lineSuffix);
+                } else {
+                    hunkParts[i].lines.push(' ' + lineSuffix);
+                }
+
                 break;
             }
         }
