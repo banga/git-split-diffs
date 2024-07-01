@@ -18,6 +18,9 @@ const ANSI_COLOR_CODE_REGEX = ansiRegex();
 const BINARY_FILES_DIFF_REGEX =
     /^Binary files (?:a\/(.*)|\/dev\/null) and (?:b\/(.*)|\/dev\/null) differ$/;
 
+// Combined hunk headers begin with N+1 @ characters for N parents
+const COMBINED_HUNK_HEADER_START_REGEX = /^(@{2,}) /;
+
 type State =
     | 'unknown'
     | 'commit-header'
@@ -90,7 +93,7 @@ async function* iterSideBySideDiffsFormatted(
             line.startsWith('diff --combined')
         ) {
             nextState = 'combined-diff';
-        } else if (line.startsWith('@@@ ')) {
+        } else if (COMBINED_HUNK_HEADER_START_REGEX.test(line)) {
             nextState = 'combined-diff-hunk-header';
         } else if (state === 'combined-diff-hunk-header') {
             nextState = 'combined-diff-hunk-body';
@@ -225,14 +228,13 @@ async function* iterSideBySideDiffsFormatted(
                 break;
             }
             case 'combined-diff-hunk-header': {
-                const hunkHeaderStart = line.indexOf('@@@ ');
-                const hunkHeaderEnd = line.indexOf(' @@@', hunkHeaderStart + 1);
+                const match = COMBINED_HUNK_HEADER_START_REGEX.exec(line);
+                assert.ok(match);
+                const hunkHeaderStart = match.index + match[0].length; // End of the opening "@@@ "
+                const hunkHeaderEnd = line.lastIndexOf(' ' + match[1]); // Start of the closing " @@@"
                 assert.ok(hunkHeaderStart >= 0);
                 assert.ok(hunkHeaderEnd > hunkHeaderStart);
-                const hunkHeader = line.slice(
-                    hunkHeaderStart + 4,
-                    hunkHeaderEnd
-                );
+                const hunkHeader = line.slice(hunkHeaderStart, hunkHeaderEnd);
                 hunkHeaderLine = line;
 
                 const fileRanges = hunkHeader.split(' ');
