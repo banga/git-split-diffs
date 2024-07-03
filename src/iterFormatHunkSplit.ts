@@ -26,7 +26,7 @@ export async function* iterFormatHunkSplit(
             const prefix = hunkPartLine?.slice(0, 1) ?? null;
             if (prefix === '-') {
                 numDeletes[i]++;
-            } else if (prefix === '+') {
+            } else {
                 lineNos[i] -= numDeletes[i];
                 numDeletes[i] = 0;
             }

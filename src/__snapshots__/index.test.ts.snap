@@ -18,7 +18,7 @@ Date:   Tue May 23 16:47:17 2017 -0700
 @@ -42,3 +43,2 @@ cask 'rescuetime'                                                                                     
    42    cask 'slate'                                          43    cask 'slate'                                       
    43  - cask 'sonos'                                                                                                   
-   44    cask 'spotify'                                        44    cask 'spotify'                                     
+   43    cask 'spotify'                                        44    cask 'spotify'                                     
 "
 `;
 
@@ -40,7 +40,7 @@ Date:   Tue May 23 16:47:17 2017 -0700
 @@ -42,3 +43,2 @@ cask 'rescuetime'                                                                                     
    42    cask 'slate'                                          43    cask 'slate'                                       
    43  - cask 'sonos'                                                                                                   
-   44    cask 'spotify'                                        44    cask 'spotify'                                     
+   43    cask 'spotify'                                        44    cask 'spotify'                                     
 "
 `;
 
@@ -107,7 +107,7 @@ exports[`inlineChangesHighlighted commit with double-spaced characters 1`] = `
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 @@ -4 +4 @@                                                                                                             
     4  - このリポジトリは、MS-DOS ░░░░░░及び MS-DOS v2.0 のオリジナルのソースコード及    4  + このリポジトリは、MS-DOS 及び MS-DOS v2.0 のオリジナルのソースコード及びコンパイル
-    5                                                           5                                                       
+    4                                                           5                                                       
 "
 `;
 
@@ -151,7 +151,7 @@ Date:   Sun Apr 18 03:17:05 2021 -0700
     5  -         end tell                                                                                               
     6  -     end timeout                                                                                                
     7  - end run                                                                                                        
-    8    No newline at end of file                                                                                      
+    1    No newline at end of file                                                                                      
 "
 `;
 
@@ -211,7 +211,7 @@ Date:   Sun Apr 4 19:04:26 2021 -0700
    29  -             "high_sierra": {                                                                                   
    30  -               "url": "https://homebrew.bintray.com/                                                            
    31  -               "sha256": "0997f6f5cda0e3bdb7789a80b5                                                            
-   32                                                          38                                                       
+   26                                                          38                                                       
 "
 `;
 
@@ -264,7 +264,7 @@ exports[`inlineChangesHighlighted diff from issue #50 1`] = `
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 @@ -1 +1,2 @@                                                                                                           
     1  - This is file1                                                                                                  
-    2    No newline at end of file                              1    No newline at end of file                          
+    1    No newline at end of file                              1    No newline at end of file                          
                                                                 2  + This is file1                                      
                                                                 3  + Experimental change                                
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -351,16 +351,16 @@ Date:   Thu Sep 1 12:52:42 2016 -0700
                                2797  -             node = no                               2806  -             node = no
                                2798  -         }                                           2807  -         }            
                                                              2798  -         node = climbP 2808  -         node = climbP
-                               2799  -         return node & 2799  -         return node & 2809  -         return node &
+                               2796  -         return node & 2799  -         return node & 2809  -         return node &
  2796  +         return isCall                                                             2805  +         return isCall
- 2797        }                 2800        }                 2800        }                 2806        }                
- 2798                          2801                          2801                          2807                         
- 2799        function isNewExp 2802        function isNewExp 2802        function isNewExp 2808        function isNewExp
-                               2803  -         if (isRightSi                               2809  -         if (isRightSi
-                               2804  -             node = no                               2810  -             node = no
-                               2805  -         }                                           2811  -         }            
-                                                             2803  -         node = climbP 2812  -         node = climbP
-                               2806  -         return node & 2804  -         return node & 2813  -         return node &
+ 2797        }                 2796        }                 2798        }                 2806        }                
+ 2798                          2797                          2799                          2807                         
+ 2799        function isNewExp 2798        function isNewExp 2800        function isNewExp 2808        function isNewExp
+                               2799  -         if (isRightSi                               2809  -         if (isRightSi
+                               2800  -             node = no                               2810  -             node = no
+                               2801  -         }                                           2811  -         }            
+                                                             2801  -         node = climbP 2812  -         node = climbP
+                               2799  -         return node & 2802  -         return node & 2813  -         return node &
  2800  +         return isCall                                                             2809  +         return isCall
  2801  +     }                                                                             2810  +     }                
  2802  +                                                                                   2811  +                      
@@ -386,10 +386,10 @@ Date:   Thu Sep 1 12:52:42 2016 -0700
                                                              2810  +     function tryGetSi 2828  +     function tryGetSi
                                                              2811  +         const callLik 2829  +         const callLik
                                                              2812  +         return callLi 2830  +         return callLi
- 2811        }                 2807        }                 2813        }                 2831        }                
- 2812                          2808                          2814                          2832                         
- 2813        function isNameOf 2809        function isNameOf 2815        function isNameOf 2833        function isNameOf
- 2814                          2810                          2816                          2834                         
+ 2808        }                 2799        }                 2813        }                 2831        }                
+ 2809                          2800                          2814                          2832                         
+ 2810        function isNameOf 2801        function isNameOf 2815        function isNameOf 2833        function isNameOf
+ 2811                          2802                          2816                          2834                         
 "
 `;
 
@@ -418,16 +418,16 @@ Date:   Sun Apr 11 16:23:54 2021 -0700
    15  -     transformStreamWithIterables(                     16  +     stream.pipeline(                               
    16  -         process.stdin,                                17  +         transformStreamWithIterables(              
    17  -         [                                             18  +             process.stdin,                         
-   18                iterlinesFromReadableAsync,               19                iterlinesFromReadableAsync,            
-   19                iterLinesWithoutAnsiColors,               20                iterLinesWithoutAnsiColors,            
-   20                iterSideBySideDiff(theme),                21                iterSideBySideDiff(theme),             
-   21  -             iterWithNewlines░                         22  +             iterWithNewlines                       
-   22  -         ░,                                            23  +         ░,                                         
-   23  -         process.stdout                                24  +         process.stdout░                            
+   15                iterlinesFromReadableAsync,               19                iterlinesFromReadableAsync,            
+   16                iterLinesWithoutAnsiColors,               20                iterLinesWithoutAnsiColors,            
+   17                iterSideBySideDiff(theme),                21                iterSideBySideDiff(theme),             
+   18  -             iterWithNewlines░                         22  +             iterWithNewlines                       
+   19  -         ░,                                            23  +         ░,                                         
+   20  -         process.stdout                                24  +         process.stdout░                            
                                                                25  +         console.error                              
-   24        );                                                26        );                                             
-   25    }                                                     27    }                                                  
-   26                                                          28                                                       
+   18        );                                                26        );                                             
+   19    }                                                     27    }                                                  
+   20                                                          28                                                       
 "
 `;
 
@@ -473,7 +473,7 @@ Date:   Tue May 23 16:47:17 2017 -0700
 @@ -42,3 +43,2 @@ cask 'rescuetime'                                             
    42    cask 'slate'                      43    cask 'slate'                   
    43  - cask 'sonos'                                                           
-   44    cask 'spotify'                    44    cask 'spotify'                 
+   43    cask 'spotify'                    44    cask 'spotify'                 
 "
 `;
 
@@ -495,7 +495,7 @@ Date:   Tue May 23 16:47:17 2017 -0700
 @@ -42,3 +43,2 @@ cask 'rescuetime'                                             
    42    cask 'slate'                      43    cask 'slate'                   
    43  - cask 'sonos'                                                           
-   44    cask 'spotify'                    44    cask 'spotify'                 
+   43    cask 'spotify'                    44    cask 'spotify'                 
 "
 `;
 
@@ -567,7 +567,7 @@ exports[`splitWithWrapping commit with double-spaced characters 1`] = `
          ソースコード及びコンパイルされ          スコード及びコンパイルされたバ 
          たバイナリを含んでいます。              イナリを含んでいます。         
                                                                                 
-    5                                       5                                   
+    4                                       5                                   
 "
 `;
 
@@ -612,7 +612,7 @@ Date:   Sun Apr 18 03:17:05 2021 -0700
     5  -         end tell                                                       
     6  -     end timeout                                                        
     7  - end run                                                                
-    8    No newline at end of file                                              
+    1    No newline at end of file                                              
 "
 `;
 
@@ -699,7 +699,7 @@ Date:   Sun Apr 4 19:04:26 2021 -0700
    31  -               "sha256": "0997f6                                        
          f5cda0e3bdb7789a80b53621cb58820                                        
          2ab37fd89bcd269f8dfafd23351"                                           
-   32                                      38                                   
+   26                                      38                                   
 "
 `;
 
@@ -753,7 +753,7 @@ exports[`splitWithWrapping diff from issue #50 1`] = `
 ────────────────────────────────────────────────────────────────────────────────
 @@ -1 +1,2 @@                                                                   
     1  - This is file1                                                          
-    2    No newline at end of file          1    No newline at end of file      
+    1    No newline at end of file          1    No newline at end of file      
                                             2  + This is file1                  
                                             3  + Experimental change            
 ────────────────────────────────────────────────────────────────────────────────
@@ -988,7 +988,7 @@ constructor_references
                                                  bPastProper         bPastProper
                                                  tyAccess(no         tyAccess(no
                                                  de);                de);       
-                     2799  -             2799  -             2809  -            
+                     2796  -             2799  -             2809  -            
                              return node         return node         return node
                               &&                  &&                  &&        
                              node.parent         node.parent         node.parent
@@ -1010,29 +1010,29 @@ constructor_references
          taxKind.Cal                                                 taxKind.Cal
          lExpression                                                 lExpression
          );                                                          );         
- 2797        }       2800        }       2800        }       2806        }      
- 2798                2801                2801                2807               
- 2799                2802                2802                2808               
+ 2797        }       2796        }       2798        }       2806        }      
+ 2798                2797                2799                2807               
+ 2799                2798                2800                2808               
          function is         function is         function is         function is
          NewExpressi         NewExpressi         NewExpressi         NewExpressi
          onTarget(no         onTarget(no         onTarget(no         onTarget(no
          de: Node):          de: Node):          de: Node):          de: Node): 
          boolean {           boolean {           boolean {           boolean {  
-                     2803  -         if                      2809  -         if 
+                     2799  -         if                      2809  -         if 
                              (isRightSid                             (isRightSid
                              eOfProperty                             eOfProperty
                              Access(node                             Access(node
                              )) {                                    )) {       
-                     2804  -                                 2810  -            
+                     2800  -                                 2810  -            
                               node = nod                              node = nod
                              e.parent;                               e.parent;  
-                     2805  -         }                       2811  -         }  
-                                         2803  -             2812  -            
+                     2801  -         }                       2811  -         }  
+                                         2801  -             2812  -            
                                                  node = clim         node = clim
                                                  bPastProper         bPastProper
                                                  tyAccess(no         tyAccess(no
                                                  de);                de);       
-                     2806  -             2804  -             2813  -            
+                     2799  -             2802  -             2813  -            
                              return node         return node         return node
                               &&                  &&                  &&        
                              node.parent         node.parent         node.parent
@@ -1210,15 +1210,15 @@ constructor_references
                                                  (callLike).         (callLike).
                                                  declaration         declaration
                                                  ;                   ;          
- 2811        }       2807        }       2813        }       2831        }      
- 2812                2808                2814                2832               
- 2813                2809                2815                2833               
+ 2808        }       2799        }       2813        }       2831        }      
+ 2809                2800                2814                2832               
+ 2810                2801                2815                2833               
          function is         function is         function is         function is
          NameOfModul         NameOfModul         NameOfModul         NameOfModul
          eDeclaratio         eDeclaratio         eDeclaratio         eDeclaratio
          n(node:             n(node:             n(node:             n(node:    
          Node) {             Node) {             Node) {             Node) {    
- 2814                2810                2816                2834               
+ 2811                2802                2816                2834               
 "
 `;
 
@@ -1259,19 +1259,19 @@ Date:   Sun Apr 11 16:23:54 2021 -0700
    16  -         process.stdin,            17  +                                
                                                  transformStreamWithIterables(  
    17  -         [                         18  +             process.stdin,     
-   18                                      19                                   
+   15                                      19                                   
          iterlinesFromReadableAsync,             iterlinesFromReadableAsync,    
-   19                                      20                                   
+   16                                      20                                   
          iterLinesWithoutAnsiColors,             iterLinesWithoutAnsiColors,    
-   20                                      21                                   
+   17                                      21                                   
          iterSideBySideDiff(theme),              iterSideBySideDiff(theme),     
-   21  -             iterWithNewlines,     22  +             iterWithNewlines   
-   22  -         ],                        23  +         ),                     
-   23  -         process.stdout            24  +         process.stdout,        
+   18  -             iterWithNewlines,     22  +             iterWithNewlines   
+   19  -         ],                        23  +         ),                     
+   20  -         process.stdout            24  +         process.stdout,        
                                            25  +         console.error          
-   24        );                            26        );                         
-   25    }                                 27    }                              
-   26                                      28                                   
+   18        );                            26        );                         
+   19    }                                 27    }                              
+   20                                      28                                   
 "
 `;
 
@@ -1324,7 +1324,7 @@ Date:   Tue May 23 16:47:17 2017 -0700
 @@ -42,3 +43,2 @@ cask 'rescuetime'                                             
    42    cask 'slate'                      43    cask 'slate'                   
    43  - cask 'sonos'                                                           
-   44    cask 'spotify'                    44    cask 'spotify'                 
+   43    cask 'spotify'                    44    cask 'spotify'                 
 "
 `;
 
@@ -1346,7 +1346,7 @@ Date:   Tue May 23 16:47:17 2017 -0700
 @@ -42,3 +43,2 @@ cask 'rescuetime'                                             
    42    cask 'slate'                      43    cask 'slate'                   
    43  - cask 'sonos'                                                           
-   44    cask 'spotify'                    44    cask 'spotify'                 
+   43    cask 'spotify'                    44    cask 'spotify'                 
 "
 `;
 
@@ -1413,7 +1413,7 @@ exports[`splitWithoutWrapping commit with double-spaced characters 1`] = `
 ────────────────────────────────────────────────────────────────────────────────
 @@ -4 +4 @@                                                                     
     4  - このリポジトリは、MS-DOS v1.25 及び MS-DOS    4  + このリポジトリは、MS-DOS 及び MS-DOS v2.0 
-    5                                       5                                   
+    4                                       5                                   
 "
 `;
 
@@ -1457,7 +1457,7 @@ Date:   Sun Apr 18 03:17:05 2021 -0700
     5  -         end tell                                                       
     6  -     end timeout                                                        
     7  - end run                                                                
-    8    No newline at end of file                                              
+    1    No newline at end of file                                              
 "
 `;
 
@@ -1517,7 +1517,7 @@ Date:   Sun Apr 4 19:04:26 2021 -0700
    29  -             "high_sierra": {                                           
    30  -               "url": "https://h                                        
    31  -               "sha256": "0997f6                                        
-   32                                      38                                   
+   26                                      38                                   
 "
 `;
 
@@ -1570,7 +1570,7 @@ exports[`splitWithoutWrapping diff from issue #50 1`] = `
 ────────────────────────────────────────────────────────────────────────────────
 @@ -1 +1,2 @@                                                                   
     1  - This is file1                                                          
-    2    No newline at end of file          1    No newline at end of file      
+    1    No newline at end of file          1    No newline at end of file      
                                             2  + This is file1                  
                                             3  + Experimental change            
 ────────────────────────────────────────────────────────────────────────────────
@@ -1657,16 +1657,16 @@ Date:   Thu Sep 1 12:52:42 2016 -0700
                      2797  -                                 2806  -            
                      2798  -         }                       2807  -         }  
                                          2798  -         nod 2808  -         nod
-                     2799  -         ret 2799  -         ret 2809  -         ret
+                     2796  -         ret 2799  -         ret 2809  -         ret
  2796  +         ret                                         2805  +         ret
- 2797        }       2800        }       2800        }       2806        }      
- 2798                2801                2801                2807               
- 2799        functio 2802        functio 2802        functio 2808        functio
-                     2803  -         if                      2809  -         if 
-                     2804  -                                 2810  -            
-                     2805  -         }                       2811  -         }  
-                                         2803  -         nod 2812  -         nod
-                     2806  -         ret 2804  -         ret 2813  -         ret
+ 2797        }       2796        }       2798        }       2806        }      
+ 2798                2797                2799                2807               
+ 2799        functio 2798        functio 2800        functio 2808        functio
+                     2799  -         if                      2809  -         if 
+                     2800  -                                 2810  -            
+                     2801  -         }                       2811  -         }  
+                                         2801  -         nod 2812  -         nod
+                     2799  -         ret 2802  -         ret 2813  -         ret
  2800  +         ret                                         2809  +         ret
  2801  +     }                                               2810  +     }      
  2802  +                                                     2811  +            
@@ -1692,10 +1692,10 @@ Date:   Thu Sep 1 12:52:42 2016 -0700
                                          2810  +     functio 2828  +     functio
                                          2811  +         con 2829  +         con
                                          2812  +         ret 2830  +         ret
- 2811        }       2807        }       2813        }       2831        }      
- 2812                2808                2814                2832               
- 2813        functio 2809        functio 2815        functio 2833        functio
- 2814                2810                2816                2834               
+ 2808        }       2799        }       2813        }       2831        }      
+ 2809                2800                2814                2832               
+ 2810        functio 2801        functio 2815        functio 2833        functio
+ 2811                2802                2816                2834               
 "
 `;
 
@@ -1724,16 +1724,16 @@ Date:   Sun Apr 11 16:23:54 2021 -0700
    15  -     transformStreamWithIterable   16  +     stream.pipeline(           
    16  -         process.stdin,            17  +         transformStreamWithIter
    17  -         [                         18  +             process.stdin,     
-   18                iterlinesFromReadab   19                iterlinesFromReadab
-   19                iterLinesWithoutAns   20                iterLinesWithoutAns
-   20                iterSideBySideDiff(   21                iterSideBySideDiff(
-   21  -             iterWithNewlines,     22  +             iterWithNewlines   
-   22  -         ],                        23  +         ),                     
-   23  -         process.stdout            24  +         process.stdout,        
+   15                iterlinesFromReadab   19                iterlinesFromReadab
+   16                iterLinesWithoutAns   20                iterLinesWithoutAns
+   17                iterSideBySideDiff(   21                iterSideBySideDiff(
+   18  -             iterWithNewlines,     22  +             iterWithNewlines   
+   19  -         ],                        23  +         ),                     
+   20  -         process.stdout            24  +         process.stdout,        
                                            25  +         console.error          
-   24        );                            26        );                         
-   25    }                                 27    }                              
-   26                                      28                                   
+   18        );                            26        );                         
+   19    }                                 27    }                              
+   20                                      28                                   
 "
 `;
 
@@ -1779,7 +1779,7 @@ Date:   Tue May 23 16:47:17 2017 -0700
 @@ -42,3 +43,2 @@ cask 'rescuetime'                                             
    42    cask 'slate'                      43    cask 'slate'                   
    43  - cask 'sonos'                                                           
-   44    cask 'spotify'                    44    cask 'spotify'                 
+   43    cask 'spotify'                    44    cask 'spotify'                 
 "
 `;
 
@@ -1801,7 +1801,7 @@ Date:   Tue May 23 16:47:17 2017 -0700
 @@ -42,3 +43,2 @@ cask 'rescuetime'                                             
    42    cask 'slate'                      43    cask 'slate'                   
    43  - cask 'sonos'                                                           
-   44    cask 'spotify'                    44    cask 'spotify'                 
+   43    cask 'spotify'                    44    cask 'spotify'                 
 "
 `;
 
@@ -1868,7 +1868,7 @@ exports[`syntaxHighlighted commit with double-spaced characters 1`] = `
 ────────────────────────────────────────────────────────────────────────────────
 @@ -4 +4 @@                                                                     
     4  - ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░    4  + ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-    5                                       5                                   
+    4                                       5                                   
 "
 `;
 
@@ -1912,7 +1912,7 @@ Date:   Sun Apr 18 03:17:05 2021 -0700
     5  -         end tell                                                       
     6  -     end timeout                                                        
     7  - end run                                                                
-    8    No newline at end of file                                              
+    1    No newline at end of file                                              
 "
 `;
 
@@ -1972,7 +1972,7 @@ Date:   Sun Apr 4 19:04:26 2021 -0700
    29  - ░░░░░░░░░░░░░░░░░░░░░░░░░░░░                                           
    30  - ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░                                        
    31  - ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░                                        
-   32                                      38                                   
+   26                                      38                                   
 "
 `;
 
@@ -2025,7 +2025,7 @@ exports[`syntaxHighlighted diff from issue #50 1`] = `
 ────────────────────────────────────────────────────────────────────────────────
 @@ -1 +1,2 @@                                                                   
     1  - This is file1                                                          
-    2    No newline at end of file          1    No newline at end of file      
+    1    No newline at end of file          1    No newline at end of file      
                                             2  + This is file1                  
                                             3  + Experimental change            
 ────────────────────────────────────────────────────────────────────────────────
@@ -2112,16 +2112,16 @@ Date:   Thu Sep 1 12:52:42 2016 -0700
                      2797  - ░░░░░░░░░░░                     2806  - ░░░░░░░░░░░
                      2798  - ░░░░░░░░░                       2807  - ░░░░░░░░░  
                                          2798  - ░░░░░░░░░░░ 2808  - ░░░░░░░░░░░
-                     2799  - ░░░░░░░░░░░ 2799  - ░░░░░░░░░░░ 2809  - ░░░░░░░░░░░
+                     2796  - ░░░░░░░░░░░ 2799  - ░░░░░░░░░░░ 2809  - ░░░░░░░░░░░
  2796  + ░░░░░░░░░░░                                         2805  + ░░░░░░░░░░░
- 2797    ░░░░░       2800    ░░░░░       2800    ░░░░░       2806    ░░░░░      
- 2798                2801                2801                2807               
- 2799    ░░░░░░░░░░░ 2802    ░░░░░░░░░░░ 2802    ░░░░░░░░░░░ 2808    ░░░░░░░░░░░
-                     2803  - ░░░░░░░░░░░                     2809  - ░░░░░░░░░░░
-                     2804  - ░░░░░░░░░░░                     2810  - ░░░░░░░░░░░
-                     2805  - ░░░░░░░░░                       2811  - ░░░░░░░░░  
-                                         2803  - ░░░░░░░░░░░ 2812  - ░░░░░░░░░░░
-                     2806  - ░░░░░░░░░░░ 2804  - ░░░░░░░░░░░ 2813  - ░░░░░░░░░░░
+ 2797    ░░░░░       2796    ░░░░░       2798    ░░░░░       2806    ░░░░░      
+ 2798                2797                2799                2807               
+ 2799    ░░░░░░░░░░░ 2798    ░░░░░░░░░░░ 2800    ░░░░░░░░░░░ 2808    ░░░░░░░░░░░
+                     2799  - ░░░░░░░░░░░                     2809  - ░░░░░░░░░░░
+                     2800  - ░░░░░░░░░░░                     2810  - ░░░░░░░░░░░
+                     2801  - ░░░░░░░░░                       2811  - ░░░░░░░░░  
+                                         2801  - ░░░░░░░░░░░ 2812  - ░░░░░░░░░░░
+                     2799  - ░░░░░░░░░░░ 2802  - ░░░░░░░░░░░ 2813  - ░░░░░░░░░░░
  2800  + ░░░░░░░░░░░                                         2809  + ░░░░░░░░░░░
  2801  + ░░░░░                                               2810  + ░░░░░      
  2802  +                                                     2811  +            
@@ -2147,10 +2147,10 @@ Date:   Thu Sep 1 12:52:42 2016 -0700
                                          2810  + ░░░░░░░░░░░ 2828  + ░░░░░░░░░░░
                                          2811  + ░░░░░░░░░░░ 2829  + ░░░░░░░░░░░
                                          2812  + ░░░░░░░░░░░ 2830  + ░░░░░░░░░░░
- 2811    ░░░░░       2807    ░░░░░       2813    ░░░░░       2831    ░░░░░      
- 2812                2808                2814                2832               
- 2813    ░░░░░░░░░░░ 2809    ░░░░░░░░░░░ 2815    ░░░░░░░░░░░ 2833    ░░░░░░░░░░░
- 2814                2810                2816                2834               
+ 2808    ░░░░░       2799    ░░░░░       2813    ░░░░░       2831    ░░░░░      
+ 2809                2800                2814                2832               
+ 2810    ░░░░░░░░░░░ 2801    ░░░░░░░░░░░ 2815    ░░░░░░░░░░░ 2833    ░░░░░░░░░░░
+ 2811                2802                2816                2834               
 "
 `;
 
@@ -2179,16 +2179,16 @@ Date:   Sun Apr 11 16:23:54 2021 -0700
    15  - ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   16  + ░░░░░░░░░░░░░░░░░░░░           
    16  - ░░░░░░░░░░░░░░░░░░░░░░            17  + ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
    17  - ░░░░░░░░░                         18  + ░░░░░░░░░░░░░░░░░░░░░░░░░░     
-   18    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   19    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-   19    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   20    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-   20    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-   21  - ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░     22  + ░░░░░░░░░░░░░░░░░░░░░░░░░░░░   
-   22  - ░░░░░░░░░░                        23  + ░░░░░░░░░░                     
-   23  - ░░░░░░░░░░░░░░░░░░░░░░            24  + ░░░░░░░░░░░░░░░░░░░░░░░        
+   15    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   19    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+   16    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   20    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+   17    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+   18  - ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░     22  + ░░░░░░░░░░░░░░░░░░░░░░░░░░░░   
+   19  - ░░░░░░░░░░                        23  + ░░░░░░░░░░                     
+   20  - ░░░░░░░░░░░░░░░░░░░░░░            24  + ░░░░░░░░░░░░░░░░░░░░░░░        
                                            25  + ░░░░░░░░░░░░░░░░░░░░░          
-   24    ░░░░░░                            26    ░░░░░░                         
-   25    ░                                 27    ░                              
-   26    ░░░░░░░                           28    ░░░░░░░                        
+   18    ░░░░░░                            26    ░░░░░░                         
+   19    ░                                 27    ░                              
+   20    ░░░░░░░                           28    ░░░░░░░                        
 "
 `;
 

@@ -115,16 +115,11 @@ export async function* iterFormatCombinedDiffHunkUnified(
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
         const prefix = line?.slice(0, 1) ?? null;
-        switch (prefix) {
-            case '-':
-                numDeletes++;
-                break;
-            case '+':
-                lineNo -= numDeletes;
-                numDeletes = 0;
-                break;
-            default:
-                break;
+        if (prefix == '-') {
+            numDeletes++;
+        } else {
+            lineNo -= numDeletes;
+            numDeletes = 0;
         }
         yield* formatAndFitHunkLine(
             context,
