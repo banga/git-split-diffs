@@ -9,10 +9,11 @@ const TEST_THEME = Object.fromEntries(
     Object.keys(ThemeColorName).map((name) => [name, {}])
 ) as Theme;
 
-const replaceColoredText = () => (text: string) => text.replace(/./g, '░');
+const replaceColoredText =
+    (r: number, g: number, b: number) => (text: string) =>
+        text.replace(/./g, '░');
 
 // Provide a fake chalk implementation to make it easier to read snapshots
-// @ts-expect-error
 const TEST_CHALK = {
     rgb: replaceColoredText,
     bgRgb: replaceColoredText,
@@ -521,6 +522,12 @@ index 2e204671f7,e56bba5ab4..ab6229d1b6
 
         test('merge commit with 3 parents', async function () {
             // Source: the TypeScript repo
+
+            // TODO: The highlighting here is wrong on lines 2792, 2803 and 2804
+            // It's not easy to repro, but looks like a bug somewhere in
+            // maintaining spans while merging lines from multiple hunk parts
+            // into the final formatted line. We end up formatting the line
+            // numbers with a span from earlier in the string somewhere.
             expect(
                 await transform(`
 commit d6d6a4aedfa78794c1b611c13d2ed1d3a66e1798
