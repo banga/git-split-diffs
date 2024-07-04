@@ -60,7 +60,7 @@ export async function* formatAndFitHunkLine(
         Each line is rendered as follows: 
         <lineNo>  <linePrefix> <lineText>
 
-        So (LINE_NUMBER_WIDTH + 2 + 1 + 1 + lineTextWidth) * 2 = lineWidth
+        So LINE_NUMBER_WIDTH + 2 + 1 + 1 + lineTextWidth = lineWidth
     */
     const lineTextWidth = lineWidth - 2 - 1 - 1 - LINE_NUMBER_WIDTH;
 

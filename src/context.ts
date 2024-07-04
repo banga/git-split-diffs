@@ -9,7 +9,6 @@ import { ChalkInstance } from 'chalk';
  */
 export type Context = Config & {
     CHALK: ChalkInstance;
-    SPLIT_DIFFS: boolean;
     SCREEN_WIDTH: number;
     HORIZONTAL_SEPARATOR: FormattedString;
     HIGHLIGHTER?: shikiji.Highlighter;
@@ -21,9 +20,6 @@ export async function getContextForConfig(
     screenWidth: number
 ): Promise<Context> {
     const SCREEN_WIDTH = screenWidth;
-
-    // Only split diffs if there's enough room
-    const SPLIT_DIFFS = SCREEN_WIDTH >= config.MIN_LINE_WIDTH * 2;
 
     const HORIZONTAL_SEPARATOR = T()
         .fillWidth(SCREEN_WIDTH, '─')
@@ -40,7 +36,6 @@ export async function getContextForConfig(
         ...config,
         CHALK: chalk,
         SCREEN_WIDTH,
-        SPLIT_DIFFS,
         HORIZONTAL_SEPARATOR,
         HIGHLIGHTER,
     };

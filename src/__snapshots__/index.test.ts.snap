@@ -294,28 +294,28 @@ Date:   Thu Dec 21 17:57:42 2023 -0800
  ■■ src/compiler/binder.ts                                                                                              
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 @@@ -137,9 -136,9 +137,10 @@@ import                                                                                    
-  137        isBlock,                     136        isBlock,                     137        isBlock,                   
-  138        isBlockOrCatchScoped,        137        isBlockOrCatchScoped,        138        isBlockOrCatchScoped,      
-  139        IsBlockScopedContainer,      138        IsBlockScopedContainer,      139        IsBlockScopedContainer,    
-                                          139  +     isBooleanLiteral,            140  +     isBooleanLiteral,          
-  140        isCallExpression,            140        isCallExpression,            141        isCallExpression,          
-  141        isClassStaticBlockDeclarati  141        isClassStaticBlockDeclarati  142        isClassStaticBlockDeclarati
-  142  +     isConditionalExpression,                                             143  +     isConditionalExpression,   
-  143        isConditionalTypeNode,       142        isConditionalTypeNode,       144        isConditionalTypeNode,     
-  144        IsContainer,                 143        IsContainer,                 145        IsContainer,               
-  145        isDeclaration,               144        isDeclaration,               146        isDeclaration,             
+  137        isBlock,                                                                                                   
+  138        isBlockOrCatchScoped,                                                                                      
+  139        IsBlockScopedContainer,                                                                                    
+  140  +     isBooleanLiteral,                                                                                          
+  141        isCallExpression,                                                                                          
+  142        isClassStaticBlockDeclaration,                                                                             
+  143  +     isConditionalExpression,                                                                                   
+  144        isConditionalTypeNode,                                                                                     
+  145        IsContainer,                                                                                               
+  146        isDeclaration,                                                                                             
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  ■■ src/compiler/types.ts                                                                                               
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 @@@ -5985,8 -6063,7 +6063,8 @@@ export interface NodeLinks                                                              
- 5985        decoratorSignature?: Signat 6063        decoratorSignature?: Signat 6063        decoratorSignature?: Signat
- 5986        spreadIndices?: { first: nu 6064        spreadIndices?: { first: nu 6064        spreadIndices?: { first: nu
- 5987        parameterInitializerContain 6065        parameterInitializerContain 6065        parameterInitializerContain
- 5988  -     fakeScopeForSignatureDeclar                                         6066  -     fakeScopeForSignatureDeclar
- 5988  +     contextualReturnType?: Type                                         6066  +     contextualReturnType?: Type
-                                         6066  +     fakeScopeForSignatureDeclar 6067  +     fakeScopeForSignatureDeclar
- 5989        assertionExpressionType?: T 6067        assertionExpressionType?: T 6068        assertionExpressionType?: T
- 5990    }                               6068    }                               6069    }                              
+ 6063        decoratorSignature?: Signature;     // Signature for decorator as if invoked by the runtime.               
+ 6064        spreadIndices?: { first: number | undefined, last: number | undefined }; // Indices of first and last sprea
+ 6065        parameterInitializerContainsUndefined?: boolean; // True if this is a parameter declaration whose type anno
+ 6066  -     fakeScopeForSignatureDeclaration?: boolean; // True if this is a fake scope injected into an enclosing decl
+ 6066  +     contextualReturnType?: Type;        // If the node is a return statement's expression, then this is the con
+ 6067  +     fakeScopeForSignatureDeclaration?: "params" | "typeParams"; // If present, this is a fake scope injected in
+ 6068        assertionExpressionType?: Type;     // Cached type of the expression of a type assertion                   
+ 6069    }                                                                                                              
 "
 `;
 
@@ -332,64 +332,64 @@ Date:   Thu Sep 1 12:52:42 2016 -0700
  ■■ src/services/services.ts                                                                                            
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 @@@@ -2788,26 -2792,18 -2788,34 +2792,42 @@@@ namespace ts                                                              
- 2788            return node & 2792            return node & 2788            return node & 2792            return node &
- 2789        }                 2793        }                 2789        }                 2793        }                
- 2790                          2794                          2790                          2794                         
- 2791  +     function climbPas                               2791  +     function climbPas 2795  +     function climbPas
- 2792  +         return isRigh                               2792  +         return isRigh 2796  +         return isRigh
- 2793  +     }                                               2793  +     }                 2797  +     }                
- 2794  +                                                     2794  +                       2798  +                      
-                                                             2795  -     function climbPas 2799  -     function climbPas
-                                                             2796  -         return isRigh 2800  -         return isRigh
-                                                                                           2799  +     /** Get \`C\` given
-                                                                                           2800  +     function tryGetCl
-                                                                                           2801  +         return tryGet
-                                                             2795  +     }                 2802  +     }                
-                                                             2796  +                       2803  +                      
- 2795        function isCallEx 2795        function isCallEx 2797        function isCallEx 2804        function isCallEx
-                               2796  -         if (isRightSi                               2805  -         if (isRightSi
-                               2797  -             node = no                               2806  -             node = no
-                               2798  -         }                                           2807  -         }            
-                                                             2798  -         node = climbP 2808  -         node = climbP
-                               2796  -         return node & 2799  -         return node & 2809  -         return node &
- 2796  +         return isCall                                                             2805  +         return isCall
- 2797        }                 2796        }                 2798        }                 2806        }                
- 2798                          2797                          2799                          2807                         
- 2799        function isNewExp 2798        function isNewExp 2800        function isNewExp 2808        function isNewExp
-                               2799  -         if (isRightSi                               2809  -         if (isRightSi
-                               2800  -             node = no                               2810  -             node = no
-                               2801  -         }                                           2811  -         }            
-                                                             2801  -         node = climbP 2812  -         node = climbP
-                               2799  -         return node & 2802  -         return node & 2813  -         return node &
- 2800  +         return isCall                                                             2809  +         return isCall
- 2801  +     }                                                                             2810  +     }                
- 2802  +                                                                                   2811  +                      
- 2803  +     function isCallOr                                                             2812  +     function isCallOr
- 2804  +         const target                                                              2813  +         const target 
- 2805  +         return target                                                             2814  +         return target
- 2806  +     }                                                                             2815  +     }                
- 2807  +                                                                                   2816  +                      
- 2808  -     /** Get \`C\` given                                                             2817  -     /** Get \`C\` given
- 2809  -     function tryGetCl                                                             2818  -     function tryGetCl
- 2810  -         return tryGet                                                             2819  -         return tryGet
-                                                                                           2817  +     function climbPas
-                                                                                           2818  +         return isRigh
-                                                             2801  +     }                 2819  +     }                
-                                                             2802  +                       2820  +                      
-                                                             2803  +     /** Returns a Cal 2821  +     /** Returns a Cal
-                                                             2804  +     function getAnces 2822  +     function getAnces
-                                                             2805  +         const target  2823  +         const target 
-                                                             2806  +         const callLik 2824  +         const callLik
-                                                             2807  +         return callLi 2825  +         return callLi
-                                                             2808  +     }                 2826  +     }                
-                                                             2809  +                       2827  +                      
-                                                             2810  +     function tryGetSi 2828  +     function tryGetSi
-                                                             2811  +         const callLik 2829  +         const callLik
-                                                             2812  +         return callLi 2830  +         return callLi
- 2808        }                 2799        }                 2813        }                 2831        }                
- 2809                          2800                          2814                          2832                         
- 2810        function isNameOf 2801        function isNameOf 2815        function isNameOf 2833        function isNameOf
- 2811                          2802                          2816                          2834                         
+ 2792            return node && node.parent && node.parent.kind === SyntaxKind.PropertyAccessExpression && (<PropertyAcc
+ 2793        }                                                                                                          
+ 2794                                                                                                                   
+ 2795  +     function climbPastPropertyAccess(node: Node) {                                                             
+ 2796  +         return isRightSideOfPropertyAccess(node) ? node.parent : node;                                         
+ 2797  +     }                                                                                                          
+ 2798  +                                                                                                                
+ 2799  -     function climbPastManyPropertyAccesses(node: Node): Node {                                                 
+ 2800  -         return isRightSideOfPropertyAccess(node) ? climbPastManyPropertyAccesses(node.parent) : node;          
+ 2799  +     /** Get \`C\` given \`N\` if \`N\` is in the position \`class C extends N\` or \`class C extends foo.N\` where \`N\` is
+ 2800  +     function tryGetClassExtendingIdentifier(node: Node): ClassLikeDeclaration | undefined {                    
+ 2801  +         return tryGetClassExtendingExpressionWithTypeArguments(climbPastPropertyAccess(node).parent);          
+ 2802  +     }                                                                                                          
+ 2803  +                                                                                                                
+ 2804        function isCallExpressionTarget(node: Node): boolean {                                                     
+ 2805  -         if (isRightSideOfPropertyAccess(node)) {                                                               
+ 2806  -             node = node.parent;                                                                                
+ 2807  -         }                                                                                                      
+ 2808  -         node = climbPastPropertyAccess(node);                                                                  
+ 2809  -         return node && node.parent && node.parent.kind === SyntaxKind.CallExpression && (<CallExpression>node.p
+ 2805  +         return isCallOrNewExpressionTarget(node, SyntaxKind.CallExpression);                                   
+ 2806        }                                                                                                          
+ 2807                                                                                                                   
+ 2808        function isNewExpressionTarget(node: Node): boolean {                                                      
+ 2809  -         if (isRightSideOfPropertyAccess(node)) {                                                               
+ 2810  -             node = node.parent;                                                                                
+ 2811  -         }                                                                                                      
+ 2812  -         node = climbPastPropertyAccess(node);                                                                  
+ 2813  -         return node && node.parent && node.parent.kind === SyntaxKind.NewExpression && (<CallExpression>node.pa
+ 2809  +         return isCallOrNewExpressionTarget(node, SyntaxKind.NewExpression);                                    
+ 2810  +     }                                                                                                          
+ 2811  +                                                                                                                
+ 2812  +     function isCallOrNewExpressionTarget(node: Node, kind: SyntaxKind) {                                       
+ 2813  +         const target = climbPastPropertyAccess(node);                                                          
+ 2814  +         return target && target.parent && target.parent.kind === kind && (<CallExpression>target.parent).expres
+ 2815  +     }                                                                                                          
+ 2816  +                                                                                                                
+ 2817  -     /** Get \`C\` given \`N\` if \`N\` is in the position \`class C extends N\` or \`class C extends foo.N\` where \`N\` is
+ 2818  -     function tryGetClassExtendingIdentifier(node: Node): ClassLikeDeclaration | undefined {                    
+ 2819  -         return tryGetClassExtendingExpressionWithTypeArguments(climbPastPropertyAccess(node).parent);          
+ 2817  +     function climbPastManyPropertyAccesses(node: Node): Node {                                                 
+ 2818  +         return isRightSideOfPropertyAccess(node) ? climbPastManyPropertyAccesses(node.parent) : node;          
+ 2819  +     }                                                                                                          
+ 2820  +                                                                                                                
+ 2821  +     /** Returns a CallLikeExpression where \`node\` is the target being invoked. */                              
+ 2822  +     function getAncestorCallLikeExpression(node: Node): CallLikeExpression | undefined {                       
+ 2823  +         const target = climbPastManyPropertyAccesses(node);                                                    
+ 2824  +         const callLike = target.parent;                                                                        
+ 2825  +         return callLike && isCallLikeExpression(callLike) && getInvokedExpression(callLike) === target && callL
+ 2826  +     }                                                                                                          
+ 2827  +                                                                                                                
+ 2828  +     function tryGetSignatureDeclaration(typeChecker: TypeChecker, node: Node): SignatureDeclaration | undefined
+ 2829  +         const callLike = getAncestorCallLikeExpression(node);                                                  
+ 2830  +         return callLike && typeChecker.getResolvedSignature(callLike).declaration;                             
+ 2831        }                                                                                                          
+ 2832                                                                                                                   
+ 2833        function isNameOfModuleDeclaration(node: Node) {                                                           
+ 2834                                                                                                                   
 "
 `;
 
@@ -783,90 +783,37 @@ Date:   Thu Dec 21 17:57:42 2023 -0800
  ■■ src/compiler/binder.ts                                                      
 ────────────────────────────────────────────────────────────────────────────────
 @@@ -137,9 -136,9 +137,10 @@@ import                                            
-  137        isBlock,       136        isBlock,       137        isBlock,     
-  138        isBlockOrCatc  137        isBlockOrCatc  138        isBlockOrCatc
-         hScoped,                  hScoped,                  hScoped,         
-  139        IsBlockScoped  138        IsBlockScoped  139        IsBlockScoped
-         Container,                Container,                Container,       
-                            139  +                    140  +                  
-                                   isBooleanLiteral,         isBooleanLiteral,
-  140                       140                       141                     
-         isCallExpression,         isCallExpression,         isCallExpression,
-  141        isClassStatic  141        isClassStatic  142        isClassStatic
-         BlockDeclaration,         BlockDeclaration,         BlockDeclaration,
-  142  +     isConditional                            143  +     isConditional
-         Expression,                                         Expression,      
-  143        isConditional  142        isConditional  144        isConditional
-         TypeNode,                 TypeNode,                 TypeNode,        
-  144        IsContainer,   143        IsContainer,   145        IsContainer, 
-  145                       144                       146                     
-         isDeclaration,            isDeclaration,            isDeclaration,   
+  137        isBlock,                                                           
+  138        isBlockOrCatchScoped,                                              
+  139        IsBlockScopedContainer,                                            
+  140  +     isBooleanLiteral,                                                  
+  141        isCallExpression,                                                  
+  142        isClassStaticBlockDeclaration,                                     
+  143  +     isConditionalExpression,                                           
+  144        isConditionalTypeNode,                                             
+  145        IsContainer,                                                       
+  146        isDeclaration,                                                     
 ────────────────────────────────────────────────────────────────────────────────
  ■■ src/compiler/types.ts                                                       
 ────────────────────────────────────────────────────────────────────────────────
 @@@ -5985,8 -6063,7 +6063,8 @@@ export interface NodeLinks                      
- 5985        decoratorSign 6063        decoratorSign 6063        decoratorSign
-         ature?:                   ature?:                   ature?:          
-         Signature;     //         Signature;     //         Signature;     //
-          Signature for             Signature for             Signature for   
-         decorator as if           decorator as if           decorator as if  
-         invoked by the            invoked by the            invoked by the   
-         runtime.                  runtime.                  runtime.         
- 5986                      6064                      6064                     
-         spreadIndices?: {         spreadIndices?: {         spreadIndices?: {
-          first: number |           first: number |           first: number | 
-         undefined, last:          undefined, last:          undefined, last: 
-         number |                  number |                  number |         
-         undefined }; //           undefined }; //           undefined }; //  
-         Indices of first          Indices of first          Indices of first 
-         and last spread           and last spread           and last spread  
-         elements in array         elements in array         elements in array
-          literal                   literal                   literal         
- 5987        parameterInit 6065        parameterInit 6065        parameterInit
-         ializerContainsUn         ializerContainsUn         ializerContainsUn
-         defined?:                 defined?:                 defined?:        
-         boolean; // True          boolean; // True          boolean; // True 
-         if this is a              if this is a              if this is a     
-         parameter                 parameter                 parameter        
-         declaration whose         declaration whose         declaration whose
-          type annotation           type annotation           type annotation 
-         contains                  contains                  contains         
-         "undefined".              "undefined".              "undefined".     
- 5988  -     fakeScopeForS                           6066  -     fakeScopeForS
-         ignatureDeclarati                                   ignatureDeclarati
-         on?: boolean; //                                    on?: boolean; // 
-         True if this is a                                   True if this is a
-          fake scope                                          fake scope      
-         injected into an                                    injected into an 
-         enclosing                                           enclosing        
-         declaration                                         declaration      
-         chain.                                              chain.           
- 5988  +     contextualRet                           6066  +     contextualRet
-         urnType?: Type;                                     urnType?: Type;  
-               // If the                                           // If the  
-         node is a return                                    node is a return 
-         statement's                                         statement's      
-         expression, then                                    expression, then 
-         this is the                                         this is the      
-         contextual return                                   contextual return
-          type.                                               type.           
-                           6066  +     fakeScopeForS 6067  +     fakeScopeForS
-                                   ignatureDeclarati         ignatureDeclarati
-                                   on?: "params" |           on?: "params" |  
-                                   "typeParams"; //          "typeParams"; // 
-                                   If present, this          If present, this 
-                                   is a fake scope           is a fake scope  
-                                   injected into an          injected into an 
-                                   enclosing                 enclosing        
-                                   declaration               declaration      
-                                   chain.                    chain.           
- 5989        assertionExpr 6067        assertionExpr 6068        assertionExpr
-         essionType?:              essionType?:              essionType?:     
-         Type;     //              Type;     //              Type;     //     
-         Cached type of            Cached type of            Cached type of   
-         the expression of         the expression of         the expression of
-          a type assertion          a type assertion          a type assertion
- 5990    }                 6068    }                 6069    }                
+ 6063        decoratorSignature?: Signature;     // Signature for decorator as  
+         if invoked by the runtime.                                             
+ 6064        spreadIndices?: { first: number | undefined, last: number |        
+         undefined }; // Indices of first and last spread elements in array     
+         literal                                                                
+ 6065        parameterInitializerContainsUndefined?: boolean; // True if this is
+          a parameter declaration whose type annotation contains "undefined".   
+ 6066  -     fakeScopeForSignatureDeclaration?: boolean; // True if this is a   
+         fake scope injected into an enclosing declaration chain.               
+ 6066  +     contextualReturnType?: Type;        // If the node is a return     
+         statement's expression, then this is the contextual return type.       
+ 6067  +     fakeScopeForSignatureDeclaration?: "params" | "typeParams"; // If  
+         present, this is a fake scope injected into an enclosing declaration   
+         chain.                                                                 
+ 6068        assertionExpressionType?: Type;     // Cached type of the          
+         expression of a type assertion                                         
+ 6069    }                                                                      
 "
 `;
 
@@ -884,341 +831,87 @@ constructor_references
  ■■ src/services/services.ts                                                    
 ────────────────────────────────────────────────────────────────────────────────
 @@@@ -2788,26 -2792,18 -2788,34 +2792,42 @@@@ namespace ts                      
- 2788                2792                2788                2792               
-         return node         return node         return node         return node
-          &&                  &&                  &&                  &&        
-         node.parent         node.parent         node.parent         node.parent
-          && node.pa          && node.pa          && node.pa          && node.pa
-         rent.kind           rent.kind           rent.kind           rent.kind  
-         === SyntaxK         === SyntaxK         === SyntaxK         === SyntaxK
-         ind.Propert         ind.Propert         ind.Propert         ind.Propert
-         yAccessExpr         yAccessExpr         yAccessExpr         yAccessExpr
-         ession && (         ession && (         ession && (         ession && (
-         <PropertyAc         <PropertyAc         <PropertyAc         <PropertyAc
-         cessExpress         cessExpress         cessExpress         cessExpress
-         ion>node.pa         ion>node.pa         ion>node.pa         ion>node.pa
-         rent).name          rent).name          rent).name          rent).name 
-         === node;           === node;           === node;           === node;  
- 2789        }       2793        }       2789        }       2793        }      
- 2790                2794                2790                2794               
- 2791  +                                 2791  +             2795  +            
-         function cl                             function cl         function cl
-         imbPastProp                             imbPastProp         imbPastProp
-         ertyAccess(                             ertyAccess(         ertyAccess(
-         node: Node)                             node: Node)         node: Node)
-          {                                       {                   {         
- 2792  +                                 2792  +             2796  +            
-         return isRi                             return isRi         return isRi
-         ghtSideOfPr                             ghtSideOfPr         ghtSideOfPr
-         opertyAcces                             opertyAcces         opertyAcces
-         s(node) ?                               s(node) ?           s(node) ?  
-         node.parent                             node.parent         node.parent
-          : node;                                 : node;             : node;   
- 2793  +     }                           2793  +     }       2797  +     }      
- 2794  +                                 2794  +             2798  +            
-                                         2795  -             2799  -            
-                                                 function cl         function cl
-                                                 imbPastMany         imbPastMany
-                                                 PropertyAcc         PropertyAcc
-                                                 esses(node:         esses(node:
-                                                  Node):              Node):    
-                                                 Node {              Node {     
-                                         2796  -             2800  -            
-                                                 return isRi         return isRi
-                                                 ghtSideOfPr         ghtSideOfPr
-                                                 opertyAcces         opertyAcces
-                                                 s(node) ? c         s(node) ? c
-                                                 limbPastMan         limbPastMan
-                                                 yPropertyAc         yPropertyAc
-                                                 cesses(node         cesses(node
-                                                 .parent) :          .parent) : 
-                                                 node;               node;      
-                                                             2799  +     /** Get
-                                                                      \`C\` given 
-                                                                     \`N\` if \`N\` 
-                                                                     is in the  
-                                                                     position   
-                                                                     \`class C   
-                                                                     extends N\` 
-                                                                     or \`class C
-                                                                      extends   
-                                                                     foo.N\`     
-                                                                     where \`N\`  
-                                                                     is an      
-                                                                     identifier.
-                                                                      */        
-                                                             2800  +            
-                                                                     function tr
-                                                                     yGetClassEx
-                                                                     tendingIden
-                                                                     tifier(node
-                                                                     : Node): Cl
-                                                                     assLikeDecl
-                                                                     aration |  
-                                                                     undefined {
-                                                             2801  +            
-                                                                     return tryG
-                                                                     etClassExte
-                                                                     ndingExpres
-                                                                     sionWithTyp
-                                                                     eArguments(
-                                                                     climbPastPr
-                                                                     opertyAcces
-                                                                     s(node).par
-                                                                     ent);      
-                                         2795  +     }       2802  +     }      
-                                         2796  +             2803  +            
- 2795                2795                2797                2804               
-         function is         function is         function is         function is
-         CallExpress         CallExpress         CallExpress         CallExpress
-         ionTarget(n         ionTarget(n         ionTarget(n         ionTarget(n
-         ode: Node):         ode: Node):         ode: Node):         ode: Node):
-          boolean {           boolean {           boolean {           boolean { 
-                     2796  -         if                      2805  -         if 
-                             (isRightSid                             (isRightSid
-                             eOfProperty                             eOfProperty
-                             Access(node                             Access(node
-                             )) {                                    )) {       
-                     2797  -                                 2806  -            
-                              node = nod                              node = nod
-                             e.parent;                               e.parent;  
-                     2798  -         }                       2807  -         }  
-                                         2798  -             2808  -            
-                                                 node = clim         node = clim
-                                                 bPastProper         bPastProper
-                                                 tyAccess(no         tyAccess(no
-                                                 de);                de);       
-                     2796  -             2799  -             2809  -            
-                             return node         return node         return node
-                              &&                  &&                  &&        
-                             node.parent         node.parent         node.parent
-                              && node.pa          && node.pa          && node.pa
-                             rent.kind           rent.kind           rent.kind  
-                             === SyntaxK         === SyntaxK         === SyntaxK
-                             ind.CallExp         ind.CallExp         ind.CallExp
-                             ression &&          ression &&          ression && 
-                             (<CallExpre         (<CallExpre         (<CallExpre
-                             ssion>node.         ssion>node.         ssion>node.
-                             parent).exp         parent).exp         parent).exp
-                             ression ===         ression ===         ression ===
-                              node;               node;               node;     
- 2796  +                                                     2805  +            
-         return isCa                                                 return isCa
-         llOrNewExpr                                                 llOrNewExpr
-         essionTarge                                                 essionTarge
-         t(node, Syn                                                 t(node, Syn
-         taxKind.Cal                                                 taxKind.Cal
-         lExpression                                                 lExpression
-         );                                                          );         
- 2797        }       2796        }       2798        }       2806        }      
- 2798                2797                2799                2807               
- 2799                2798                2800                2808               
-         function is         function is         function is         function is
-         NewExpressi         NewExpressi         NewExpressi         NewExpressi
-         onTarget(no         onTarget(no         onTarget(no         onTarget(no
-         de: Node):          de: Node):          de: Node):          de: Node): 
-         boolean {           boolean {           boolean {           boolean {  
-                     2799  -         if                      2809  -         if 
-                             (isRightSid                             (isRightSid
-                             eOfProperty                             eOfProperty
-                             Access(node                             Access(node
-                             )) {                                    )) {       
-                     2800  -                                 2810  -            
-                              node = nod                              node = nod
-                             e.parent;                               e.parent;  
-                     2801  -         }                       2811  -         }  
-                                         2801  -             2812  -            
-                                                 node = clim         node = clim
-                                                 bPastProper         bPastProper
-                                                 tyAccess(no         tyAccess(no
-                                                 de);                de);       
-                     2799  -             2802  -             2813  -            
-                             return node         return node         return node
-                              &&                  &&                  &&        
-                             node.parent         node.parent         node.parent
-                              && node.pa          && node.pa          && node.pa
-                             rent.kind           rent.kind           rent.kind  
-                             === SyntaxK         === SyntaxK         === SyntaxK
-                             ind.NewExpr         ind.NewExpr         ind.NewExpr
-                             ession && (         ession && (         ession && (
-                             <CallExpres         <CallExpres         <CallExpres
-                             sion>node.p         sion>node.p         sion>node.p
-                             arent).expr         arent).expr         arent).expr
-                             ession ===          ession ===          ession === 
-                             node;               node;               node;      
- 2800  +                                                     2809  +            
-         return isCa                                                 return isCa
-         llOrNewExpr                                                 llOrNewExpr
-         essionTarge                                                 essionTarge
-         t(node, Syn                                                 t(node, Syn
-         taxKind.New                                                 taxKind.New
-         Expression)                                                 Expression)
-         ;                                                           ;          
- 2801  +     }                                               2810  +     }      
- 2802  +                                                     2811  +            
- 2803  +                                                     2812  +            
-         function is                                                 function is
-         CallOrNewEx                                                 CallOrNewEx
-         pressionTar                                                 pressionTar
-         get(node:                                                   get(node:  
-         Node, kind:                                                 Node, kind:
-                                                                                
-         SyntaxKind)                                                 SyntaxKind)
-          {                                                           {         
- 2804  +                                                     2813  +            
-         const                                                       const      
-         target = cl                                                 target = cl
-         imbPastProp                                                 imbPastProp
-         ertyAccess(                                                 ertyAccess(
-         node);                                                      node);     
- 2805  +                                                     2814  +            
-         return                                                      return     
-         target && t                                                 target && t
-         arget.paren                                                 arget.paren
-         t && target                                                 t && target
-         .parent.kin                                                 .parent.kin
-         d === kind                                                  d === kind 
-         && (<CallEx                                                 && (<CallEx
-         pression>ta                                                 pression>ta
-         rget.parent                                                 rget.parent
-         ).expressio                                                 ).expressio
-         n ===                                                       n ===      
-         target;                                                     target;    
- 2806  +     }                                               2815  +     }      
- 2807  +                                                     2816  +            
- 2808  -     /** Get                                         2817  -     /** Get
-          \`C\` given                                                   \`C\` given 
-         \`N\` if \`N\`                                                  \`N\` if \`N\` 
-         is in the                                                   is in the  
-         position                                                    position   
-         \`class C                                                    \`class C   
-         extends N\`                                                  extends N\` 
-         or \`class C                                                 or \`class C
-          extends                                                     extends   
-         foo.N\`                                                      foo.N\`     
-         where \`N\`                                                   where \`N\`  
-         is an                                                       is an      
-         identifier.                                                 identifier.
-          */                                                          */        
- 2809  -                                                     2818  -            
-         function tr                                                 function tr
-         yGetClassEx                                                 yGetClassEx
-         tendingIden                                                 tendingIden
-         tifier(node                                                 tifier(node
-         : Node): Cl                                                 : Node): Cl
-         assLikeDecl                                                 assLikeDecl
-         aration |                                                   aration |  
-         undefined {                                                 undefined {
- 2810  -                                                     2819  -            
-         return tryG                                                 return tryG
-         etClassExte                                                 etClassExte
-         ndingExpres                                                 ndingExpres
-         sionWithTyp                                                 sionWithTyp
-         eArguments(                                                 eArguments(
-         climbPastPr                                                 climbPastPr
-         opertyAcces                                                 opertyAcces
-         s(node).par                                                 s(node).par
-         ent);                                                       ent);      
-                                                             2817  +            
-                                                                     function cl
-                                                                     imbPastMany
-                                                                     PropertyAcc
-                                                                     esses(node:
-                                                                      Node):    
-                                                                     Node {     
-                                                             2818  +            
-                                                                     return isRi
-                                                                     ghtSideOfPr
-                                                                     opertyAcces
-                                                                     s(node) ? c
-                                                                     limbPastMan
-                                                                     yPropertyAc
-                                                                     cesses(node
-                                                                     .parent) : 
-                                                                     node;      
-                                         2801  +     }       2819  +     }      
-                                         2802  +             2820  +            
-                                         2803  +     /**     2821  +     /**    
-                                                 Returns a C         Returns a C
-                                                 allLikeExpr         allLikeExpr
-                                                 ession              ession     
-                                                 where               where      
-                                                 \`node\` is           \`node\` is  
-                                                 the target          the target 
-                                                 being               being      
-                                                 invoked. */         invoked. */
-                                         2804  +             2822  +            
-                                                 function ge         function ge
-                                                 tAncestorCa         tAncestorCa
-                                                 llLikeExpre         llLikeExpre
-                                                 ssion(node:         ssion(node:
-                                                  Node): Cal          Node): Cal
-                                                 lLikeExpres         lLikeExpres
-                                                 sion |              sion |     
-                                                 undefined {         undefined {
-                                         2805  +             2823  +            
-                                                 const               const      
-                                                 target = cl         target = cl
-                                                 imbPastMany         imbPastMany
-                                                 PropertyAcc         PropertyAcc
-                                                 esses(node)         esses(node)
-                                                 ;                   ;          
-                                         2806  +             2824  +            
-                                                 const               const      
-                                                 callLike =          callLike = 
-                                                 target.pare         target.pare
-                                                 nt;                 nt;        
-                                         2807  +             2825  +            
-                                                 return              return     
-                                                 callLike &&         callLike &&
-                                                  isCallLike          isCallLike
-                                                 Expression(         Expression(
-                                                 callLike)           callLike)  
-                                                 && getInvok         && getInvok
-                                                 edExpressio         edExpressio
-                                                 n(callLike)         n(callLike)
-                                                  === target          === target
-                                                  &&                  &&        
-                                                 callLike;           callLike;  
-                                         2808  +     }       2826  +     }      
-                                         2809  +             2827  +            
-                                         2810  +             2828  +            
-                                                 function tr         function tr
-                                                 yGetSignatu         yGetSignatu
-                                                 reDeclarati         reDeclarati
-                                                 on(typeChec         on(typeChec
-                                                 ker: TypeCh         ker: TypeCh
-                                                 ecker,              ecker,     
-                                                 node:               node:      
-                                                 Node): Sign         Node): Sign
-                                                 atureDeclar         atureDeclar
-                                                 ation |             ation |    
-                                                 undefined {         undefined {
-                                         2811  +             2829  +            
-                                                 const               const      
-                                                 callLike =          callLike = 
-                                                 getAncestor         getAncestor
-                                                 CallLikeExp         CallLikeExp
-                                                 ression(nod         ression(nod
-                                                 e);                 e);        
-                                         2812  +             2830  +            
-                                                 return              return     
-                                                 callLike &&         callLike &&
-                                                  typeChecke          typeChecke
-                                                 r.getResolv         r.getResolv
-                                                 edSignature         edSignature
-                                                 (callLike).         (callLike).
-                                                 declaration         declaration
-                                                 ;                   ;          
- 2808        }       2799        }       2813        }       2831        }      
- 2809                2800                2814                2832               
- 2810                2801                2815                2833               
-         function is         function is         function is         function is
-         NameOfModul         NameOfModul         NameOfModul         NameOfModul
-         eDeclaratio         eDeclaratio         eDeclaratio         eDeclaratio
-         n(node:             n(node:             n(node:             n(node:    
-         Node) {             Node) {             Node) {             Node) {    
- 2811                2802                2816                2834               
+ 2792            return node && node.parent && node.parent.kind ===             
+         SyntaxKind.PropertyAccessExpression &&                                 
+         (<PropertyAccessExpression>node.parent).name === node;                 
+ 2793        }                                                                  
+ 2794                                                                           
+ 2795  +     function climbPastPropertyAccess(node: Node) {                     
+ 2796  +         return isRightSideOfPropertyAccess(node) ? node.parent : node; 
+ 2797  +     }                                                                  
+ 2798  +                                                                        
+ 2799  -     function climbPastManyPropertyAccesses(node: Node): Node {         
+ 2800  -         return isRightSideOfPropertyAccess(node) ?                     
+         climbPastManyPropertyAccesses(node.parent) : node;                     
+ 2799  +     /** Get \`C\` given \`N\` if \`N\` is in the position \`class C extends N\`
+          or \`class C extends foo.N\` where \`N\` is an identifier. */             
+ 2800  +     function tryGetClassExtendingIdentifier(node: Node):               
+         ClassLikeDeclaration | undefined {                                     
+ 2801  +         return tryGetClassExtendingExpressionWithTypeArguments(climbPas
+         tPropertyAccess(node).parent);                                         
+ 2802  +     }                                                                  
+ 2803  +                                                                        
+ 2804        function isCallExpressionTarget(node: Node): boolean {             
+ 2805  -         if (isRightSideOfPropertyAccess(node)) {                       
+ 2806  -             node = node.parent;                                        
+ 2807  -         }                                                              
+ 2808  -         node = climbPastPropertyAccess(node);                          
+ 2809  -         return node && node.parent && node.parent.kind ===             
+         SyntaxKind.CallExpression && (<CallExpression>node.parent).expression  
+         === node;                                                              
+ 2805  +         return isCallOrNewExpressionTarget(node,                       
+         SyntaxKind.CallExpression);                                            
+ 2806        }                                                                  
+ 2807                                                                           
+ 2808        function isNewExpressionTarget(node: Node): boolean {              
+ 2809  -         if (isRightSideOfPropertyAccess(node)) {                       
+ 2810  -             node = node.parent;                                        
+ 2811  -         }                                                              
+ 2812  -         node = climbPastPropertyAccess(node);                          
+ 2813  -         return node && node.parent && node.parent.kind ===             
+         SyntaxKind.NewExpression && (<CallExpression>node.parent).expression   
+         === node;                                                              
+ 2809  +         return isCallOrNewExpressionTarget(node,                       
+         SyntaxKind.NewExpression);                                             
+ 2810  +     }                                                                  
+ 2811  +                                                                        
+ 2812  +     function isCallOrNewExpressionTarget(node: Node, kind: SyntaxKind) 
+         {                                                                      
+ 2813  +         const target = climbPastPropertyAccess(node);                  
+ 2814  +         return target && target.parent && target.parent.kind === kind  
+         && (<CallExpression>target.parent).expression === target;              
+ 2815  +     }                                                                  
+ 2816  +                                                                        
+ 2817  -     /** Get \`C\` given \`N\` if \`N\` is in the position \`class C extends N\`
+          or \`class C extends foo.N\` where \`N\` is an identifier. */             
+ 2818  -     function tryGetClassExtendingIdentifier(node: Node):               
+         ClassLikeDeclaration | undefined {                                     
+ 2819  -         return tryGetClassExtendingExpressionWithTypeArguments(climbPas
+         tPropertyAccess(node).parent);                                         
+ 2817  +     function climbPastManyPropertyAccesses(node: Node): Node {         
+ 2818  +         return isRightSideOfPropertyAccess(node) ?                     
+         climbPastManyPropertyAccesses(node.parent) : node;                     
+ 2819  +     }                                                                  
+ 2820  +                                                                        
+ 2821  +     /** Returns a CallLikeExpression where \`node\` is the target being  
+         invoked. */                                                            
+ 2822  +     function getAncestorCallLikeExpression(node: Node):                
+         CallLikeExpression | undefined {                                       
+ 2823  +         const target = climbPastManyPropertyAccesses(node);            
+ 2824  +         const callLike = target.parent;                                
+ 2825  +         return callLike && isCallLikeExpression(callLike) &&           
+         getInvokedExpression(callLike) === target && callLike;                 
+ 2826  +     }                                                                  
+ 2827  +                                                                        
+ 2828  +     function tryGetSignatureDeclaration(typeChecker: TypeChecker, node:
+          Node): SignatureDeclaration | undefined {                             
+ 2829  +         const callLike = getAncestorCallLikeExpression(node);          
+ 2830  +         return callLike &&                                             
+         typeChecker.getResolvedSignature(callLike).declaration;                
+ 2831        }                                                                  
+ 2832                                                                           
+ 2833        function isNameOfModuleDeclaration(node: Node) {                   
+ 2834                                                                           
 "
 `;
 
@@ -1600,28 +1293,28 @@ Date:   Thu Dec 21 17:57:42 2023 -0800
  ■■ src/compiler/binder.ts                                                      
 ────────────────────────────────────────────────────────────────────────────────
 @@@ -137,9 -136,9 +137,10 @@@ import                                            
-  137        isBlock,       136        isBlock,       137        isBlock,     
-  138        isBlockOrCatc  137        isBlockOrCatc  138        isBlockOrCatc
-  139        IsBlockScoped  138        IsBlockScoped  139        IsBlockScoped
-                            139  +     isBooleanLite  140  +     isBooleanLite
-  140        isCallExpress  140        isCallExpress  141        isCallExpress
-  141        isClassStatic  141        isClassStatic  142        isClassStatic
-  142  +     isConditional                            143  +     isConditional
-  143        isConditional  142        isConditional  144        isConditional
-  144        IsContainer,   143        IsContainer,   145        IsContainer, 
-  145        isDeclaration  144        isDeclaration  146        isDeclaration
+  137        isBlock,                                                           
+  138        isBlockOrCatchScoped,                                              
+  139        IsBlockScopedContainer,                                            
+  140  +     isBooleanLiteral,                                                  
+  141        isCallExpression,                                                  
+  142        isClassStaticBlockDeclaration,                                     
+  143  +     isConditionalExpression,                                           
+  144        isConditionalTypeNode,                                             
+  145        IsContainer,                                                       
+  146        isDeclaration,                                                     
 ────────────────────────────────────────────────────────────────────────────────
  ■■ src/compiler/types.ts                                                       
 ────────────────────────────────────────────────────────────────────────────────
 @@@ -5985,8 -6063,7 +6063,8 @@@ export interface NodeLinks                      
- 5985        decoratorSign 6063        decoratorSign 6063        decoratorSign
- 5986        spreadIndices 6064        spreadIndices 6064        spreadIndices
- 5987        parameterInit 6065        parameterInit 6065        parameterInit
- 5988  -     fakeScopeForS                           6066  -     fakeScopeForS
- 5988  +     contextualRet                           6066  +     contextualRet
-                           6066  +     fakeScopeForS 6067  +     fakeScopeForS
- 5989        assertionExpr 6067        assertionExpr 6068        assertionExpr
- 5990    }                 6068    }                 6069    }                
+ 6063        decoratorSignature?: Signature;     // Signature for decorator as i
+ 6064        spreadIndices?: { first: number | undefined, last: number | undefin
+ 6065        parameterInitializerContainsUndefined?: boolean; // True if this is
+ 6066  -     fakeScopeForSignatureDeclaration?: boolean; // True if this is a fa
+ 6066  +     contextualReturnType?: Type;        // If the node is a return stat
+ 6067  +     fakeScopeForSignatureDeclaration?: "params" | "typeParams"; // If p
+ 6068        assertionExpressionType?: Type;     // Cached type of the expressio
+ 6069    }                                                                      
 "
 `;
 
@@ -1638,64 +1331,64 @@ Date:   Thu Sep 1 12:52:42 2016 -0700
  ■■ src/services/services.ts                                                    
 ────────────────────────────────────────────────────────────────────────────────
 @@@@ -2788,26 -2792,18 -2788,34 +2792,42 @@@@ namespace ts                      
- 2788            ret 2792            ret 2788            ret 2792            ret
- 2789        }       2793        }       2789        }       2793        }      
- 2790                2794                2790                2794               
- 2791  +     functio                     2791  +     functio 2795  +     functio
- 2792  +         ret                     2792  +         ret 2796  +         ret
- 2793  +     }                           2793  +     }       2797  +     }      
- 2794  +                                 2794  +             2798  +            
-                                         2795  -     functio 2799  -     functio
-                                         2796  -         ret 2800  -         ret
-                                                             2799  +     /** Get
-                                                             2800  +     functio
-                                                             2801  +         ret
-                                         2795  +     }       2802  +     }      
-                                         2796  +             2803  +            
- 2795        functio 2795        functio 2797        functio 2804        functio
-                     2796  -         if                      2805  -         if 
-                     2797  -                                 2806  -            
-                     2798  -         }                       2807  -         }  
-                                         2798  -         nod 2808  -         nod
-                     2796  -         ret 2799  -         ret 2809  -         ret
- 2796  +         ret                                         2805  +         ret
- 2797        }       2796        }       2798        }       2806        }      
- 2798                2797                2799                2807               
- 2799        functio 2798        functio 2800        functio 2808        functio
-                     2799  -         if                      2809  -         if 
-                     2800  -                                 2810  -            
-                     2801  -         }                       2811  -         }  
-                                         2801  -         nod 2812  -         nod
-                     2799  -         ret 2802  -         ret 2813  -         ret
- 2800  +         ret                                         2809  +         ret
- 2801  +     }                                               2810  +     }      
- 2802  +                                                     2811  +            
- 2803  +     functio                                         2812  +     functio
- 2804  +         con                                         2813  +         con
- 2805  +         ret                                         2814  +         ret
- 2806  +     }                                               2815  +     }      
- 2807  +                                                     2816  +            
- 2808  -     /** Get                                         2817  -     /** Get
- 2809  -     functio                                         2818  -     functio
- 2810  -         ret                                         2819  -         ret
-                                                             2817  +     functio
-                                                             2818  +         ret
-                                         2801  +     }       2819  +     }      
-                                         2802  +             2820  +            
-                                         2803  +     /** Ret 2821  +     /** Ret
-                                         2804  +     functio 2822  +     functio
-                                         2805  +         con 2823  +         con
-                                         2806  +         con 2824  +         con
-                                         2807  +         ret 2825  +         ret
-                                         2808  +     }       2826  +     }      
-                                         2809  +             2827  +            
-                                         2810  +     functio 2828  +     functio
-                                         2811  +         con 2829  +         con
-                                         2812  +         ret 2830  +         ret
- 2808        }       2799        }       2813        }       2831        }      
- 2809                2800                2814                2832               
- 2810        functio 2801        functio 2815        functio 2833        functio
- 2811                2802                2816                2834               
+ 2792            return node && node.parent && node.parent.kind === SyntaxKind.P
+ 2793        }                                                                  
+ 2794                                                                           
+ 2795  +     function climbPastPropertyAccess(node: Node) {                     
+ 2796  +         return isRightSideOfPropertyAccess(node) ? node.parent : node; 
+ 2797  +     }                                                                  
+ 2798  +                                                                        
+ 2799  -     function climbPastManyPropertyAccesses(node: Node): Node {         
+ 2800  -         return isRightSideOfPropertyAccess(node) ? climbPastManyPropert
+ 2799  +     /** Get \`C\` given \`N\` if \`N\` is in the position \`class C extends N\`
+ 2800  +     function tryGetClassExtendingIdentifier(node: Node): ClassLikeDecla
+ 2801  +         return tryGetClassExtendingExpressionWithTypeArguments(climbPas
+ 2802  +     }                                                                  
+ 2803  +                                                                        
+ 2804        function isCallExpressionTarget(node: Node): boolean {             
+ 2805  -         if (isRightSideOfPropertyAccess(node)) {                       
+ 2806  -             node = node.parent;                                        
+ 2807  -         }                                                              
+ 2808  -         node = climbPastPropertyAccess(node);                          
+ 2809  -         return node && node.parent && node.parent.kind === SyntaxKind.C
+ 2805  +         return isCallOrNewExpressionTarget(node, SyntaxKind.CallExpress
+ 2806        }                                                                  
+ 2807                                                                           
+ 2808        function isNewExpressionTarget(node: Node): boolean {              
+ 2809  -         if (isRightSideOfPropertyAccess(node)) {                       
+ 2810  -             node = node.parent;                                        
+ 2811  -         }                                                              
+ 2812  -         node = climbPastPropertyAccess(node);                          
+ 2813  -         return node && node.parent && node.parent.kind === SyntaxKind.N
+ 2809  +         return isCallOrNewExpressionTarget(node, SyntaxKind.NewExpressi
+ 2810  +     }                                                                  
+ 2811  +                                                                        
+ 2812  +     function isCallOrNewExpressionTarget(node: Node, kind: SyntaxKind) 
+ 2813  +         const target = climbPastPropertyAccess(node);                  
+ 2814  +         return target && target.parent && target.parent.kind === kind &
+ 2815  +     }                                                                  
+ 2816  +                                                                        
+ 2817  -     /** Get \`C\` given \`N\` if \`N\` is in the position \`class C extends N\`
+ 2818  -     function tryGetClassExtendingIdentifier(node: Node): ClassLikeDecla
+ 2819  -         return tryGetClassExtendingExpressionWithTypeArguments(climbPas
+ 2817  +     function climbPastManyPropertyAccesses(node: Node): Node {         
+ 2818  +         return isRightSideOfPropertyAccess(node) ? climbPastManyPropert
+ 2819  +     }                                                                  
+ 2820  +                                                                        
+ 2821  +     /** Returns a CallLikeExpression where \`node\` is the target being i
+ 2822  +     function getAncestorCallLikeExpression(node: Node): CallLikeExpress
+ 2823  +         const target = climbPastManyPropertyAccesses(node);            
+ 2824  +         const callLike = target.parent;                                
+ 2825  +         return callLike && isCallLikeExpression(callLike) && getInvoked
+ 2826  +     }                                                                  
+ 2827  +                                                                        
+ 2828  +     function tryGetSignatureDeclaration(typeChecker: TypeChecker, node:
+ 2829  +         const callLike = getAncestorCallLikeExpression(node);          
+ 2830  +         return callLike && typeChecker.getResolvedSignature(callLike).d
+ 2831        }                                                                  
+ 2832                                                                           
+ 2833        function isNameOfModuleDeclaration(node: Node) {                   
+ 2834                                                                           
 "
 `;
 
@@ -2055,28 +1748,28 @@ Date:   Thu Dec 21 17:57:42 2023 -0800
  ■■ src/compiler/binder.ts                                                      
 ────────────────────────────────────────────────────────────────────────────────
 @@@ -137,9 -136,9 +137,10 @@@ import                                            
-  137    ░░░░░░░░░░░░       136    ░░░░░░░░░░░░       137    ░░░░░░░░░░░░     
-  138    ░░░░░░░░░░░░░░░░░  137    ░░░░░░░░░░░░░░░░░  138    ░░░░░░░░░░░░░░░░░
-  139    ░░░░░░░░░░░░░░░░░  138    ░░░░░░░░░░░░░░░░░  139    ░░░░░░░░░░░░░░░░░
-                            139  + ░░░░░░░░░░░░░░░░░  140  + ░░░░░░░░░░░░░░░░░
-  140    ░░░░░░░░░░░░░░░░░  140    ░░░░░░░░░░░░░░░░░  141    ░░░░░░░░░░░░░░░░░
-  141    ░░░░░░░░░░░░░░░░░  141    ░░░░░░░░░░░░░░░░░  142    ░░░░░░░░░░░░░░░░░
-  142  + ░░░░░░░░░░░░░░░░░                            143  + ░░░░░░░░░░░░░░░░░
-  143    ░░░░░░░░░░░░░░░░░  142    ░░░░░░░░░░░░░░░░░  144    ░░░░░░░░░░░░░░░░░
-  144    ░░░░░░░░░░░░░░░░   143    ░░░░░░░░░░░░░░░░   145    ░░░░░░░░░░░░░░░░ 
-  145    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+  137    ░░░░░░░░░░░░                                                           
+  138    ░░░░░░░░░░░░░░░░░░░░░░░░░                                              
+  139    ░░░░░░░░░░░░░░░░░░░░░░░░░░░                                            
+  140  + ░░░░░░░░░░░░░░░░░░░░░                                                  
+  141    ░░░░░░░░░░░░░░░░░░░░░                                                  
+  142    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░                                     
+  143  + ░░░░░░░░░░░░░░░░░░░░░░░░░░░░                                           
+  144    ░░░░░░░░░░░░░░░░░░░░░░░░░░                                             
+  145    ░░░░░░░░░░░░░░░░                                                       
+  146    ░░░░░░░░░░░░░░░░░░                                                     
 ────────────────────────────────────────────────────────────────────────────────
  ■■ src/compiler/types.ts                                                       
 ────────────────────────────────────────────────────────────────────────────────
 @@@ -5985,8 -6063,7 +6063,8 @@@ export interface NodeLinks                      
- 5985    ░░░░░░░░░░░░░░░░░ 6063    ░░░░░░░░░░░░░░░░░ 6063    ░░░░░░░░░░░░░░░░░
- 5986    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
- 5987    ░░░░░░░░░░░░░░░░░ 6065    ░░░░░░░░░░░░░░░░░ 6065    ░░░░░░░░░░░░░░░░░
- 5988  - ░░░░░░░░░░░░░░░░░                           6066  - ░░░░░░░░░░░░░░░░░
- 5988  + ░░░░░░░░░░░░░░░░░                           6066  + ░░░░░░░░░░░░░░░░░
-                           6066  + ░░░░░░░░░░░░░░░░░ 6067  + ░░░░░░░░░░░░░░░░░
- 5989    ░░░░░░░░░░░░░░░░░ 6067    ░░░░░░░░░░░░░░░░░ 6068    ░░░░░░░░░░░░░░░░░
- 5990    ░                 6068    ░                 6069    ░                
+ 6063    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ 6064    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ 6065    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ 6066  - ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ 6066  + ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ 6067  + ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ 6068    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ 6069    ░                                                                      
 "
 `;
 
@@ -2093,64 +1786,64 @@ Date:   Thu Sep 1 12:52:42 2016 -0700
  ■■ src/services/services.ts                                                    
 ────────────────────────────────────────────────────────────────────────────────
 @@@@ -2788,26 -2792,18 -2788,34 +2792,42 @@@@ namespace ts                      
- 2788    ░░░░░░░░░░░ 2792    ░░░░░░░░░░░ 2788    ░░░░░░░░░░░ 2792    ░░░░░░░░░░░
- 2789    ░░░░░       2793    ░░░░░       2789    ░░░░░       2793    ░░░░░      
- 2790                2794                2790                2794               
- 2791  + ░░░░░░░░░░░                     2791  + ░░░░░░░░░░░ 2795  + ░░░░░░░░░░░
- 2792  + ░░░░░░░░░░░                     2792  + ░░░░░░░░░░░ 2796  + ░░░░░░░░░░░
- 2793  + ░░░░░                           2793  + ░░░░░       2797  + ░░░░░      
- 2794  +                                 2794  +             2798  +            
-                                         2795  - ░░░░░░░░░░░ 2799  - ░░░░░░░░░░░
-                                         2796  - ░░░░░░░░░░░ 2800  - ░░░░░░░░░░░
-                                                             2799  + ░░░░░░░░░░░
-                                                             2800  + ░░░░░░░░░░░
-                                                             2801  + ░░░░░░░░░░░
-                                         2795  + ░░░░░       2802  + ░░░░░      
-                                         2796  +             2803  +            
- 2795    ░░░░░░░░░░░ 2795    ░░░░░░░░░░░ 2797    ░░░░░░░░░░░ 2804    ░░░░░░░░░░░
-                     2796  - ░░░░░░░░░░░                     2805  - ░░░░░░░░░░░
-                     2797  - ░░░░░░░░░░░                     2806  - ░░░░░░░░░░░
-                     2798  - ░░░░░░░░░                       2807  - ░░░░░░░░░  
-                                         2798  - ░░░░░░░░░░░ 2808  - ░░░░░░░░░░░
-                     2796  - ░░░░░░░░░░░ 2799  - ░░░░░░░░░░░ 2809  - ░░░░░░░░░░░
- 2796  + ░░░░░░░░░░░                                         2805  + ░░░░░░░░░░░
- 2797    ░░░░░       2796    ░░░░░       2798    ░░░░░       2806    ░░░░░      
- 2798                2797                2799                2807               
- 2799    ░░░░░░░░░░░ 2798    ░░░░░░░░░░░ 2800    ░░░░░░░░░░░ 2808    ░░░░░░░░░░░
-                     2799  - ░░░░░░░░░░░                     2809  - ░░░░░░░░░░░
-                     2800  - ░░░░░░░░░░░                     2810  - ░░░░░░░░░░░
-                     2801  - ░░░░░░░░░                       2811  - ░░░░░░░░░  
-                                         2801  - ░░░░░░░░░░░ 2812  - ░░░░░░░░░░░
-                     2799  - ░░░░░░░░░░░ 2802  - ░░░░░░░░░░░ 2813  - ░░░░░░░░░░░
- 2800  + ░░░░░░░░░░░                                         2809  + ░░░░░░░░░░░
- 2801  + ░░░░░                                               2810  + ░░░░░      
- 2802  +                                                     2811  +            
- 2803  + ░░░░░░░░░░░                                         2812  + ░░░░░░░░░░░
- 2804  + ░░░░░░░░░░░                                         2813  + ░░░░░░░░░░░
- 2805  + ░░░░░░░░░░░                                         2814  + ░░░░░░░░░░░
- 2806  + ░░░░░                                               2815  + ░░░░░      
- 2807  +                                                     2816  +            
- 2808  - ░░░░░░░░░░░                                         2817  - ░░░░░░░░░░░
- 2809  - ░░░░░░░░░░░                                         2818  - ░░░░░░░░░░░
- 2810  - ░░░░░░░░░░░                                         2819  - ░░░░░░░░░░░
-                                                             2817  + ░░░░░░░░░░░
-                                                             2818  + ░░░░░░░░░░░
-                                         2801  + ░░░░░       2819  + ░░░░░      
-                                         2802  +             2820  +            
-                                         2803  + ░░░░░░░░░░░ 2821  + ░░░░░░░░░░░
-                                         2804  + ░░░░░░░░░░░ 2822  + ░░░░░░░░░░░
-                                         2805  + ░░░░░░░░░░░ 2823  + ░░░░░░░░░░░
-                                         2806  + ░░░░░░░░░░░ 2824  + ░░░░░░░░░░░
-                                         2807  + ░░░░░░░░░░░ 2825  + ░░░░░░░░░░░
-                                         2808  + ░░░░░       2826  + ░░░░░      
-                                         2809  +             2827  +            
-                                         2810  + ░░░░░░░░░░░ 2828  + ░░░░░░░░░░░
-                                         2811  + ░░░░░░░░░░░ 2829  + ░░░░░░░░░░░
-                                         2812  + ░░░░░░░░░░░ 2830  + ░░░░░░░░░░░
- 2808    ░░░░░       2799    ░░░░░       2813    ░░░░░       2831    ░░░░░      
- 2809                2800                2814                2832               
- 2810    ░░░░░░░░░░░ 2801    ░░░░░░░░░░░ 2815    ░░░░░░░░░░░ 2833    ░░░░░░░░░░░
- 2811                2802                2816                2834               
+ 2792    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ 2793    ░░░░░                                                                  
+ 2794                                                                           
+ 2795  + ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░                     
+ 2796  + ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 
+ 2797  + ░░░░░                                                                  
+ 2798  +                                                                        
+ 2799  - ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░         
+ 2800  - ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ 2799  + ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ 2800  + ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ 2801  + ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ 2802  + ░░░░░                                                                  
+ 2803  +                                                                        
+ 2804    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░             
+ 2805  - ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░                       
+ 2806  - ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░                                        
+ 2807  - ░░░░░░░░░                                                              
+ 2808  - ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░                          
+ 2809  - ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ 2805  + ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ 2806    ░░░░░                                                                  
+ 2807                                                                           
+ 2808    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░              
+ 2809  - ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░                       
+ 2810  - ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░                                        
+ 2811  - ░░░░░░░░░                                                              
+ 2812  - ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░                          
+ 2813  - ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ 2809  + ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ 2810  + ░░░░░                                                                  
+ 2811  +                                                                        
+ 2812  + ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ 2813  + ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░                  
+ 2814  + ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ 2815  + ░░░░░                                                                  
+ 2816  +                                                                        
+ 2817  - ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ 2818  - ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ 2819  - ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ 2817  + ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░         
+ 2818  + ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ 2819  + ░░░░░                                                                  
+ 2820  +                                                                        
+ 2821  + ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ 2822  + ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ 2823  + ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░            
+ 2824  + ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░                                
+ 2825  + ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ 2826  + ░░░░░                                                                  
+ 2827  +                                                                        
+ 2828  + ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ 2829  + ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░          
+ 2830  + ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ 2831    ░░░░░                                                                  
+ 2832                                                                           
+ 2833    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░                   
+ 2834                                                                           
 "
 `;
 
