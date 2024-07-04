@@ -25,61 +25,43 @@ const TEST_CONFIG: Config = {
     ...TEST_THEME,
 };
 
-type TestOverrides = { screenWidth: number; config: Partial<Config> };
+type TestOverrides = Partial<Config>;
 
+const SCREEN_WIDTH = 240;
 const CONFIG_OVERRIDES: Record<string, TestOverrides> = {
     splitWithoutWrapping: {
-        screenWidth: 80,
-        config: {
-            MIN_LINE_WIDTH: 40,
-            WRAP_LINES: false,
-        },
+        MIN_LINE_WIDTH: 60,
+        WRAP_LINES: false,
     },
     splitWithWrapping: {
-        screenWidth: 80,
-        config: {
-            MIN_LINE_WIDTH: 40,
-            WRAP_LINES: true,
-        },
+        MIN_LINE_WIDTH: 60,
+        WRAP_LINES: true,
     },
     unifiedWithWrapping: {
-        screenWidth: 80,
-        config: {
-            MIN_LINE_WIDTH: 80,
-            WRAP_LINES: true,
-        },
+        MIN_LINE_WIDTH: 200,
+        WRAP_LINES: true,
     },
     // This is in split mode
     inlineChangesHighlighted: {
-        screenWidth: 120,
-        config: {
-            HIGHLIGHT_LINE_CHANGES: true,
-            DELETED_WORD_COLOR: { color: { r: 255, g: 0, b: 0, a: 255 } },
-            INSERTED_WORD_COLOR: { color: { r: 0, g: 255, b: 0, a: 255 } },
-        },
+        MIN_LINE_WIDTH: 60,
+        HIGHLIGHT_LINE_CHANGES: true,
+        DELETED_WORD_COLOR: { color: { r: 255, g: 0, b: 0, a: 255 } },
+        INSERTED_WORD_COLOR: { color: { r: 0, g: 255, b: 0, a: 255 } },
     },
     unifiedWithInlineChangesHighlighted: {
-        screenWidth: 80,
-        config: {
-            MIN_LINE_WIDTH: 80,
-            HIGHLIGHT_LINE_CHANGES: true,
-            DELETED_WORD_COLOR: { color: { r: 255, g: 0, b: 0, a: 255 } },
-            INSERTED_WORD_COLOR: { color: { r: 0, g: 255, b: 0, a: 255 } },
-        },
+        MIN_LINE_WIDTH: 200,
+        HIGHLIGHT_LINE_CHANGES: true,
+        DELETED_WORD_COLOR: { color: { r: 255, g: 0, b: 0, a: 255 } },
+        INSERTED_WORD_COLOR: { color: { r: 0, g: 255, b: 0, a: 255 } },
     },
     syntaxHighlighted: {
-        screenWidth: 80,
-        config: {
-            MIN_LINE_WIDTH: 40,
-            WRAP_LINES: false,
-            SYNTAX_HIGHLIGHTING_THEME: 'dark-plus',
-        },
+        MIN_LINE_WIDTH: 60,
+        WRAP_LINES: false,
+        SYNTAX_HIGHLIGHTING_THEME: 'dark-plus',
     },
 };
 
-for (const [configName, { screenWidth, config }] of Object.entries(
-    CONFIG_OVERRIDES
-)) {
+for (const [configName, config] of Object.entries(CONFIG_OVERRIDES)) {
     async function transform(input: string): Promise<string> {
         const testConfig: Config = {
             ...TEST_CONFIG,
@@ -88,7 +70,7 @@ for (const [configName, { screenWidth, config }] of Object.entries(
         const context = await getContextForConfig(
             testConfig,
             TEST_CHALK,
-            screenWidth
+            SCREEN_WIDTH
         );
 
         let string = '';
