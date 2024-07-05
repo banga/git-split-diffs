@@ -213,6 +213,24 @@ describe('slice', () => {
 
         expect(() => apply(a.slice(-1, 3))).toThrow();
     });
+
+    test('discard leading spans', () => {
+        const a = S()
+            .appendString('12')
+            .addSpan(0, 1, 'i')
+            .slice(1, 2)
+            .appendString('3');
+        expect(apply(a)).toEqual('23');
+    });
+
+    test('discard trailing spans', () => {
+        const a = S()
+            .appendString('12')
+            .addSpan(1, 2, 'i')
+            .slice(0, 1)
+            .appendString('3');
+        expect(apply(a)).toEqual('13');
+    });
 });
 
 describe('appendSpannedString', () => {

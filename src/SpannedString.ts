@@ -83,16 +83,17 @@ export class SpannedString<T> {
             if (otherSpans) {
                 const index = otherIndex + overlappingSpanIndex;
                 spanMarkers[index] = spanMarkers[index] ?? [];
-                spanMarkers[index]?.push(...otherSpans);
+                spanMarkers[index]?.push(
+                    ...otherSpans.map((span) => ({
+                        ...span,
+                        // Remap ids to avoid collisions
+                        id: span.id + this._nextId,
+                    }))
+                );
             }
         }
         this._spanMarkers = spanMarkers;
-
-        // We don't need to remap the ids of the spans, because they only occur
-        // together in one place, `overlappingSpanIndex` and at that index, all
-        // the spans of the first string must be closing and all the spans of
-        // the second string must be opening.
-        this._nextId = Math.max(this._nextId, other._nextId);
+        this._nextId = this._nextId + other._nextId;
 
         return this;
     }
@@ -111,50 +112,52 @@ export class SpannedString<T> {
             endIndex = this._string.length;
         }
 
-        const spanMarkers = new Array(endIndex + 1 - startIndex);
+        let index = 0;
         const activeSpansById = new Map<number, Span<T>>();
-        for (let index = 0; index < this._spanMarkers.length; index++) {
-            const sliceIndex = index - startIndex;
-
-            if (sliceIndex === spanMarkers.length - 1) {
-                spanMarkers[spanMarkers.length - 1] = Array.from(
-                    activeSpansById.values()
-                ).map(({ id, attribute }) => ({
-                    id,
-                    attribute,
-                    isStart: false,
-                }));
-            }
-
-            const spans = this._spanMarkers[index];
-            if (spans) {
-                for (const span of spans) {
-                    if (span.isStart) {
-                        activeSpansById.set(span.id, span);
-                    } else {
-                        activeSpansById.delete(span.id);
-                    }
-                }
-                if (sliceIndex >= 0 && sliceIndex < spanMarkers.length) {
-                    spanMarkers[sliceIndex] = spanMarkers[sliceIndex] ?? [];
-                    spanMarkers[sliceIndex].push(...spans);
+        const updatedActiveSpans = () => {
+            for (const span of this._spanMarkers[index] ?? []) {
+                if (span.isStart) {
+                    activeSpansById.set(span.id, span);
+                } else {
+                    activeSpansById.delete(span.id);
                 }
             }
+        };
+        const getActiveSpans = () => {
+            return [...activeSpansById.values()];
+        };
 
-            if (sliceIndex === 0) {
-                spanMarkers[0] = Array.from(activeSpansById.values()).map(
-                    ({ id, attribute }) => ({
-                        id,
-                        attribute,
-                        isStart: true,
-                    })
-                );
-            }
+        const newSpanMarkers: (Span<T>[] | undefined)[] = new Array(
+            endIndex + 1 - startIndex
+        );
+
+        // Collect all the active spans before the new string starts
+        while (index < startIndex) {
+            updatedActiveSpans();
+            index++;
         }
+        newSpanMarkers[0] = getActiveSpans().map((span) => ({ ...span }));
+
+        // Copy over spans active in the new string
+        while (index < endIndex) {
+            const spans = this._spanMarkers[index];
+            updatedActiveSpans();
+            if (spans) {
+                const newIndex = index - startIndex;
+                newSpanMarkers[newIndex] = newSpanMarkers[newIndex] ?? [];
+                newSpanMarkers[newIndex]!.push(...spans);
+            }
+            index++;
+        }
+
+        // Close any spans that are still active at the end of the new string
+        newSpanMarkers[endIndex - startIndex] = getActiveSpans().map(
+            (span) => ({ ...span, isStart: false })
+        );
 
         return new SpannedString<T>(
             this._string.slice(startIndex, endIndex),
-            spanMarkers,
+            newSpanMarkers,
             this._nextId
         );
     }

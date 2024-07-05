@@ -36,8 +36,8 @@ export async function* formatAndFitHunkLine(
         return;
     }
 
-    const linePrefix = line?.slice(0, 1) ?? null;
-    const lineText = line?.slice(1) ?? null;
+    const linePrefix = line.slice(0, 1);
+    const lineText = line.slice(1);
 
     let lineColor: ThemeColor;
     let lineNoColor: ThemeColor;
