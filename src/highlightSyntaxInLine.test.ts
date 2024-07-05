@@ -12,6 +12,11 @@ test('highlighting should load languages on-demand', async () => {
     });
     expect(highlighter.getLoadedLanguages()).toEqual([]);
 
-    await highlightSyntaxInLine(referenceString, 'test.c', highlighter);
+    await highlightSyntaxInLine(
+        referenceString,
+        'test.c',
+        highlighter,
+        'dark-plus'
+    );
     expect(highlighter.getLoadedLanguages()).toEqual(['c']);
 });
