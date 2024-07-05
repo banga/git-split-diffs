@@ -14,10 +14,11 @@ export async function* iterFormatUnifiedDiffHunkUnified(
 ): AsyncIterable<FormattedString> {
     const lineWidth = context.SCREEN_WIDTH;
 
-    let [
-        { fileName: fileNameA, lines: hunkLinesA, startLineNo: lineNoA },
-        { fileName: fileNameB, lines: hunkLinesB, startLineNo: lineNoB },
+    const [
+        { fileName: fileNameA, lines: hunkLinesA },
+        { fileName: fileNameB, lines: hunkLinesB },
     ] = hunkParts;
+    let [{ startLineNo: lineNoA }, { startLineNo: lineNoB }] = hunkParts;
 
     let indexA = 0,
         indexB = 0;
@@ -108,7 +109,7 @@ export async function* iterFormatCombinedDiffHunkUnified(
 
     // The final hunk part shows the current state of the file, so we just
     // display that with additions and deletions highlighted.
-    let { fileName, lines, startLineNo } = hunkParts[hunkParts.length - 1];
+    const { fileName, lines, startLineNo } = hunkParts[hunkParts.length - 1];
     let lineNo = startLineNo;
     let numDeletes = 0;
 

@@ -1,4 +1,4 @@
-export function* zip<T extends Array<any>>(
+export function* zip<T extends Array<unknown>>(
     ...iterables: { [K in keyof T]: Iterable<T[K]> }
 ): Iterable<{ [K in keyof T]: T[K] | undefined }> {
     const iterators = iterables.map((iterable) => iterable[Symbol.iterator]());
@@ -18,7 +18,7 @@ export function* zip<T extends Array<any>>(
     }
 }
 
-export async function* zipAsync<T extends Array<any>>(
+export async function* zipAsync<T extends Array<unknown>>(
     ...iterables: { [K in keyof T]: AsyncIterable<T[K]> }
 ): AsyncIterable<{ [K in keyof T]: T[K] | undefined }> {
     const iterators = iterables.map((iterable) =>

@@ -10,6 +10,7 @@ const TEST_THEME = Object.fromEntries(
 ) as Theme;
 
 const replaceColoredText =
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     (r: number, g: number, b: number) => (text: string) =>
         text.replace(/./g, '░');
 
@@ -164,7 +165,7 @@ index 9f14e96..eaf3730 100644
             ).toMatchSnapshot();
         });
 
-        test('commit with deletion', async function () {
+        test('commit with deletion', function () {
             expect(`commit eccfb5a2b3d76ba53df315f977da74b18d50113e
 Author: Shrey Banga <shrey@quip.com>
 Date:   Thu Aug 22 10:07:25 2019 -0700
@@ -316,7 +317,7 @@ index 0000000..6499edf
 @@ -0,0 +1,2 @@
 +node_modules/**
 +build/**
-\ No newline at end of file`)
+\\ No newline at end of file`)
             ).toMatchSnapshot();
         });
 
@@ -380,7 +381,7 @@ index ca15c64..0000000
 -        end tell
 -    end timeout
 -end run
-\ No newline at end of file`)
+\\ No newline at end of file`)
             ).toMatchSnapshot();
         });
 
@@ -465,7 +466,7 @@ index d88c464..6901818 100644
 +++ b/file1
 @@ -1 +1,2 @@
 -This is file1
-\ No newline at end of file
+\\ No newline at end of file
 +This is file1
 +Experimental change
 diff --git a/file2 b/file2

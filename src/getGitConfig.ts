@@ -11,7 +11,7 @@ export const DEFAULT_THEME_NAME = 'dark';
 
 const GIT_CONFIG_KEY_PREFIX = 'split-diffs';
 const GIT_CONFIG_LINE_REGEX = new RegExp(
-    `${GIT_CONFIG_KEY_PREFIX}\.([^=]+)=(.*)`
+    `${GIT_CONFIG_KEY_PREFIX}\\.([^=]+)=(.*)`
 );
 
 function extractFromGitConfigString(configString: string) {
@@ -36,7 +36,9 @@ export function getGitConfig(configString: string): GitConfig {
         if (!isNaN(parsedMinLineWidth)) {
             minLineWidth = parsedMinLineWidth;
         }
-    } catch {}
+    } catch {
+        // Ignore invalid values
+    }
 
     return {
         MIN_LINE_WIDTH: minLineWidth,

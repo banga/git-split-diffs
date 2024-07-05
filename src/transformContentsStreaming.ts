@@ -5,7 +5,7 @@ import { iterReplaceTabsWithSpaces } from './iterReplaceTabsWithSpaces';
 import { iterSideBySideDiffs } from './iterSideBySideDiffs';
 import { iterWithNewlines } from './iterWithNewlines';
 
-export async function transformContentsStreaming(
+export function transformContentsStreaming(
     context: Context,
     input: Readable,
     output: Writable

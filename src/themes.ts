@@ -82,7 +82,7 @@ function hexToRgba(hex: string): ColorRgba {
     hex = hex.slice(1);
 
     let hexNo = parseInt(hex, 16);
-    let bits = hex.length === 3 ? 4 : 8;
+    const bits = hex.length === 3 ? 4 : 8;
 
     let a = 255;
     if (hex.length === 8) {
