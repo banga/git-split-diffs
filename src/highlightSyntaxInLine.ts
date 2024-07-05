@@ -1,8 +1,34 @@
 import path from 'path';
 import * as shiki from 'shiki';
 import { FormattedString } from './formattedString';
-import { parseColorDefinition, ThemeColor } from './themes';
+import { ColorModifier, parseColorDefinition, ThemeColor } from './themes';
 export type HighlightedText = [string, ThemeColor | null];
+
+function parseShikiColor(token: shiki.ThemedToken): ThemeColor {
+    let modifiers: ColorModifier[] | undefined;
+    if (
+        token.fontStyle !== undefined &&
+        token.fontStyle !== shiki.FontStyle.NotSet &&
+        token.fontStyle !== shiki.FontStyle.None
+    ) {
+        modifiers = [];
+        if (token.fontStyle & shiki.FontStyle.Bold) {
+            modifiers.push('bold');
+        }
+        if (token.fontStyle & shiki.FontStyle.Italic) {
+            modifiers.push('italic');
+        }
+        if (token.fontStyle & shiki.FontStyle.Underline) {
+            modifiers.push('underline');
+        }
+    }
+    const themeColor = parseColorDefinition({
+        color: token.color,
+        backgroundColor: token.bgColor,
+        modifiers,
+    });
+    return themeColor;
+}
 
 export async function highlightSyntaxInLine(
     line: FormattedString,
@@ -23,14 +49,11 @@ export async function highlightSyntaxInLine(
         theme,
     });
 
-    let index = 0;
-    for (const { content, color } of tokens.flat()) {
-        if (color) {
-            const syntaxColor = parseColorDefinition({
-                color: color,
-            });
-            line.addSpan(index, index + content.length, syntaxColor);
-            index += content.length;
-        }
+    for (const token of tokens.flat()) {
+        line.addSpan(
+            token.offset,
+            token.offset + token.content.length,
+            parseShikiColor(token)
+        );
     }
 }

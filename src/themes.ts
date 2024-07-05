@@ -14,7 +14,7 @@ const THEMES_DIR = path.resolve(
  */
 type Color = string;
 
-type ColorModifier =
+export type ColorModifier =
     | 'reset'
     | 'bold'
     | 'dim'
@@ -25,7 +25,7 @@ type ColorModifier =
     | 'strikethrough'
     | 'visible';
 
-type ColorDefinition = {
+export type ColorDefinition = {
     color?: Color;
     backgroundColor?: Color;
     modifiers?: ColorModifier[];
