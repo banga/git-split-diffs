@@ -34,7 +34,7 @@
 -   [x] Keep colors from --stat
 -   [x] Tests for syntax highlighting
 -   [x] Load shiki languages on-demand (by switching to shikiji)
--   [ ] Benchmark for syntax highlighting
+-   [x] Benchmark for syntax highlighting
 -   [x] Display 3-way merge diffs (e.g. during merge conflicts)
 -   [ ] See why `less` occasionally goes into search mode
 -   [ ] Test on linux
