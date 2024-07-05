@@ -1,4 +1,4 @@
-import * as shikiji from 'shikiji';
+import * as shiki from 'shiki';
 import { Config } from './getConfig';
 import { FormattedString, T } from './formattedString';
 import { ChalkInstance } from 'chalk';
@@ -11,7 +11,7 @@ export type Context = Config & {
     CHALK: ChalkInstance;
     SCREEN_WIDTH: number;
     HORIZONTAL_SEPARATOR: FormattedString;
-    HIGHLIGHTER?: shikiji.Highlighter;
+    HIGHLIGHTER?: shiki.Highlighter;
 };
 
 export async function getContextForConfig(
@@ -27,7 +27,7 @@ export async function getContextForConfig(
 
     let HIGHLIGHTER = undefined;
     if (config.SYNTAX_HIGHLIGHTING_THEME) {
-        HIGHLIGHTER = await shikiji.getHighlighter({
+        HIGHLIGHTER = await shiki.createHighlighter({
             themes: [config.SYNTAX_HIGHLIGHTING_THEME],
             langs: [],
         });

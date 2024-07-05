@@ -1,6 +1,6 @@
 import { GitConfig } from './getGitConfig';
 import { Theme, loadTheme } from './themes';
-import * as shikiji from 'shikiji';
+import * as shiki from 'shiki';
 
 export type Config = Theme & {
     MIN_LINE_WIDTH: number;
@@ -24,6 +24,6 @@ export function getConfig(gitConfig: GitConfig): Config {
         ...theme,
         ...gitConfig,
         SYNTAX_HIGHLIGHTING_THEME: (theme.SYNTAX_HIGHLIGHTING_THEME ??
-            gitConfig.SYNTAX_HIGHLIGHTING_THEME) as shikiji.BundledTheme,
+            gitConfig.SYNTAX_HIGHLIGHTING_THEME) as shiki.BundledTheme,
     };
 }

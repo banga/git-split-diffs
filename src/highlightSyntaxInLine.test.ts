@@ -1,4 +1,4 @@
-import * as shikiji from 'shikiji';
+import * as shiki from 'shiki';
 import { T } from './formattedString';
 import { highlightSyntaxInLine } from './highlightSyntaxInLine';
 
@@ -6,7 +6,7 @@ test('highlighting should load languages on-demand', async () => {
     const string = 'int main {}';
     const referenceString = T().appendString(string);
 
-    const highlighter = await shikiji.getHighlighter({
+    const highlighter = await shiki.createHighlighter({
         themes: ['dark-plus'],
         langs: [],
     });

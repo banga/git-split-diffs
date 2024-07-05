@@ -67,11 +67,12 @@ export async function* formatAndFitHunkLine(
     let isFirstLine = true;
     const formattedLine = T().appendString(lineText);
     highlightChangesInLine(context, linePrefix, formattedLine, changes);
-    if (context.HIGHLIGHTER) {
+    if (context.HIGHLIGHTER && context.SYNTAX_HIGHLIGHTING_THEME) {
         await highlightSyntaxInLine(
             formattedLine,
             fileName,
-            context.HIGHLIGHTER
+            context.HIGHLIGHTER,
+            context.SYNTAX_HIGHLIGHTING_THEME
         );
     }
 
