@@ -23,7 +23,7 @@ export function getConfig(gitConfig: GitConfig): Config {
         ...CONFIG_DEFAULTS,
         ...theme,
         ...gitConfig,
-        SYNTAX_HIGHLIGHTING_THEME: (theme.SYNTAX_HIGHLIGHTING_THEME ??
-            gitConfig.SYNTAX_HIGHLIGHTING_THEME) as shiki.BundledTheme,
+        SYNTAX_HIGHLIGHTING_THEME: (gitConfig.SYNTAX_HIGHLIGHTING_THEME ??
+            theme.SYNTAX_HIGHLIGHTING_THEME) as shiki.BundledTheme,
     };
 }
