@@ -63,40 +63,45 @@ const CONFIG_OVERRIDES: Record<string, TestOverrides> = {
     },
 };
 
+async function transform(
+    config: Partial<Config>,
+    input: string
+): Promise<string> {
+    const testConfig: Config = {
+        ...TEST_CONFIG,
+        ...config,
+    };
+    const context = await getContextForConfig(
+        testConfig,
+        TEST_CHALK,
+        SCREEN_WIDTH
+    );
+
+    let string = '';
+    await transformContentsStreaming(
+        context,
+        Readable.from(input),
+        new (class extends Writable {
+            write(chunk: Buffer) {
+                string += chunk.toString();
+                return true;
+            }
+        })()
+    );
+    return string;
+}
+
 for (const [configName, config] of Object.entries(CONFIG_OVERRIDES)) {
-    async function transform(input: string): Promise<string> {
-        const testConfig: Config = {
-            ...TEST_CONFIG,
-            ...config,
-        };
-        const context = await getContextForConfig(
-            testConfig,
-            TEST_CHALK,
-            SCREEN_WIDTH
-        );
-
-        let string = '';
-        await transformContentsStreaming(
-            context,
-            Readable.from(input),
-            new (class extends Writable {
-                write(chunk: Buffer) {
-                    string += chunk.toString();
-                    return true;
-                }
-            })()
-        );
-        return string;
-    }
-
     describe(configName, () => {
         test('empty', async function () {
-            expect(await transform(``)).toMatchSnapshot();
+            expect(await transform(config, ``)).toMatchSnapshot();
         });
 
         test('with ANSI color codes', async function () {
             expect(
-                await transform(`
+                await transform(
+                    config,
+                    `
 [1;32mcommit f735de7025c6d626c5ae1a291fe24f143dea0313[m
 Author: Shrey Banga <banga.shrey@gmail.com>
 Date:   Sun Apr 11 15:25:34 2021 -0700
@@ -116,13 +121,16 @@ Date:   Sun Apr 11 15:25:34 2021 -0700
  -   [ ] Handle moves and renames without diffs[m
  -   [ ] Highlight changes in lines[m
 
-`)
+`
+                )
             ).toMatchSnapshot();
         });
 
         test('commits without diffs', async function () {
             expect(
-                await transform(`
+                await transform(
+                    config,
+                    `
 commit e5f896655402f8cf2d947c528d45e1d56bbf5717 (HEAD -> main)
 Author: Shrey Banga <banga.shrey@gmail.com>
 Date:   Sun Apr 11 16:23:54 2021 -0700
@@ -140,13 +148,16 @@ Author: Shrey Banga <banga.shrey@gmail.com>
 Date:   Sun Apr 11 10:39:17 2021 -0700
 
     more todos
-`)
+`
+                )
             ).toMatchSnapshot();
         });
 
         test('commit with addition', async function () {
             expect(
-                await transform(`
+                await transform(
+                    config,
+                    `
 commit f735de7025c6d626c5ae1a291fe24f143dea0313
 Author: Shrey Banga <banga.shrey@gmail.com>
 Date:   Sun Apr 11 15:25:34 2021 -0700
@@ -161,7 +172,8 @@ index 9f14e96..eaf3730 100644
  -   [x] Organize code
 +-   [x] Move visual config to theme
  -   [ ] Handle empty diffs
-`)
+`
+                )
             ).toMatchSnapshot();
         });
 
@@ -187,7 +199,9 @@ index a33d267..ae58a01 100644
 
         test('commit with a small diff', async function () {
             expect(
-                await transform(`
+                await transform(
+                    config,
+                    `
 commit 26ca49fb83758bace20a473e231d576aa1bbe115
 Author: Shrey Banga <shrey@quip.com>
 Date:   Tue May 23 16:47:17 2017 -0700
@@ -205,13 +219,16 @@ index 5a38bdb..ef4ff52 100644
 @@ -42,3 +43,2 @@ cask 'rescuetime'
  cask 'slate'
 -cask 'sonos'
- cask 'spotify'`)
+ cask 'spotify'`
+                )
             ).toMatchSnapshot();
         });
 
         test('commit with a small diff without a/ and b/ prefixs', async function () {
             expect(
-                await transform(`
+                await transform(
+                    config,
+                    `
 commit 26ca49fb83758bace20a473e231d576aa1bbe115
 Author: Shrey Banga <shrey@quip.com>
 Date:   Tue May 23 16:47:17 2017 -0700
@@ -229,13 +246,16 @@ index 5a38bdb..ef4ff52 100644
 @@ -42,3 +43,2 @@ cask 'rescuetime'
  cask 'slate'
 -cask 'sonos'
- cask 'spotify'`)
+ cask 'spotify'`
+                )
             ).toMatchSnapshot();
         });
 
         test('commit with tabs', async function () {
             expect(
-                await transform(`
+                await transform(
+                    config,
+                    `
 commit f735de7025c6d626c5ae1a291fe24f143dea0313
 Author: Shrey Banga <banga.shrey@gmail.com>
 Date:   Sun Apr 11 15:25:34 2021 -0700
@@ -250,13 +270,16 @@ index 9f14e96..eaf3730 100644
  -		[x] Organize code
 +-		[x] Move visual config to theme
  -		[ ] Handle empty diffs
-`)
+`
+                )
             ).toMatchSnapshot();
         });
 
         test('multiple inserts and deletes in the same hunk', async function () {
             expect(
-                await transform(`
+                await transform(
+                    config,
+                    `
 commit e5f896655402f8cf2d947c528d45e1d56bbf5717
 Author: Shrey Banga <banga.shrey@gmail.com>
 Date:   Sun Apr 11 16:23:54 2021 -0700
@@ -296,13 +319,16 @@ index 149981d..fb507a4 100644
 +        console.error
      );
  }
-        `)
+        `
+                )
             ).toMatchSnapshot();
         });
 
         test('commit with file addition', async function () {
             expect(
-                await transform(`
+                await transform(
+                    config,
+                    `
 commit e4951eee3b9a8fa471d01dd64075c5fd44879a26
 Author: Shrey Banga <banga.shrey@gmail.com>
 Date:   Sat Apr 10 14:35:42 2021 -0700
@@ -317,13 +343,16 @@ index 0000000..6499edf
 @@ -0,0 +1,2 @@
 +node_modules/**
 +build/**
-\\ No newline at end of file`)
+\\ No newline at end of file`
+                )
             ).toMatchSnapshot();
         });
 
         test('commit with binary file addition', async function () {
             expect(
-                await transform(`
+                await transform(
+                    config,
+                    `
 commit c0ca4394fd55f1709430414f03db3d04cb9cc72c (HEAD -> main)
 Author: Shrey Banga <banga.shrey@gmail.com>
 Date:   Wed Apr 14 18:24:29 2021 -0700
@@ -336,13 +365,16 @@ index 0000000..40e16dc
 Binary files /dev/null and b/screenshots/default.png differ
 diff --git a/test dir a/default.png b/test dir a/default.png
 index 44f1c8a..915e850 100644
-Binary files a/test dir a/default.png and b/test dir a/default.png differ`)
+Binary files a/test dir a/default.png and b/test dir a/default.png differ`
+                )
             ).toMatchSnapshot();
         });
 
         test('commit with file move', async function () {
             expect(
-                await transform(`
+                await transform(
+                    config,
+                    `
 commit 1c76ed4bb05429741fd4a48896bb84b11bc661f5
 Author: Shrey Banga <banga.shrey@gmail.com>
 Date:   Sat Apr 10 22:26:15 2021 -0700
@@ -353,13 +385,16 @@ diff --git a/colors.diff b/test-data/colors.diff
 similarity index 100%
 rename from colors.diff
 rename to test-data/colors.diff
-    `)
+    `
+                )
             ).toMatchSnapshot();
         });
 
         test('commit with file deletion', async function () {
             expect(
-                await transform(`
+                await transform(
+                    config,
+                    `
 commit 1e6ebaccc6fadf3390a749e7aa2cc6372b24325e
 Author: Shrey Banga <banga.shrey@gmail.com>
 Date:   Sun Apr 18 03:17:05 2021 -0700
@@ -381,13 +416,15 @@ index ca15c64..0000000
 -        end tell
 -    end timeout
 -end run
-\\ No newline at end of file`)
+\\ No newline at end of file`
+                )
             ).toMatchSnapshot();
         });
 
         test('commit with inline line changes', async function () {
             expect(
                 await transform(
+                    config,
                     `
 commit 9e424d329800e945e3003c9e275f80bdef69e591
 Author: Shrey Banga <banga.shrey@gmail.com>
@@ -445,7 +482,9 @@ index ecb417f..f412f84 100644
 
         test('commit with double-spaced characters', async function () {
             expect(
-                await transform(`
+                await transform(
+                    config,
+                    `
 diff --git a/README.ja-JP.md b/README.ja-JP.md
 index 5ff5244..b48cf46 100644
 --- a/README.ja-JP.md
@@ -453,13 +492,16 @@ index 5ff5244..b48cf46 100644
 @@ -4 +4 @@
 -このリポジトリは、MS-DOS v1.25 及び MS-DOS v2.0 のオリジナルのソースコード及びコンパイルされたバイナリを含んでいます。
 +このリポジトリは、MS-DOS 及び MS-DOS v2.0 のオリジナルのソースコード及びコンパイルされたバイナリを含んでいます。
-`)
+`
+                )
             ).toMatchSnapshot();
         });
 
         test('diff from issue #50', async function () {
             expect(
-                await transform(`
+                await transform(
+                    config,
+                    `
 diff --git a/file1 b/file1
 index d88c464..6901818 100644
 --- a/file1
@@ -475,14 +517,17 @@ index 095ee29..439621e 100644
 +++ b/file2
 @@ -1 +1,2 @@
 +All good
- This is file2`)
+ This is file2`
+                )
             ).toMatchSnapshot();
         });
 
         test('merge commit with 2 parents', async function () {
             // Source: the TypeScript repo
             expect(
-                await transform(`
+                await transform(
+                    config,
+                    `
 commit 3f504f4fbc1caf9c10814d48d8897a34f8a34dec
 Merge: 2439767601 fbcdb8cf4f
 Author: Gabriela Araujo Britto <gabrielaa@microsoft.com>
@@ -517,14 +562,17 @@ index 2e204671f7,e56bba5ab4..ab6229d1b6
  +    contextualReturnType?: Type;        // If the node is a return statement's expression, then this is the contextual return type.
 +     fakeScopeForSignatureDeclaration?: "params" | "typeParams"; // If present, this is a fake scope injected into an enclosing declaration chain.
       assertionExpressionType?: Type;     // Cached type of the expression of a type assertion
-  }`)
+  }`
+                )
             ).toMatchSnapshot();
         });
 
         test('merge commit with 3 parents', async function () {
             // Source: the TypeScript repo
             expect(
-                await transform(`
+                await transform(
+                    config,
+                    `
 commit d6d6a4aedfa78794c1b611c13d2ed1d3a66e1798
 Merge: 0dc976df1e 5f16a48236 3eadbf6c96
 Author: Andy Hanson <anhans@microsoft.com>
@@ -594,7 +642,8 @@ index b95feb9207,c19eb487d7,83a2192659..7e9a356e73
        }
    
        function isNameOfModuleDeclaration(node: Node) {
-`)
+`
+                )
             ).toMatchSnapshot();
         });
     });

@@ -1,3 +1,4 @@
+/* eslint-disable no-inner-declarations */
 import { zip, zipAsync } from './zip';
 
 describe('zip', () => {
