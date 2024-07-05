@@ -1,5 +1,5 @@
 {
-    "SYNTAX_HIGHLIGHTING_THEME": "solarized-dark",
+    "SYNTAX_HIGHLIGHTING_THEME": "solarized-light",
     "DEFAULT_COLOR": {
         "color": "#657b83",
         "backgroundColor": "#fdf6e3"

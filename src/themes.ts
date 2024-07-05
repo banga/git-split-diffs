@@ -77,21 +77,24 @@ export type ThemeColor = {
  * The hex string is of the format #rrggbb(aa)
  */
 function hexToRgba(hex: string): ColorRgba {
-    assert.ok(hex.length === 7 || hex.length === 9);
+    assert.ok(hex.length === 7 || hex.length === 9 || hex.length === 4, hex);
 
-    let hexNo = parseInt(hex.slice(1), 16);
+    hex = hex.slice(1);
+
+    let hexNo = parseInt(hex, 16);
+    let bits = hex.length === 3 ? 4 : 8;
 
     let a = 255;
-    if (hex.length === 9) {
+    if (hex.length === 8) {
         a = hexNo & 0xff;
-        hexNo >>>= 8;
+        hexNo >>>= bits;
     }
 
     const b = hexNo & 0xff;
-    hexNo >>>= 8;
+    hexNo >>>= bits;
 
     const g = hexNo & 0xff;
-    hexNo >>>= 8;
+    hexNo >>>= bits;
 
     const r = hexNo & 0xff;
 

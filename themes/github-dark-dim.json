@@ -1,5 +1,5 @@
 {
-    "SYNTAX_HIGHLIGHTING_THEME": "github-dark",
+    "SYNTAX_HIGHLIGHTING_THEME": "github-dark-dimmed",
     "DEFAULT_COLOR": {
         "color": "#768390",
         "backgroundColor": "#22282d"

@@ -71,7 +71,7 @@ Syntax highlighting is supported via [shiki](https://github.com/shikijs/shiki/),
 git config split-diffs.syntax-highlighting-theme <name>
 ```
 
-The supported syntax highlighting themes are listed at https://github.com/shikijs/shiki/blob/v0.9.3/docs/themes.md
+The supported syntax highlighting themes are listed at https://github.com/shikijs/textmate-grammars-themes/tree/main/packages/tm-themes#tm-themes
 
 You can disable syntax highlighting by setting the name to empty:
 
@@ -175,11 +175,11 @@ git config split-diffs.theme-name monochrome-light
 
 Tested by measuring the time it took to pipe the output `git log -p` to `/dev/null` via `git-split-diffs` with the default theme:
 
-| Features enabled                                      | ms/kloc         |
-| ----------------------------------------------------- | --------------- |
-| Everything                                            | 45              |
-| No syntax highlighting                                | 15              |
-| No syntax highlighting, no inline change highlighting | 13              |
+| Features enabled                                      | ms/kloc |
+| ----------------------------------------------------- | ------- |
+| Everything                                            | 45      |
+| No syntax highlighting                                | 15      |
+| No syntax highlighting, no inline change highlighting | 13      |
 
 ## Troubleshooting
 
