@@ -36,6 +36,7 @@ const prodOptions = {
 async function main(args) {
     let isProd = false;
     let shouldWatch = false;
+    let shouldProfile = false;
 
     for (const arg of args) {
         switch (arg) {
@@ -45,6 +46,9 @@ async function main(args) {
             case '--watch':
                 shouldWatch = true;
                 break;
+            case '--profile':
+                shouldProfile = true;
+                break;
             default:
                 throw new Error(`Unknown arg: ${arg}`);
         }
@@ -53,6 +57,9 @@ async function main(args) {
     /** @type {esbuild.BuildOptions} */
     const buildOptions = {
         ...(isProd ? prodOptions : devOptions),
+        ...(shouldProfile
+            ? { banner: { js: '#!/usr/bin/env node --cpu-prof' } }
+            : {}),
     };
 
     console.log('Building with options:', buildOptions);
