@@ -1,14 +1,8 @@
 import * as assert from 'assert';
 import * as path from 'path';
 import * as fs from 'fs';
-import { fileURLToPath } from 'url';
 import * as shiki from 'shiki';
 
-const THEMES_DIR = path.resolve(
-    path.dirname(fileURLToPath(import.meta.url)),
-    '..',
-    'themes'
-);
 /**
  * Colors are always specified as hex strings
  */
@@ -165,14 +159,17 @@ export function parseColorDefinition(definition: ColorDefinition): ThemeColor {
     };
 }
 
-function loadThemeDefinition(themeName: string): ThemeDefinition {
+function loadThemeDefinition(
+    themesDir: string,
+    themeName: string
+): ThemeDefinition {
     return JSON.parse(
-        fs.readFileSync(path.join(THEMES_DIR, `${themeName}.json`)).toString()
+        fs.readFileSync(path.join(themesDir, `${themeName}.json`)).toString()
     ) as ThemeDefinition;
 }
 
-export function loadTheme(themeName: string): Theme {
-    const themeDefinition = loadThemeDefinition(themeName);
+export function loadTheme(themesDir: string, themeName: string): Theme {
+    const themeDefinition = loadThemeDefinition(themesDir, themeName);
 
     const theme: Partial<Theme> = {
         SYNTAX_HIGHLIGHTING_THEME: themeDefinition.SYNTAX_HIGHLIGHTING_THEME,

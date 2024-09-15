@@ -8,8 +8,6 @@ export type Config = Theme & {
     HIGHLIGHT_LINE_CHANGES: boolean;
 };
 
-export const DEFAULT_THEME_NAME = 'dark';
-
 export const CONFIG_DEFAULTS: Omit<Config, keyof Theme> = {
     MIN_LINE_WIDTH: 80,
     WRAP_LINES: true,
@@ -17,7 +15,7 @@ export const CONFIG_DEFAULTS: Omit<Config, keyof Theme> = {
 };
 
 export function getConfig(gitConfig: GitConfig): Config {
-    const theme = loadTheme(gitConfig.THEME_NAME ?? DEFAULT_THEME_NAME);
+    const theme = loadTheme(gitConfig.THEME_DIRECTORY, gitConfig.THEME_NAME);
 
     return {
         ...CONFIG_DEFAULTS,

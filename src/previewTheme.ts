@@ -6,6 +6,7 @@ import { Config } from './getConfig';
 import { getContextForConfig } from './context';
 import { loadTheme } from './themes';
 import { transformContentsStreaming } from './transformContentsStreaming';
+import { DEFAULT_THEME_DIRECTORY } from './getGitConfig';
 
 const CONFIG = {
     MIN_LINE_WIDTH: 40,
@@ -13,8 +14,12 @@ const CONFIG = {
     HIGHLIGHT_LINE_CHANGES: true,
 };
 
-async function previewTheme(themeName: string, content: string) {
-    const theme = loadTheme(themeName);
+async function previewTheme(
+    themeDirectory: string,
+    themeName: string,
+    content: string
+) {
+    const theme = loadTheme(themeDirectory, themeName);
 
     const { rows, columns } = terminalSize();
     const config: Config = {
@@ -41,19 +46,22 @@ async function previewTheme(themeName: string, content: string) {
 }
 
 function main() {
-    if (process.argv.length !== 4) {
-        console.error(`Usage: ${process.argv[1]} <sha> <theme name>`);
+    if (process.argv.length < 4) {
+        console.error(
+            `Usage: ${process.argv[1]} <sha> <theme name> [theme directory]`
+        );
         process.exit(1);
     }
 
-    const [, , sha, themeName] = process.argv;
+    const [, , sha, themeName, themeDirectory = DEFAULT_THEME_DIRECTORY] =
+        process.argv;
 
     const content = execSync(`git show ${sha}`).toString();
 
     // Clear screen
     process.stdout.write('\x1bc');
 
-    previewTheme(themeName, content);
+    previewTheme(themeDirectory, themeName, content);
 }
 
 main();
