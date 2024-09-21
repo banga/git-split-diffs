@@ -171,6 +171,17 @@ git config split-diffs.theme-name monochrome-light
 
 ![Screenshot of Monochrome Light theme](screenshots/monochrome-light.png?raw=true)
 
+## Custom Themes
+
+Default themes are loaded from the `git-split-diffs` bundle. To load a custom theme, set `theme-directory` in git config and create a `{theme-name}.json` file in that directory with the theme's definition. You can use one of the existing themes in [themes/](https://github.com/banga/git-split-diffs/tree/main/themes) as a starting point.
+
+```
+git config split-diffs.theme-directory </path/to/theme>
+git config split-diffs.theme-name <name>
+```
+
+This will use `/path/to/theme/name.json` as the theme.
+
 ## Performance
 
 Tested by measuring the time it took to pipe the output `git log -p` to `/dev/null` via `git-split-diffs` with the default theme:
@@ -190,6 +201,10 @@ See [#narrow-terminals](#narrow-terminals)
 ### Not seeing colors, or seeing fewer colors?
 
 Text coloring is implemented using Chalk which supports [various levels of color](https://github.com/chalk/chalk#supportscolor). If Chalk is producing fewer colors than your terminal supports, try overriding Chalk's detection using a variation of the `--color` flag, e.g. `--color=16m` for true color. See Chalk's documentation or [this useful gist on terminal support](https://gist.github.com/XVilka/8346728) if issues persist.
+
+### Want to remove background colors from a theme?
+
+See [#custom-themes](#custom-themes) for instructions on customizing themes. Removing `backgroundColor` should usually work.
 
 ## Acknowledgements
 
