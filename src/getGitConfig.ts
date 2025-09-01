@@ -1,3 +1,4 @@
+import os from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -22,6 +23,26 @@ const GIT_CONFIG_KEY_PREFIX = 'split-diffs';
 const GIT_CONFIG_LINE_REGEX = new RegExp(
     `${GIT_CONFIG_KEY_PREFIX}\\.([^=]+)=(.*)`
 );
+
+function expandPath(p: string): string {
+    let expanded = p;
+    
+    // Expand ~ and ~/ to user home directory
+    if (expanded === '~' || expanded.startsWith('~/')) {
+        expanded = expanded.replace(/^~/, os.homedir());
+    }
+    
+    // Expand $VAR and ${VAR} environment variables
+    expanded = expanded.replace(/\$\{([^}]+)\}/g, (_, varName) => {
+        return process.env[varName] || '';
+    });
+    expanded = expanded.replace(/\$([A-Z_][A-Z0-9_]*)/g, (_, varName) => {
+        return process.env[varName] || '';
+    });
+    
+    // Return absolute path
+    return path.resolve(expanded);
+}
 
 function extractFromGitConfigString(configString: string) {
     const rawConfig: Record<string, string> = {};
@@ -53,8 +74,9 @@ export function getGitConfig(configString: string): GitConfig {
         MIN_LINE_WIDTH: minLineWidth,
         WRAP_LINES: rawConfig['wrap-lines'] !== 'false',
         HIGHLIGHT_LINE_CHANGES: rawConfig['highlight-line-changes'] !== 'false',
-        THEME_DIRECTORY:
-            rawConfig['theme-directory'] ?? DEFAULT_THEME_DIRECTORY,
+        THEME_DIRECTORY: rawConfig['theme-directory'] 
+            ? expandPath(rawConfig['theme-directory'])
+            : DEFAULT_THEME_DIRECTORY,
         THEME_NAME: rawConfig['theme-name'] ?? DEFAULT_THEME_NAME,
         SYNTAX_HIGHLIGHTING_THEME: rawConfig['syntax-highlighting-theme'],
     };

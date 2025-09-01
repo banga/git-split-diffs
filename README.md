@@ -89,6 +89,19 @@ git config split-diffs.min-line-width 40
 
 This defaults to `80`, so screens below `160` characters will display unified diffs. Set it to `0` to always show split diffs.
 
+### Custom theme directory
+
+You can specify a custom directory for themes using the `theme-directory` setting. This supports path expansion for convenient configuration:
+
+```
+git config split-diffs.theme-directory ~/my/themes/split-diff
+```
+
+The following expansions are supported:
+- `~` and `~/` expand to your home directory
+- `$HOME`, `${HOME}`, `$USER`, and other environment variables are expanded
+- Relative paths are resolved to absolute paths
+
 ## Themes
 
 You can pick between several [themes](themes/):
