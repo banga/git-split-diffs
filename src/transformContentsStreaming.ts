@@ -30,7 +30,8 @@ export function transformContentsStreaming(
                     case 'EPIPE':
                         // This can happen if the process exits while we are still
                         // processing the input and writing to stdout.
-                        break;
+                        resolve();
+                        return;
                     default:
                         reject(err);
                         return;

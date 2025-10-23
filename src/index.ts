@@ -19,6 +19,22 @@ async function main() {
         terminalSize().columns
     );
     await transformContentsStreaming(context, process.stdin, process.stdout);
+
+    // Ensure stdout is fully flushed before exiting
+    // This is critical when piping to `less` - if we exit before stdout is drained,
+    // less may not receive all data or may receive it in a broken state
+    if (process.stdout.writableNeedDrain) {
+        await new Promise<void>((resolve) => {
+            process.stdout.once('drain', resolve);
+        });
+    }
 }
 
-main();
+main().catch((err) => {
+    // Don't print errors if stdout pipe was closed (EPIPE)
+    // This happens when less quits before we finish processing
+    if (err.code !== 'EPIPE') {
+        console.error(err);
+        process.exit(1);
+    }
+});
