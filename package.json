@@ -29,7 +29,7 @@
     "dependencies": {
         "ansi-regex": "^6.0.1",
         "chalk": "^5.3.0",
-        "diff": "^5.1.0",
+        "diff": "^8.0.3",
         "shiki": "^1.10.1",
         "terminal-size": "^4.0.0",
         "wcwidth": "^1.0.1"
