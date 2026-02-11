@@ -8,6 +8,7 @@ export type GitConfig = {
     THEME_DIRECTORY: string;
     THEME_NAME: string;
     SYNTAX_HIGHLIGHTING_THEME?: string;
+    INTERACTIVE: boolean;
 };
 
 export const DEFAULT_MIN_LINE_WIDTH = 80;
@@ -57,5 +58,6 @@ export function getGitConfig(configString: string): GitConfig {
             rawConfig['theme-directory'] ?? DEFAULT_THEME_DIRECTORY,
         THEME_NAME: rawConfig['theme-name'] ?? DEFAULT_THEME_NAME,
         SYNTAX_HIGHLIGHTING_THEME: rawConfig['syntax-highlighting-theme'],
+        INTERACTIVE: rawConfig['interactive'] === 'true',
     };
 }

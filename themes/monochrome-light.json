@@ -53,5 +53,13 @@
     "INSERTED_WORD_COLOR": {
         "color": "#dddddd",
         "backgroundColor": "#666666"
-    }
+    },
+    "FILE_TREE_COLOR": {
+        "color": "#333333",
+        "backgroundColor": "#d0d0d0"
+    },
+    "FILE_TREE_SELECTED_COLOR": {
+        "modifiers": ["inverse"]
+    },
+    "FILE_TREE_BORDER_COLOR": {}
 }

@@ -66,5 +66,15 @@
     "UNMODIFIED_LINE_COLOR": {},
     "MISSING_LINE_COLOR": {
         "backgroundColor": "#fafbfc"
+    },
+    "FILE_TREE_COLOR": {
+        "color": "#24292e",
+        "backgroundColor": "#f6f8fa"
+    },
+    "FILE_TREE_SELECTED_COLOR": {
+        "modifiers": ["inverse"]
+    },
+    "FILE_TREE_BORDER_COLOR": {
+        "color": "#e1e4e8"
     }
 }

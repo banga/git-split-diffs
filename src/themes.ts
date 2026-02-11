@@ -46,7 +46,27 @@ export enum ThemeColorName {
     UNMODIFIED_LINE_COLOR = 'UNMODIFIED_LINE_COLOR',
     UNMODIFIED_LINE_NO_COLOR = 'UNMODIFIED_LINE_NO_COLOR',
     MISSING_LINE_COLOR = 'MISSING_LINE_COLOR',
+    FILE_TREE_COLOR = 'FILE_TREE_COLOR',
+    FILE_TREE_SELECTED_COLOR = 'FILE_TREE_SELECTED_COLOR',
+    FILE_TREE_BORDER_COLOR = 'FILE_TREE_BORDER_COLOR',
 }
+
+const OPTIONAL_THEME_COLORS: Set<ThemeColorName> = new Set([
+    ThemeColorName.FILE_TREE_COLOR,
+    ThemeColorName.FILE_TREE_SELECTED_COLOR,
+    ThemeColorName.FILE_TREE_BORDER_COLOR,
+]);
+
+const OPTIONAL_THEME_COLOR_DEFAULTS: Partial<
+    Record<ThemeColorName, ColorDefinition>
+> = {
+    [ThemeColorName.FILE_TREE_COLOR]: { color: '#cccccc' },
+    [ThemeColorName.FILE_TREE_SELECTED_COLOR]: { modifiers: ['inverse'] },
+    [ThemeColorName.FILE_TREE_BORDER_COLOR]: {
+        color: '#ffdd9966',
+        modifiers: ['dim'],
+    },
+};
 
 export type ThemeDefinition = {
     SYNTAX_HIGHLIGHTING_THEME?: shiki.BundledTheme;
@@ -177,8 +197,14 @@ export function loadTheme(themesDir: string, themeName: string): Theme {
 
     const themeColorNames = Object.keys(ThemeColorName) as ThemeColorName[];
     for (const variableName of themeColorNames) {
-        const value = themeDefinition[variableName];
+        const value =
+            themeDefinition[variableName] ??
+            OPTIONAL_THEME_COLOR_DEFAULTS[variableName];
         if (!value) {
+            if (OPTIONAL_THEME_COLORS.has(variableName)) {
+                theme[variableName] = {};
+                continue;
+            }
             assert.fail(`${variableName} is missing in theme`);
         }
         theme[variableName] = parseColorDefinition(value);
