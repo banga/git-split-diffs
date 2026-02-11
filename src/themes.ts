@@ -49,12 +49,20 @@ export enum ThemeColorName {
     FILE_TREE_COLOR = 'FILE_TREE_COLOR',
     FILE_TREE_SELECTED_COLOR = 'FILE_TREE_SELECTED_COLOR',
     FILE_TREE_BORDER_COLOR = 'FILE_TREE_BORDER_COLOR',
+    FILE_TREE_DIR_COLOR = 'FILE_TREE_DIR_COLOR',
+    FILE_TREE_BORDER_FOCUSED_COLOR = 'FILE_TREE_BORDER_FOCUSED_COLOR',
+    FILE_TREE_ADDITIONS_COLOR = 'FILE_TREE_ADDITIONS_COLOR',
+    FILE_TREE_DELETIONS_COLOR = 'FILE_TREE_DELETIONS_COLOR',
 }
 
 const OPTIONAL_THEME_COLORS: Set<ThemeColorName> = new Set([
     ThemeColorName.FILE_TREE_COLOR,
     ThemeColorName.FILE_TREE_SELECTED_COLOR,
     ThemeColorName.FILE_TREE_BORDER_COLOR,
+    ThemeColorName.FILE_TREE_DIR_COLOR,
+    ThemeColorName.FILE_TREE_BORDER_FOCUSED_COLOR,
+    ThemeColorName.FILE_TREE_ADDITIONS_COLOR,
+    ThemeColorName.FILE_TREE_DELETIONS_COLOR,
 ]);
 
 const OPTIONAL_THEME_COLOR_DEFAULTS: Partial<
@@ -66,6 +74,10 @@ const OPTIONAL_THEME_COLOR_DEFAULTS: Partial<
         color: '#ffdd9966',
         modifiers: ['dim'],
     },
+    [ThemeColorName.FILE_TREE_DIR_COLOR]: { color: '#66cccc' },
+    [ThemeColorName.FILE_TREE_BORDER_FOCUSED_COLOR]: { color: '#ffdd99' },
+    [ThemeColorName.FILE_TREE_ADDITIONS_COLOR]: { color: '#66cc66' },
+    [ThemeColorName.FILE_TREE_DELETIONS_COLOR]: { color: '#cc6666' },
 };
 
 export type ThemeDefinition = {

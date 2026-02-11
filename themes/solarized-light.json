@@ -61,9 +61,23 @@
         "backgroundColor": "#eee8d5"
     },
     "FILE_TREE_SELECTED_COLOR": {
-        "modifiers": ["inverse"]
+        "modifiers": [
+            "inverse"
+        ]
     },
     "FILE_TREE_BORDER_COLOR": {
         "color": "#586e75"
+    },
+    "FILE_TREE_DIR_COLOR": {
+        "color": "#268bd2"
+    },
+    "FILE_TREE_BORDER_FOCUSED_COLOR": {
+        "color": "#b58900"
+    },
+    "FILE_TREE_ADDITIONS_COLOR": {
+        "color": "#859900"
+    },
+    "FILE_TREE_DELETIONS_COLOR": {
+        "color": "#dc322f"
     }
 }

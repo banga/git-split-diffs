@@ -15,14 +15,18 @@
         "color": "#111111"
     },
     "COMMIT_TITLE_COLOR": {
-        "modifiers": ["bold"]
+        "modifiers": [
+            "bold"
+        ]
     },
     "FILE_NAME_COLOR": {
         "color": "#000000"
     },
     "BORDER_COLOR": {},
     "HUNK_HEADER_COLOR": {
-        "modifiers": ["dim"],
+        "modifiers": [
+            "dim"
+        ],
         "color": "#000000"
     },
     "DELETED_LINE_NO_COLOR": {
@@ -59,7 +63,21 @@
         "backgroundColor": "#d0d0d0"
     },
     "FILE_TREE_SELECTED_COLOR": {
-        "modifiers": ["inverse"]
+        "modifiers": [
+            "inverse"
+        ]
     },
-    "FILE_TREE_BORDER_COLOR": {}
+    "FILE_TREE_BORDER_COLOR": {},
+    "FILE_TREE_DIR_COLOR": {
+        "color": "#333333"
+    },
+    "FILE_TREE_BORDER_FOCUSED_COLOR": {
+        "color": "#000000"
+    },
+    "FILE_TREE_ADDITIONS_COLOR": {
+        "color": "#333333"
+    },
+    "FILE_TREE_DELETIONS_COLOR": {
+        "color": "#888888"
+    }
 }

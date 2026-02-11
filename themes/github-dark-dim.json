@@ -18,7 +18,9 @@
     },
     "COMMIT_TITLE_COLOR": {
         "color": "#c6e6ff",
-        "modifiers": ["bold"]
+        "modifiers": [
+            "bold"
+        ]
     },
     "BORDER_COLOR": {
         "color": "#444c56",
@@ -61,9 +63,23 @@
         "backgroundColor": "#1c2128"
     },
     "FILE_TREE_SELECTED_COLOR": {
-        "modifiers": ["inverse"]
+        "modifiers": [
+            "inverse"
+        ]
     },
     "FILE_TREE_BORDER_COLOR": {
         "color": "#444c56"
+    },
+    "FILE_TREE_DIR_COLOR": {
+        "color": "#539bf5"
+    },
+    "FILE_TREE_BORDER_FOCUSED_COLOR": {
+        "color": "#539bf5"
+    },
+    "FILE_TREE_ADDITIONS_COLOR": {
+        "color": "#57ab5a"
+    },
+    "FILE_TREE_DELETIONS_COLOR": {
+        "color": "#e5534b"
     }
 }
