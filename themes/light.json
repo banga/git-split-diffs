@@ -63,7 +63,7 @@
     },
     "FILE_TREE_COLOR": {
         "color": "#333333",
-        "backgroundColor": "#e8e8e8"
+        "backgroundColor": "#e6e6e6"
     },
     "FILE_TREE_SELECTED_COLOR": {
         "modifiers": [
@@ -74,7 +74,7 @@
         "color": "#cccccc"
     },
     "FILE_TREE_DIR_COLOR": {
-        "color": "#2299aa"
+        "color": "#336666"
     },
     "FILE_TREE_BORDER_FOCUSED_COLOR": {
         "color": "#336666"
@@ -84,5 +84,11 @@
     },
     "FILE_TREE_DELETIONS_COLOR": {
         "color": "#aa3333"
+    },
+    "FILE_TREE_STAGED_COLOR": {
+        "color": "#228822"
+    },
+    "FILE_TREE_PARTIAL_STAGED_COLOR": {
+        "color": "#aa6622"
     }
 }

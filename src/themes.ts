@@ -53,6 +53,8 @@ export enum ThemeColorName {
     FILE_TREE_BORDER_FOCUSED_COLOR = 'FILE_TREE_BORDER_FOCUSED_COLOR',
     FILE_TREE_ADDITIONS_COLOR = 'FILE_TREE_ADDITIONS_COLOR',
     FILE_TREE_DELETIONS_COLOR = 'FILE_TREE_DELETIONS_COLOR',
+    FILE_TREE_STAGED_COLOR = 'FILE_TREE_STAGED_COLOR',
+    FILE_TREE_PARTIAL_STAGED_COLOR = 'FILE_TREE_PARTIAL_STAGED_COLOR',
 }
 
 const OPTIONAL_THEME_COLORS: Set<ThemeColorName> = new Set([
@@ -63,6 +65,8 @@ const OPTIONAL_THEME_COLORS: Set<ThemeColorName> = new Set([
     ThemeColorName.FILE_TREE_BORDER_FOCUSED_COLOR,
     ThemeColorName.FILE_TREE_ADDITIONS_COLOR,
     ThemeColorName.FILE_TREE_DELETIONS_COLOR,
+    ThemeColorName.FILE_TREE_STAGED_COLOR,
+    ThemeColorName.FILE_TREE_PARTIAL_STAGED_COLOR,
 ]);
 
 const OPTIONAL_THEME_COLOR_DEFAULTS: Partial<
@@ -78,6 +82,8 @@ const OPTIONAL_THEME_COLOR_DEFAULTS: Partial<
     [ThemeColorName.FILE_TREE_BORDER_FOCUSED_COLOR]: { color: '#ffdd99' },
     [ThemeColorName.FILE_TREE_ADDITIONS_COLOR]: { color: '#66cc66' },
     [ThemeColorName.FILE_TREE_DELETIONS_COLOR]: { color: '#cc6666' },
+    [ThemeColorName.FILE_TREE_STAGED_COLOR]: { color: '#66cc66' },
+    [ThemeColorName.FILE_TREE_PARTIAL_STAGED_COLOR]: { color: '#cc9944' },
 };
 
 export type ThemeDefinition = {

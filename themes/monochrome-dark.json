@@ -73,7 +73,7 @@
         "color": "#666666"
     },
     "FILE_TREE_DIR_COLOR": {
-        "color": "#cccccc"
+        "color": "#ffffff"
     },
     "FILE_TREE_BORDER_FOCUSED_COLOR": {
         "color": "#ffffff"
@@ -83,5 +83,11 @@
     },
     "FILE_TREE_DELETIONS_COLOR": {
         "color": "#888888"
+    },
+    "FILE_TREE_STAGED_COLOR": {
+        "color": "#66cc66"
+    },
+    "FILE_TREE_PARTIAL_STAGED_COLOR": {
+        "color": "#cc9944"
     }
 }

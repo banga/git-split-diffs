@@ -72,7 +72,7 @@
     "MISSING_LINE_COLOR": {},
     "FILE_TREE_COLOR": {
         "color": "#cccccc",
-        "backgroundColor": "#1e1e1e"
+        "backgroundColor": "#232323"
     },
     "FILE_TREE_SELECTED_COLOR": {
         "modifiers": [
@@ -86,7 +86,7 @@
         ]
     },
     "FILE_TREE_DIR_COLOR": {
-        "color": "#66cccc"
+        "color": "#ffdd99"
     },
     "FILE_TREE_BORDER_FOCUSED_COLOR": {
         "color": "#ffdd99"
@@ -96,5 +96,11 @@
     },
     "FILE_TREE_DELETIONS_COLOR": {
         "color": "#cc6666"
+    },
+    "FILE_TREE_STAGED_COLOR": {
+        "color": "#66cc66"
+    },
+    "FILE_TREE_PARTIAL_STAGED_COLOR": {
+        "color": "#cc9944"
     }
 }
