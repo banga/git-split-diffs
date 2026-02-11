@@ -13,6 +13,8 @@ export interface DiffFile {
     fileNameB: string;
     displayName: string;
     startLineIndex: number;
+    additions: number;
+    deletions: number;
 }
 
 export interface DiffData {
@@ -54,6 +56,8 @@ export async function collectDiffData(
                 fileNameB: event.fileNameB,
                 displayName: getDisplayName(event.fileNameA, event.fileNameB),
                 startLineIndex,
+                additions: event.additions,
+                deletions: event.deletions,
             });
             fileBoundaries.push(startLineIndex);
         } else {

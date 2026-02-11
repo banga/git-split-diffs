@@ -325,7 +325,7 @@ export async function* iterSideBySideDiffs(
 
 export type DiffEvent =
     | { type: 'line'; content: FormattedString }
-    | { type: 'file-start'; fileNameA: string; fileNameB: string };
+    | { type: 'file-start'; fileNameA: string; fileNameB: string; additions: number; deletions: number };
 
 export async function* iterSideBySideDiffsWithEvents(
     context: Context,
@@ -337,6 +337,8 @@ export async function* iterSideBySideDiffsWithEvents(
     let isFirstCommitBodyLine = false;
     let fileNameA: string = '';
     let fileNameB: string = '';
+    let fileAdditions: number = 0;
+    let fileDeletions: number = 0;
     let hunkParts: HunkPart[] = [];
     let hunkHeaderLine: string = '';
 
@@ -360,6 +362,8 @@ export async function* iterSideBySideDiffsWithEvents(
                 type: 'file-start',
                 fileNameA,
                 fileNameB,
+                additions: fileAdditions,
+                deletions: fileDeletions,
             };
             for (const line of yieldFileNameLines()) {
                 yield { type: 'line', content: line };
@@ -424,6 +428,8 @@ export async function* iterSideBySideDiffsWithEvents(
                 case 'unified-diff':
                     fileNameA = '';
                     fileNameB = '';
+                    fileAdditions = 0;
+                    fileDeletions = 0;
                     break;
                 case 'unified-diff-hunk-header':
                     hunkParts = [
@@ -513,8 +519,10 @@ export async function* iterSideBySideDiffsWithEvents(
                     hunkParts;
                 if (line.startsWith('-')) {
                     hunkLinesA.push(line);
+                    fileDeletions++;
                 } else if (line.startsWith('+')) {
                     hunkLinesB.push(line);
+                    fileAdditions++;
                 } else {
                     while (hunkLinesA.length < hunkLinesB.length) {
                         hunkLinesA.push(null);
@@ -579,8 +587,10 @@ export async function* iterSideBySideDiffsWithEvents(
                 }
                 if (isLineRemoved) {
                     hunkParts[i].lines.push('-' + lineSuffix);
+                    fileDeletions++;
                 } else if (isLineAdded) {
                     hunkParts[i].lines.push('+' + lineSuffix);
+                    fileAdditions++;
                 } else {
                     hunkParts[i].lines.push(' ' + lineSuffix);
                 }
