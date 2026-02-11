@@ -87,5 +87,8 @@
     },
     "FILE_TREE_PARTIAL_STAGED_COLOR": {
         "color": "#c69026"
+    },
+    "FILE_TREE_FILE_SELECTED_COLOR": {
+        "backgroundColor": "#283040"
     }
 }
