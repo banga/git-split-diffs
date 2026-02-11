@@ -8,6 +8,8 @@ import {
     iterSideBySideDiffsWithEvents,
 } from '../iterSideBySideDiffs';
 
+import { StagingStatus } from './gitStatus';
+
 export interface DiffFile {
     fileNameA: string;
     fileNameB: string;
@@ -15,6 +17,7 @@ export interface DiffFile {
     startLineIndex: number;
     additions: number;
     deletions: number;
+    stagingStatus?: StagingStatus;
 }
 
 export interface DiffData {

@@ -8,6 +8,7 @@ import { FileTreePanel } from './FileTreePanel';
 import { DiffViewPanel } from './DiffViewPanel';
 import { collectDiffData, DiffData } from './collectDiffData';
 import { syncTreeToDiff, syncDiffToTree } from './sync';
+import { getGitStagingStatus } from './gitStatus';
 import { RESET } from './ansi';
 
 const TREE_WIDTH = 30;
@@ -33,6 +34,15 @@ export class TuiApp {
 
         if (this.data.files.length === 0 && this.data.allRenderedLines.length === 0) {
             return;
+        }
+
+        // Annotate files with git staging status
+        const stagingMap = getGitStagingStatus();
+        for (const file of this.data.files) {
+            const path = file.fileNameB || file.fileNameA;
+            if (path && stagingMap.has(path)) {
+                file.stagingStatus = stagingMap.get(path);
+            }
         }
 
         const rows = process.stdout.rows ?? 24;
