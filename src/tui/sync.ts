@@ -3,16 +3,19 @@ import { DiffViewPanel } from './DiffViewPanel';
 
 /**
  * When the user selects a file in the tree, scroll the diff view to that file.
+ * Returns false if the selected node is a dir (no sync needed).
  */
 export function syncTreeToDiff(
     tree: FileTreePanel,
     diff: DiffViewPanel,
     fileBoundaries: number[]
-): void {
-    const idx = tree.selectedIndex;
+): boolean {
+    const idx = tree.getSelectedFileIndex();
+    if (idx === undefined) return false;
     if (idx >= 0 && idx < fileBoundaries.length) {
         diff.scrollToLine(fileBoundaries[idx]);
     }
+    return true;
 }
 
 /**
@@ -28,7 +31,7 @@ export function syncDiffToTree(
 
     const topLine = diff.getTopVisibleLine();
     let fileIndex = binarySearchBoundary(fileBoundaries, topLine);
-    tree.selectFile(fileIndex);
+    tree.selectFileByIndex(fileIndex);
 }
 
 /**

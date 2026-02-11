@@ -13,6 +13,10 @@ export class DiffViewPanel {
         this.height = height;
     }
 
+    get viewHeight(): number {
+        return this.height;
+    }
+
     resize(width: number, height: number): void {
         this.width = width;
         this.height = height;

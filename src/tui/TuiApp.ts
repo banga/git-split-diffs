@@ -101,13 +101,42 @@ export class TuiApp {
         }
 
         if (this.focus === 'tree') {
-            this.handleTreeKey(key);
+            this.handleTreeKey(key, ctrl);
         } else {
-            this.handleDiffKey(key);
+            this.handleDiffKey(key, ctrl);
         }
     }
 
-    private handleTreeKey(key: string): void {
+    private handleTreeKey(key: string, ctrl: boolean): void {
+        if (ctrl) {
+            switch (key) {
+                case 'd': {
+                    const half = Math.floor(this.tree.viewHeight / 2);
+                    this.tree.moveBy(half);
+                    syncTreeToDiff(
+                        this.tree,
+                        this.diff,
+                        this.data.fileBoundaries
+                    );
+                    break;
+                }
+                case 'u': {
+                    const half = Math.floor(this.tree.viewHeight / 2);
+                    this.tree.moveBy(-half);
+                    syncTreeToDiff(
+                        this.tree,
+                        this.diff,
+                        this.data.fileBoundaries
+                    );
+                    break;
+                }
+                default:
+                    return;
+            }
+            this.render();
+            return;
+        }
+
         switch (key) {
             case 'j':
             case 'down':
@@ -129,8 +158,21 @@ export class TuiApp {
                 break;
             case 'l':
             case 'right':
-            case 'return':
-                this.focus = 'diff';
+            case 'return': {
+                const isFile = this.tree.toggleOrSelect();
+                if (isFile) {
+                    this.focus = 'diff';
+                    syncTreeToDiff(
+                        this.tree,
+                        this.diff,
+                        this.data.fileBoundaries
+                    );
+                }
+                break;
+            }
+            case 'h':
+            case 'left':
+                this.tree.collapseOrParent();
                 syncTreeToDiff(
                     this.tree,
                     this.diff,
@@ -138,7 +180,7 @@ export class TuiApp {
                 );
                 break;
             case 'g':
-                this.tree.selectFile(0);
+                this.tree.selectFirst();
                 syncTreeToDiff(
                     this.tree,
                     this.diff,
@@ -146,7 +188,7 @@ export class TuiApp {
                 );
                 break;
             case 'G':
-                this.tree.selectFile(this.data.files.length - 1);
+                this.tree.selectLast();
                 syncTreeToDiff(
                     this.tree,
                     this.diff,
@@ -159,7 +201,36 @@ export class TuiApp {
         this.render();
     }
 
-    private handleDiffKey(key: string): void {
+    private handleDiffKey(key: string, ctrl: boolean): void {
+        if (ctrl) {
+            switch (key) {
+                case 'd': {
+                    const half = Math.floor(this.diff.viewHeight / 2);
+                    this.diff.scrollDown(half);
+                    syncDiffToTree(
+                        this.diff,
+                        this.tree,
+                        this.data.fileBoundaries
+                    );
+                    break;
+                }
+                case 'u': {
+                    const half = Math.floor(this.diff.viewHeight / 2);
+                    this.diff.scrollUp(half);
+                    syncDiffToTree(
+                        this.diff,
+                        this.tree,
+                        this.data.fileBoundaries
+                    );
+                    break;
+                }
+                default:
+                    return;
+            }
+            this.render();
+            return;
+        }
+
         switch (key) {
             case 'j':
             case 'down':
@@ -231,10 +302,13 @@ export class TuiApp {
         // Render tree panel
         this.tree.render(this.screen, 0, 0, this.focus === 'tree');
 
-        // Render border
+        // Render border — use focused color when tree is focused
+        const borderColor = this.focus === 'tree'
+            ? this.context.FILE_TREE_BORDER_FOCUSED_COLOR
+            : this.context.FILE_TREE_BORDER_COLOR;
         const borderStyle = applyFormatting(
             this.context,
-            T().appendString('│').addSpan(0, 1, this.context.FILE_TREE_BORDER_COLOR)
+            T().appendString('│').addSpan(0, 1, borderColor)
         );
         for (let r = 0; r < viewHeight; r++) {
             this.screen.writeAt(r, borderCol, borderStyle + RESET, 1);
