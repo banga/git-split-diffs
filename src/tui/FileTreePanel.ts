@@ -291,6 +291,9 @@ export class FileTreePanel {
             FILE_TREE_DIR_COLOR,
             FILE_TREE_ADDITIONS_COLOR,
             FILE_TREE_DELETIONS_COLOR,
+            FILE_TREE_FILE_SELECTED_COLOR,
+            FILE_TREE_STAGED_COLOR,
+            FILE_TREE_PARTIAL_STAGED_COLOR,
         } = this.context;
 
         for (let row = 0; row < this.height; row++) {
@@ -362,13 +365,26 @@ export class FileTreePanel {
 
                 const line = T()
                     .appendString(fullText)
-                    .fillWidth(this.width, ' ')
-                    .addSpan(0, this.width, FILE_TREE_COLOR);
+                    .fillWidth(this.width, ' ');
 
-                // Color the stat portion
+                // Specific spans first (first-added wins in reduceThemeColors)
+                const staging = vn.node.file.stagingStatus;
+                if (staging === 'staged') {
+                    line.addSpan(
+                        prefix.length,
+                        prefix.length + name.length,
+                        FILE_TREE_STAGED_COLOR
+                    );
+                } else if (staging === 'partial') {
+                    line.addSpan(
+                        prefix.length,
+                        prefix.length + name.length,
+                        FILE_TREE_PARTIAL_STAGED_COLOR
+                    );
+                }
+
                 if (stat) {
                     const statStart = this.width - suffix.length + 1;
-                    // Color additions part
                     if (adds > 0) {
                         const addStr = `+${adds}`;
                         const addStart = statStart;
@@ -389,9 +405,13 @@ export class FileTreePanel {
                     }
                 }
 
+                // Selected bg before generic base so it wins the bg merge
                 if (isSelected) {
-                    line.addSpan(0, this.width, FILE_TREE_SELECTED_COLOR);
+                    line.addSpan(0, this.width, FILE_TREE_FILE_SELECTED_COLOR);
                 }
+
+                // Generic base color last (fallback for unspanned regions)
+                line.addSpan(0, this.width, FILE_TREE_COLOR);
 
                 screen.writeAt(
                     screenRow,
