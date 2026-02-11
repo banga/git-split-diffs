@@ -1,11 +1,101 @@
+import * as path from 'path';
 import { Context } from '../context';
 import { applyFormatting, T } from '../formattedString';
 import { Screen } from './Screen';
 import { DiffFile } from './collectDiffData';
 import { RESET } from './ansi';
+import { getFileIcon, FOLDER_CLOSED, FOLDER_OPEN } from './fileIcons';
+
+type DirNode = {
+    type: 'dir';
+    name: string;
+    path: string;
+    children: TreeNode[];
+    expanded: boolean;
+    depth: number;
+};
+
+type FileNode = {
+    type: 'file';
+    name: string;
+    path: string;
+    file: DiffFile;
+    fileIndex: number;
+    depth: number;
+};
+
+type TreeNode = DirNode | FileNode;
+
+type VisibleNode =
+    | { type: 'dir'; node: DirNode; depth: number }
+    | { type: 'file'; node: FileNode; fileIndex: number; depth: number };
+
+function buildTree(files: DiffFile[]): TreeNode[] {
+    const root: TreeNode[] = [];
+
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const filePath = file.fileNameB || file.fileNameA || file.displayName;
+        const parts = filePath.split('/');
+        let children = root;
+        let currentPath = '';
+
+        for (let j = 0; j < parts.length - 1; j++) {
+            currentPath = currentPath ? currentPath + '/' + parts[j] : parts[j];
+            let dir = children.find(
+                (n) => n.type === 'dir' && n.name === parts[j]
+            ) as DirNode | undefined;
+            if (!dir) {
+                dir = {
+                    type: 'dir',
+                    name: parts[j],
+                    path: currentPath,
+                    children: [],
+                    expanded: true,
+                    depth: j,
+                };
+                children.push(dir);
+            }
+            children = dir.children;
+        }
+
+        children.push({
+            type: 'file',
+            name: parts[parts.length - 1],
+            path: filePath,
+            file,
+            fileIndex: i,
+            depth: parts.length - 1,
+        });
+    }
+
+    return root;
+}
+
+function flattenVisible(nodes: TreeNode[], depth: number = 0): VisibleNode[] {
+    const result: VisibleNode[] = [];
+    for (const node of nodes) {
+        if (node.type === 'dir') {
+            result.push({ type: 'dir', node, depth });
+            if (node.expanded) {
+                result.push(...flattenVisible(node.children, depth + 1));
+            }
+        } else {
+            result.push({
+                type: 'file',
+                node,
+                fileIndex: node.fileIndex,
+                depth,
+            });
+        }
+    }
+    return result;
+}
 
 export class FileTreePanel {
     private files: DiffFile[];
+    private rootNodes: TreeNode[];
+    private visibleNodes: VisibleNode[] = [];
     private width: number;
     private height: number;
     private context: Context;
@@ -22,6 +112,16 @@ export class FileTreePanel {
         this.width = width;
         this.height = height;
         this.context = context;
+        this.rootNodes = buildTree(files);
+        this.regenerateVisible();
+    }
+
+    get viewHeight(): number {
+        return this.height;
+    }
+
+    private regenerateVisible(): void {
+        this.visibleNodes = flattenVisible(this.rootNodes);
     }
 
     resize(width: number, height: number): void {
@@ -38,21 +138,131 @@ export class FileTreePanel {
     }
 
     moveDown(): void {
-        if (this.selectedIndex < this.files.length - 1) {
+        if (this.selectedIndex < this.visibleNodes.length - 1) {
             this.selectedIndex++;
             this.ensureVisible();
         }
     }
 
-    selectFile(index: number): void {
-        if (index >= 0 && index < this.files.length) {
-            this.selectedIndex = index;
+    moveBy(delta: number): void {
+        const newIndex = Math.max(
+            0,
+            Math.min(this.visibleNodes.length - 1, this.selectedIndex + delta)
+        );
+        this.selectedIndex = newIndex;
+        this.ensureVisible();
+    }
+
+    /**
+     * Toggle expand/collapse on a dir, or focus diff on a file.
+     * Returns true if a file was selected (caller should switch focus).
+     */
+    toggleOrSelect(): boolean {
+        const vn = this.visibleNodes[this.selectedIndex];
+        if (!vn) return false;
+        if (vn.type === 'dir') {
+            vn.node.expanded = !vn.node.expanded;
+            this.regenerateVisible();
+            // Clamp selection if collapsed nodes removed entries below
+            if (this.selectedIndex >= this.visibleNodes.length) {
+                this.selectedIndex = this.visibleNodes.length - 1;
+            }
             this.ensureVisible();
+            return false;
+        }
+        return true; // file selected
+    }
+
+    /**
+     * Collapse current dir, or navigate to parent dir.
+     */
+    collapseOrParent(): void {
+        const vn = this.visibleNodes[this.selectedIndex];
+        if (!vn) return;
+
+        if (vn.type === 'dir' && vn.node.expanded) {
+            vn.node.expanded = false;
+            this.regenerateVisible();
+            if (this.selectedIndex >= this.visibleNodes.length) {
+                this.selectedIndex = this.visibleNodes.length - 1;
+            }
+            this.ensureVisible();
+            return;
+        }
+
+        // Navigate to parent directory
+        const nodePath =
+            vn.type === 'dir' ? vn.node.path : vn.node.path;
+        const parentPath = path.dirname(nodePath);
+        if (parentPath === '.' || parentPath === nodePath) return;
+
+        for (let i = this.selectedIndex - 1; i >= 0; i--) {
+            const candidate = this.visibleNodes[i];
+            if (candidate.type === 'dir' && candidate.node.path === parentPath) {
+                this.selectedIndex = i;
+                this.ensureVisible();
+                return;
+            }
         }
     }
 
-    getSelectedFile(): DiffFile | undefined {
-        return this.files[this.selectedIndex];
+    /**
+     * Returns the original file index if a file is selected, undefined for dirs.
+     */
+    getSelectedFileIndex(): number | undefined {
+        const vn = this.visibleNodes[this.selectedIndex];
+        if (!vn || vn.type !== 'file') return undefined;
+        return vn.fileIndex;
+    }
+
+    /**
+     * Select a file by its original index in the files array.
+     * Expands ancestors if collapsed.
+     */
+    selectFileByIndex(idx: number): void {
+        if (idx < 0 || idx >= this.files.length) return;
+        const file = this.files[idx];
+        const filePath = file.fileNameB || file.fileNameA || file.displayName;
+
+        // Ensure all ancestor dirs are expanded
+        this.expandAncestors(filePath);
+        this.regenerateVisible();
+
+        // Find the visible node with this file index
+        for (let i = 0; i < this.visibleNodes.length; i++) {
+            const vn = this.visibleNodes[i];
+            if (vn.type === 'file' && vn.fileIndex === idx) {
+                this.selectedIndex = i;
+                this.ensureVisible();
+                return;
+            }
+        }
+    }
+
+    selectFirst(): void {
+        this.selectedIndex = 0;
+        this.ensureVisible();
+    }
+
+    selectLast(): void {
+        this.selectedIndex = Math.max(0, this.visibleNodes.length - 1);
+        this.ensureVisible();
+    }
+
+    private expandAncestors(filePath: string): void {
+        const parts = filePath.split('/');
+        let children = this.rootNodes;
+        for (let i = 0; i < parts.length - 1; i++) {
+            const dir = children.find(
+                (n) => n.type === 'dir' && n.name === parts[i]
+            ) as DirNode | undefined;
+            if (dir) {
+                dir.expanded = true;
+                children = dir.children;
+            } else {
+                break;
+            }
+        }
     }
 
     private ensureVisible(): void {
@@ -64,20 +274,30 @@ export class FileTreePanel {
     }
 
     private clampScroll(): void {
-        const maxScroll = Math.max(0, this.files.length - this.height);
+        const maxScroll = Math.max(0, this.visibleNodes.length - this.height);
         this.scrollOffset = Math.min(this.scrollOffset, maxScroll);
         this.scrollOffset = Math.max(0, this.scrollOffset);
     }
 
-    render(screen: Screen, startCol: number, startRow: number, focused: boolean): void {
-        const { FILE_TREE_COLOR, FILE_TREE_SELECTED_COLOR } = this.context;
+    render(
+        screen: Screen,
+        startCol: number,
+        startRow: number,
+        focused: boolean
+    ): void {
+        const {
+            FILE_TREE_COLOR,
+            FILE_TREE_SELECTED_COLOR,
+            FILE_TREE_DIR_COLOR,
+            FILE_TREE_ADDITIONS_COLOR,
+            FILE_TREE_DELETIONS_COLOR,
+        } = this.context;
 
         for (let row = 0; row < this.height; row++) {
-            const fileIndex = this.scrollOffset + row;
+            const visIdx = this.scrollOffset + row;
             const screenRow = startRow + row;
 
-            if (fileIndex >= this.files.length) {
-                // Empty row — fill with tree background
+            if (visIdx >= this.visibleNodes.length) {
                 const emptyLine = T()
                     .fillWidth(this.width, ' ')
                     .addSpan(0, this.width, FILE_TREE_COLOR);
@@ -90,38 +310,96 @@ export class FileTreePanel {
                 continue;
             }
 
-            const file = this.files[fileIndex];
-            const isSelected = fileIndex === this.selectedIndex;
+            const vn = this.visibleNodes[visIdx];
+            const isSelected = visIdx === this.selectedIndex;
+            const indent = '  '.repeat(vn.depth);
 
-            const statusChar = this.getStatusChar(file);
-            const label = ` ${statusChar} ${file.displayName} `;
+            if (vn.type === 'dir') {
+                const icon = vn.node.expanded ? FOLDER_OPEN : FOLDER_CLOSED;
+                const label = ` ${indent}${icon} ${vn.node.name}`;
 
-            const line = T()
-                .appendString(label)
-                .fillWidth(this.width, ' ')
-                .addSpan(0, this.width, FILE_TREE_COLOR);
+                const line = T()
+                    .appendString(label)
+                    .fillWidth(this.width, ' ')
+                    .addSpan(0, this.width, FILE_TREE_DIR_COLOR);
 
-            if (isSelected) {
-                line.addSpan(0, this.width, FILE_TREE_SELECTED_COLOR);
-                if (focused) {
-                    // Add a marker for focused+selected
-                    // The inverse modifier already handles highlight
+                if (isSelected) {
+                    line.addSpan(0, this.width, FILE_TREE_SELECTED_COLOR);
                 }
+
+                screen.writeAt(
+                    screenRow,
+                    startCol,
+                    applyFormatting(this.context, line) + RESET,
+                    this.width
+                );
+            } else {
+                const icon = getFileIcon(vn.node.path);
+                const adds = vn.node.file.additions;
+                const dels = vn.node.file.deletions;
+
+                // Build the stat suffix
+                let stat = '';
+                if (adds > 0) stat += `+${adds}`;
+                if (dels > 0) stat += (stat ? ' ' : '') + `-${dels}`;
+
+                const prefix = ` ${indent}${icon} `;
+                const suffix = stat ? ` ${stat} ` : ' ';
+                const maxNameLen = this.width - prefix.length - suffix.length;
+                let name = vn.node.name;
+                if (name.length > maxNameLen && maxNameLen > 3) {
+                    name = name.slice(0, maxNameLen - 1) + '…';
+                } else if (maxNameLen <= 3) {
+                    name = name.slice(0, Math.max(1, maxNameLen));
+                }
+
+                const leftPart = prefix + name;
+                const padding = Math.max(
+                    0,
+                    this.width - leftPart.length - suffix.length
+                );
+                const fullText = leftPart + ' '.repeat(padding) + suffix;
+
+                const line = T()
+                    .appendString(fullText)
+                    .fillWidth(this.width, ' ')
+                    .addSpan(0, this.width, FILE_TREE_COLOR);
+
+                // Color the stat portion
+                if (stat) {
+                    const statStart = this.width - suffix.length + 1;
+                    // Color additions part
+                    if (adds > 0) {
+                        const addStr = `+${adds}`;
+                        const addStart = statStart;
+                        line.addSpan(
+                            addStart,
+                            addStart + addStr.length,
+                            FILE_TREE_ADDITIONS_COLOR
+                        );
+                    }
+                    if (dels > 0) {
+                        const delStr = `-${dels}`;
+                        const delStart = this.width - 1 - delStr.length;
+                        line.addSpan(
+                            delStart,
+                            delStart + delStr.length,
+                            FILE_TREE_DELETIONS_COLOR
+                        );
+                    }
+                }
+
+                if (isSelected) {
+                    line.addSpan(0, this.width, FILE_TREE_SELECTED_COLOR);
+                }
+
+                screen.writeAt(
+                    screenRow,
+                    startCol,
+                    applyFormatting(this.context, line) + RESET,
+                    this.width
+                );
             }
-
-            screen.writeAt(
-                screenRow,
-                startCol,
-                applyFormatting(this.context, line) + RESET,
-                this.width
-            );
         }
-    }
-
-    private getStatusChar(file: DiffFile): string {
-        if (!file.fileNameA) return 'A';
-        if (!file.fileNameB) return 'D';
-        if (file.fileNameA !== file.fileNameB) return 'R';
-        return 'M';
     }
 }
