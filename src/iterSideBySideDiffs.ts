@@ -197,6 +197,8 @@ export async function* iterSideBySideDiffEvents(
                     fileNameB = line.slice('+++ b/'.length);
                 } else if (line.startsWith('--- ')) {
                     fileNameA = line.slice('--- '.length);
+                    // /dev/null indicates file creation/deletion
+                    // per git diff-format spec
                     if (fileNameA === '/dev/null') {
                         fileNameA = '';
                     }
@@ -282,6 +284,10 @@ export async function* iterSideBySideDiffEvents(
                 break;
             }
             case 'combined-diff-hunk-body': {
+                // Combined diffs have N+1 columns: first N show changes
+                // relative to each parent, last shows the merge result.
+                // Prefix chars: + (added), - (removed), space (unchanged).
+                // See: https://git-scm.com/docs/git-diff#_combined_diff_format
                 const linePrefix = line.slice(0, hunkParts.length - 1);
                 const lineSuffix = line.slice(hunkParts.length - 1);
                 const isLineAdded = linePrefix.includes('+');
@@ -307,6 +313,7 @@ export async function* iterSideBySideDiffEvents(
                     }
                     i++;
                 }
+                // Final part: the merge result (current commit state)
                 if (isLineRemoved) {
                     hunkParts[i].lines.push('-' + lineSuffix);
                     fileDeletions++;

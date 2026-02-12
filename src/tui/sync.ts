@@ -37,7 +37,7 @@ export function syncDiffToTree(
 /**
  * Binary search: find the last boundary <= topLine.
  */
-function binarySearchBoundary(
+export function binarySearchBoundary(
     boundaries: number[],
     topLine: number
 ): number {

@@ -6,6 +6,7 @@ export type KeyHandler = (key: string, ctrl: boolean) => void;
 
 export class InputHandler {
     private ttyStream: tty.ReadStream | null = null;
+    private ttyFd: number = -1;
     private handler: KeyHandler;
 
     constructor(handler: KeyHandler) {
@@ -13,8 +14,8 @@ export class InputHandler {
     }
 
     start(): void {
-        const fd = fs.openSync('/dev/tty', 'r');
-        this.ttyStream = new tty.ReadStream(fd);
+        this.ttyFd = fs.openSync('/dev/tty', 'r');
+        this.ttyStream = new tty.ReadStream(this.ttyFd);
         this.ttyStream.setEncoding('utf-8');
         this.ttyStream.setRawMode(true);
 
@@ -35,6 +36,10 @@ export class InputHandler {
             this.ttyStream.setRawMode(false);
             this.ttyStream.destroy();
             this.ttyStream = null;
+        }
+        if (this.ttyFd >= 0) {
+            try { fs.closeSync(this.ttyFd); } catch {}
+            this.ttyFd = -1;
         }
     }
 }

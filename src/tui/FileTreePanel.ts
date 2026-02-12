@@ -27,10 +27,10 @@ type FileNode = {
 type TreeNode = DirNode | FileNode;
 
 type VisibleNode =
-    | { type: 'dir'; node: DirNode; depth: number }
-    | { type: 'file'; node: FileNode; fileIndex: number; depth: number };
+    | { type: 'dir'; node: DirNode }
+    | { type: 'file'; node: FileNode; fileIndex: number };
 
-function buildTree(files: DiffFile[]): TreeNode[] {
+export function buildTree(files: DiffFile[]): TreeNode[] {
     const root: TreeNode[] = [];
 
     for (let i = 0; i < files.length; i++) {
@@ -72,20 +72,19 @@ function buildTree(files: DiffFile[]): TreeNode[] {
     return root;
 }
 
-function flattenVisible(nodes: TreeNode[], depth: number = 0): VisibleNode[] {
+export function flattenVisible(nodes: TreeNode[]): VisibleNode[] {
     const result: VisibleNode[] = [];
     for (const node of nodes) {
         if (node.type === 'dir') {
-            result.push({ type: 'dir', node, depth });
+            result.push({ type: 'dir', node });
             if (node.expanded) {
-                result.push(...flattenVisible(node.children, depth + 1));
+                result.push(...flattenVisible(node.children));
             }
         } else {
             result.push({
                 type: 'file',
                 node,
                 fileIndex: node.fileIndex,
-                depth,
             });
         }
     }
@@ -281,8 +280,7 @@ export class FileTreePanel {
     render(
         screen: Screen,
         startCol: number,
-        startRow: number,
-        focused: boolean
+        startRow: number
     ): void {
         const {
             FILE_TREE_COLOR,
@@ -314,7 +312,7 @@ export class FileTreePanel {
 
             const vn = this.visibleNodes[visIdx];
             const isSelected = visIdx === this.selectedIndex;
-            const indent = '  '.repeat(vn.depth);
+            const indent = '  '.repeat(vn.node.depth);
 
             if (vn.type === 'dir') {
                 const icon = vn.node.expanded ? FOLDER_OPEN : FOLDER_CLOSED;
