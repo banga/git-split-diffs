@@ -23,6 +23,11 @@ export class DiffViewPanel {
         this.clampScroll();
     }
 
+    setLines(lines: string[]): void {
+        this.lines = lines;
+        this.clampScroll();
+    }
+
     scrollUp(n: number = 1): void {
         this.scrollOffset = Math.max(0, this.scrollOffset - n);
     }
