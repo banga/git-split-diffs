@@ -7,21 +7,25 @@ import { getContextForConfig } from './context';
 import { getGitConfig } from './getGitConfig';
 import { transformContentsStreaming } from './transformContentsStreaming';
 import { getConfig } from './getConfig';
-import { TuiApp } from './tui/TuiApp';
+import { TuiApp, TREE_WIDTH, BORDER_WIDTH } from './tui/TuiApp';
 const execAsync = util.promisify(exec);
-
-const TREE_WIDTH = 30;
-const BORDER_WIDTH = 1;
 
 async function main() {
     const { stdout: gitConfigString } = await execAsync('git config -l');
     const gitConfig = getGitConfig(gitConfigString);
     const config = getConfig(gitConfig);
 
-    const isInteractive =
+    let isInteractive =
         process.argv.includes('--interactive') ||
         process.argv.includes('-i') ||
         config.INTERACTIVE;
+
+    if (isInteractive && process.platform === 'win32') {
+        process.stderr.write(
+            'Interactive mode is not supported on Windows. Falling back to non-interactive mode.\n'
+        );
+        isInteractive = false;
+    }
 
     const termCols = terminalSize().columns;
     const screenWidth = isInteractive
