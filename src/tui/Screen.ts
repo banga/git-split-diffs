@@ -7,6 +7,7 @@ import {
     SHOW_CURSOR,
     CLEAR_SCREEN,
     CLEAR_LINE,
+    ERASE_TO_EOL,
     moveTo,
     RESET,
 } from './ansi';
@@ -27,6 +28,10 @@ export class Screen {
     enter(): void {
         this.write(ENTER_ALT_SCREEN + HIDE_CURSOR + CLEAR_SCREEN);
         this.flush();
+    }
+
+    clear(): void {
+        this.buffer += CLEAR_SCREEN;
     }
 
     exit(): void {
@@ -53,6 +58,7 @@ export class Screen {
     writeAt(row: number, col: number, text: string, maxWidth: number): void {
         this.buffer += moveTo(row, col);
         this.buffer += truncateAnsi(text, maxWidth);
+        this.buffer += ERASE_TO_EOL;
     }
 
     clearLine(row: number): void {

@@ -16,6 +16,7 @@ export function moveTo(row: number, col: number): string {
 // Clearing
 export const CLEAR_SCREEN = `${ESC}[2J`;
 export const CLEAR_LINE = `${ESC}[2K`;
+export const ERASE_TO_EOL = `${ESC}[0K`;
 
 // Style
 export const RESET = `${ESC}[0m`;
