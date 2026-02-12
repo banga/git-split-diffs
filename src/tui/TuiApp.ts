@@ -11,7 +11,6 @@ import { syncTreeToDiff, syncDiffToTree } from './sync';
 import { getGitStagingStatus } from './gitStatus';
 import { RESET } from './ansi';
 
-export const TREE_WIDTH = 30;
 export const BORDER_WIDTH = 1;
 
 type FocusPanel = 'tree' | 'diff';
@@ -26,10 +25,12 @@ export class TuiApp {
     private focus: FocusPanel = 'tree';
     private treeVisible: boolean = true;
     private lastDiffWidth: number = 0;
+    private treeWidth: number = 30;
     private resolve!: () => void;
 
-    async run(context: Context, stdin: Readable): Promise<void> {
+    async run(context: Context, stdin: Readable, treeWidth: number = 30): Promise<void> {
         this.context = context;
+        this.treeWidth = treeWidth;
 
         // Consume all diff data from stdin first
         this.data = await collectDiffData(context, stdin);
@@ -54,12 +55,12 @@ export class TuiApp {
         this.screen.enter();
 
         const viewHeight = rows;
-        const diffWidth = cols - TREE_WIDTH - BORDER_WIDTH;
+        const diffWidth = Math.max(1, cols - this.treeWidth - BORDER_WIDTH);
         this.lastDiffWidth = diffWidth;
 
         this.tree = new FileTreePanel(
             this.data.files,
-            TREE_WIDTH,
+            this.treeWidth,
             viewHeight,
             context
         );
@@ -94,9 +95,9 @@ export class TuiApp {
         this.screen.cols = cols;
 
         const viewHeight = rows;
-        const treeWidth = this.treeVisible ? TREE_WIDTH : 0;
+        const treeWidth = this.treeVisible ? this.treeWidth : 0;
         const borderWidth = this.treeVisible ? BORDER_WIDTH : 0;
-        const diffWidth = cols - treeWidth - borderWidth;
+        const diffWidth = Math.max(1, cols - treeWidth - borderWidth);
 
         this.tree.resize(treeWidth, viewHeight);
         this.diff.resize(diffWidth, viewHeight);
@@ -364,10 +365,10 @@ export class TuiApp {
         const viewHeight = this.screen.rows;
 
         if (this.treeVisible) {
-            const borderCol = TREE_WIDTH;
-            const diffCol = TREE_WIDTH + BORDER_WIDTH;
+            const borderCol = this.treeWidth;
+            const diffCol = this.treeWidth + BORDER_WIDTH;
 
-            this.tree.render(this.screen, 0, 0, this.focus === 'tree');
+            this.tree.render(this.screen, 0, 0);
 
             const borderColor = this.focus === 'tree'
                 ? this.context.FILE_TREE_BORDER_FOCUSED_COLOR

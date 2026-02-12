@@ -9,9 +9,11 @@ export type GitConfig = {
     THEME_NAME: string;
     SYNTAX_HIGHLIGHTING_THEME?: string;
     INTERACTIVE: boolean;
+    TREE_WIDTH: number;
 };
 
 export const DEFAULT_MIN_LINE_WIDTH = 80;
+export const DEFAULT_TREE_WIDTH = 30;
 export const DEFAULT_THEME_DIRECTORY = path.resolve(
     path.dirname(fileURLToPath(import.meta.url)),
     '..',
@@ -50,6 +52,16 @@ export function getGitConfig(configString: string): GitConfig {
         // Ignore invalid values
     }
 
+    let treeWidth = DEFAULT_TREE_WIDTH;
+    try {
+        const parsedTreeWidth = parseInt(rawConfig['tree-width'], 10);
+        if (!isNaN(parsedTreeWidth)) {
+            treeWidth = parsedTreeWidth;
+        }
+    } catch {
+        // Ignore invalid values
+    }
+
     return {
         MIN_LINE_WIDTH: minLineWidth,
         WRAP_LINES: rawConfig['wrap-lines'] !== 'false',
@@ -59,5 +71,6 @@ export function getGitConfig(configString: string): GitConfig {
         THEME_NAME: rawConfig['theme-name'] ?? DEFAULT_THEME_NAME,
         SYNTAX_HIGHLIGHTING_THEME: rawConfig['syntax-highlighting-theme'],
         INTERACTIVE: rawConfig['interactive'] === 'true',
+        TREE_WIDTH: treeWidth,
     };
 }

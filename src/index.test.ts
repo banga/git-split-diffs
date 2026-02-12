@@ -25,6 +25,7 @@ const TEST_CONFIG: Config = {
     WRAP_LINES: false,
     HIGHLIGHT_LINE_CHANGES: false,
     INTERACTIVE: false,
+    TREE_WIDTH: 30,
     ...TEST_THEME,
 };
 

@@ -7,6 +7,7 @@ export type Config = Theme & {
     WRAP_LINES: boolean;
     HIGHLIGHT_LINE_CHANGES: boolean;
     INTERACTIVE: boolean;
+    TREE_WIDTH: number;
 };
 
 export const CONFIG_DEFAULTS: Omit<Config, keyof Theme> = {
@@ -14,6 +15,7 @@ export const CONFIG_DEFAULTS: Omit<Config, keyof Theme> = {
     WRAP_LINES: true,
     HIGHLIGHT_LINE_CHANGES: true,
     INTERACTIVE: false,
+    TREE_WIDTH: 30,
 };
 
 export function getConfig(gitConfig: GitConfig): Config {

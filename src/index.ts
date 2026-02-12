@@ -7,7 +7,7 @@ import { getContextForConfig } from './context';
 import { getGitConfig } from './getGitConfig';
 import { transformContentsStreaming } from './transformContentsStreaming';
 import { getConfig } from './getConfig';
-import { TuiApp, TREE_WIDTH, BORDER_WIDTH } from './tui/TuiApp';
+import { TuiApp, BORDER_WIDTH } from './tui/TuiApp';
 const execAsync = util.promisify(exec);
 
 async function main() {
@@ -29,14 +29,14 @@ async function main() {
 
     const termCols = terminalSize().columns;
     const screenWidth = isInteractive
-        ? termCols - TREE_WIDTH - BORDER_WIDTH
+        ? Math.max(1, termCols - config.TREE_WIDTH - BORDER_WIDTH)
         : termCols;
 
     const context = await getContextForConfig(config, chalk, screenWidth);
 
     if (isInteractive) {
         const app = new TuiApp();
-        await app.run(context, process.stdin);
+        await app.run(context, process.stdin, config.TREE_WIDTH);
     } else {
         await transformContentsStreaming(
             context,
