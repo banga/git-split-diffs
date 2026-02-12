@@ -1,4 +1,4 @@
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 
 export type StagingStatus = 'staged' | 'partial' | 'unstaged';
 
@@ -10,7 +10,7 @@ export function getGitStagingStatus(): Map<string, StagingStatus> {
     const result = new Map<string, StagingStatus>();
 
     try {
-        const output = execSync('git status --porcelain', {
+        const output = execFileSync('git', ['status', '--porcelain'], {
             encoding: 'utf-8',
             timeout: 5000,
             stdio: ['pipe', 'pipe', 'pipe'],

@@ -191,8 +191,7 @@ export class FileTreePanel {
         }
 
         // Navigate to parent directory
-        const nodePath =
-            vn.type === 'dir' ? vn.node.path : vn.node.path;
+        const nodePath = vn.node.path;
         const parentPath = path.dirname(nodePath);
         if (parentPath === '.' || parentPath === nodePath) return;
 
