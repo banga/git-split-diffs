@@ -5,7 +5,7 @@ import { iterlinesFromReadable } from '../iterLinesFromReadable';
 import { iterReplaceTabsWithSpaces } from '../iterReplaceTabsWithSpaces';
 import {
     DiffEvent,
-    iterSideBySideDiffsWithEvents,
+    iterSideBySideDiffEvents,
 } from '../iterSideBySideDiffs';
 
 import { StagingStatus } from './gitStatus';
@@ -24,6 +24,7 @@ export interface DiffData {
     files: DiffFile[];
     allRenderedLines: string[];
     fileBoundaries: number[];
+    rawLines: string[];
 }
 
 function getDisplayName(fileNameA: string, fileNameB: string): string {
@@ -33,6 +34,33 @@ function getDisplayName(fileNameA: string, fileNameB: string): string {
     return `${fileNameA} → ${fileNameB}`;
 }
 
+/**
+ * Re-render diff lines from raw input with a given context.
+ * Used for dynamic width changes (terminal resize, tree toggle).
+ */
+export async function rerenderDiffLines(
+    context: Context,
+    rawLines: string[]
+): Promise<{ allRenderedLines: string[]; fileBoundaries: number[] }> {
+    const allRenderedLines: string[] = [];
+    const fileBoundaries: number[] = [];
+
+    async function* iterLines() {
+        for (const line of rawLines) yield line;
+    }
+
+    const events = iterSideBySideDiffEvents(context, iterLines());
+    for await (const event of events) {
+        if (event.type === 'file-start') {
+            fileBoundaries.push(allRenderedLines.length);
+        } else {
+            allRenderedLines.push(applyFormatting(context, event.content));
+        }
+    }
+
+    return { allRenderedLines, fileBoundaries };
+}
+
 export async function collectDiffData(
     context: Context,
     input: Readable
@@ -40,15 +68,24 @@ export async function collectDiffData(
     const files: DiffFile[] = [];
     const allRenderedLines: string[] = [];
     const fileBoundaries: number[] = [];
+    const rawLines: string[] = [];
 
     const lines = iterReplaceTabsWithSpaces(
         context,
         iterlinesFromReadable(input)
     );
 
-    const events: AsyncIterable<DiffEvent> = iterSideBySideDiffsWithEvents(
+    // Buffer raw lines for later re-rendering
+    async function* captureLines() {
+        for await (const line of lines) {
+            rawLines.push(line);
+            yield line;
+        }
+    }
+
+    const events: AsyncIterable<DiffEvent> = iterSideBySideDiffEvents(
         context,
-        lines
+        captureLines()
     );
 
     for await (const event of events) {
@@ -68,5 +105,5 @@ export async function collectDiffData(
         }
     }
 
-    return { files, allRenderedLines, fileBoundaries };
+    return { files, allRenderedLines, fileBoundaries, rawLines };
 }
