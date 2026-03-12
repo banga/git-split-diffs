@@ -1,7 +1,7 @@
 import { truncateAnsi } from './Screen';
 import { getFileIcon } from './fileIcons';
 import { binarySearchBoundary } from './sync';
-import { buildTree, flattenVisible } from './FileTreePanel';
+import { buildTree, flattenVisible, flattenFlat } from './FileTreePanel';
 import { DiffFile } from './collectDiffData';
 
 const RESET = '\x1b[0m';
@@ -169,5 +169,42 @@ describe('flattenVisible', () => {
         expect(visible[0].type).toBe('dir');
         expect(visible[1].type).toBe('file');
         expect(visible[1].node.name).toBe('README.md');
+    });
+});
+
+describe('flattenFlat', () => {
+    test('returns only files with full paths, no dirs', () => {
+        const files = [
+            makeDiffFile('src/tui/App.ts'),
+            makeDiffFile('src/utils.ts'),
+            makeDiffFile('README.md'),
+        ];
+        const visible = flattenFlat(files);
+        expect(visible).toHaveLength(3);
+        expect(visible.every((v) => v.type === 'file')).toBe(true);
+        expect(visible[0].node.name).toBe('src/tui/App.ts');
+        expect(visible[1].node.name).toBe('src/utils.ts');
+        expect(visible[2].node.name).toBe('README.md');
+    });
+
+    test('all nodes have depth 0', () => {
+        const files = [
+            makeDiffFile('a/b/c.ts'),
+            makeDiffFile('d.ts'),
+        ];
+        const visible = flattenFlat(files);
+        expect(visible.every((v) => v.node.depth === 0)).toBe(true);
+    });
+
+    test('preserves file indices', () => {
+        const files = [
+            makeDiffFile('x.ts'),
+            makeDiffFile('y.ts'),
+            makeDiffFile('z.ts'),
+        ];
+        const visible = flattenFlat(files);
+        expect(visible[0].type === 'file' && visible[0].fileIndex).toBe(0);
+        expect(visible[1].type === 'file' && visible[1].fileIndex).toBe(1);
+        expect(visible[2].type === 'file' && visible[2].fileIndex).toBe(2);
     });
 });

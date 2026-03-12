@@ -159,6 +159,12 @@ export class TuiApp {
             return;
         }
 
+        if (key === 'f') {
+            this.tree.toggleFlatMode();
+            this.render();
+            return;
+        }
+
         if (key === 'tab') {
             if (!this.treeVisible) return;
             this.focus = this.focus === 'tree' ? 'diff' : 'tree';

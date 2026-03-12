@@ -91,10 +91,26 @@ export function flattenVisible(nodes: TreeNode[]): VisibleNode[] {
     return result;
 }
 
+export function flattenFlat(files: DiffFile[]): VisibleNode[] {
+    return files.map((file, i) => ({
+        type: 'file' as const,
+        node: {
+            type: 'file' as const,
+            name: file.fileNameB || file.fileNameA || file.displayName,
+            path: file.fileNameB || file.fileNameA || file.displayName,
+            file,
+            fileIndex: i,
+            depth: 0,
+        },
+        fileIndex: i,
+    }));
+}
+
 export class FileTreePanel {
     private files: DiffFile[];
     private rootNodes: TreeNode[];
     private visibleNodes: VisibleNode[] = [];
+    private flatMode: boolean = false;
     private width: number;
     private height: number;
     private context: Context;
@@ -120,7 +136,30 @@ export class FileTreePanel {
     }
 
     private regenerateVisible(): void {
-        this.visibleNodes = flattenVisible(this.rootNodes);
+        this.visibleNodes = this.flatMode
+            ? flattenFlat(this.files)
+            : flattenVisible(this.rootNodes);
+    }
+
+    toggleFlatMode(): void {
+        const selectedFileIndex = this.getSelectedFileIndex();
+        this.flatMode = !this.flatMode;
+        this.regenerateVisible();
+        if (selectedFileIndex != null) {
+            for (let i = 0; i < this.visibleNodes.length; i++) {
+                const vn = this.visibleNodes[i];
+                if (vn.type === 'file' && vn.fileIndex === selectedFileIndex) {
+                    this.selectedIndex = i;
+                    this.ensureVisible();
+                    return;
+                }
+            }
+        }
+        this.selectedIndex = Math.min(
+            this.selectedIndex,
+            Math.max(0, this.visibleNodes.length - 1)
+        );
+        this.ensureVisible();
     }
 
     resize(width: number, height: number): void {
