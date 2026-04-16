@@ -1,6 +1,7 @@
 import * as assert from 'assert';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as os from 'os';
 import * as shiki from 'shiki';
 
 /**
@@ -159,12 +160,19 @@ export function parseColorDefinition(definition: ColorDefinition): ThemeColor {
     };
 }
 
+function expandHomeDir(path: string) {
+    const homeDir = os.homedir()
+    return path.replace('~', homeDir).replace('$HOME', homeDir)
+}
+
 function loadThemeDefinition(
     themesDir: string,
     themeName: string
 ): ThemeDefinition {
     return JSON.parse(
-        fs.readFileSync(path.join(themesDir, `${themeName}.json`)).toString()
+        fs.readFileSync(
+            expandHomeDir(path.join(themesDir, `${themeName}.json`))
+        ).toString()
     ) as ThemeDefinition;
 }
 
