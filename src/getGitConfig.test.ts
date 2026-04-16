@@ -2,6 +2,7 @@ import {
     DEFAULT_MIN_LINE_WIDTH,
     DEFAULT_THEME_DIRECTORY,
     DEFAULT_THEME_NAME,
+    DEFAULT_TREE_WIDTH,
     GitConfig,
     getGitConfig,
 } from './getGitConfig';
@@ -12,6 +13,8 @@ const DEFAULT_CONFIG: GitConfig = {
     MIN_LINE_WIDTH: DEFAULT_MIN_LINE_WIDTH,
     THEME_NAME: DEFAULT_THEME_NAME,
     THEME_DIRECTORY: DEFAULT_THEME_DIRECTORY,
+    INTERACTIVE: false,
+    TREE_WIDTH: DEFAULT_TREE_WIDTH,
 };
 
 describe('getGitConfig', () => {
@@ -28,6 +31,7 @@ split-diffs.min-line-width=40
 split-diffs.theme-name=arctic
 split-diffs.theme-directory=/tmp
 split-diffs.syntax-highlighting-theme=dark-plus
+split-diffs.tree-width=40
             `)
         ).toEqual({
             WRAP_LINES: false,
@@ -36,6 +40,8 @@ split-diffs.syntax-highlighting-theme=dark-plus
             THEME_NAME: 'arctic',
             THEME_DIRECTORY: '/tmp',
             SYNTAX_HIGHLIGHTING_THEME: 'dark-plus',
+            INTERACTIVE: false,
+            TREE_WIDTH: 40,
         });
     });
 

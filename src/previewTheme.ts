@@ -12,6 +12,8 @@ const CONFIG = {
     MIN_LINE_WIDTH: 40,
     WRAP_LINES: true,
     HIGHLIGHT_LINE_CHANGES: true,
+    INTERACTIVE: false,
+    TREE_WIDTH: 30,
 };
 
 async function previewTheme(
