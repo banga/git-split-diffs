@@ -26,7 +26,9 @@
     },
     "COMMIT_TITLE_COLOR": {
         "color": "#05264c",
-        "modifiers": ["bold"]
+        "modifiers": [
+            "bold"
+        ]
     },
     "BORDER_COLOR": {
         "color": "#e1e4e8"
@@ -66,5 +68,38 @@
     "UNMODIFIED_LINE_COLOR": {},
     "MISSING_LINE_COLOR": {
         "backgroundColor": "#fafbfc"
+    },
+    "FILE_TREE_COLOR": {
+        "color": "#24292e",
+        "backgroundColor": "#f7f7f7"
+    },
+    "FILE_TREE_SELECTED_COLOR": {
+        "modifiers": [
+            "inverse"
+        ]
+    },
+    "FILE_TREE_BORDER_COLOR": {
+        "color": "#e1e4e8"
+    },
+    "FILE_TREE_DIR_COLOR": {
+        "color": "#05264c"
+    },
+    "FILE_TREE_BORDER_FOCUSED_COLOR": {
+        "color": "#0366d6"
+    },
+    "FILE_TREE_ADDITIONS_COLOR": {
+        "color": "#28a745"
+    },
+    "FILE_TREE_DELETIONS_COLOR": {
+        "color": "#d73a49"
+    },
+    "FILE_TREE_STAGED_COLOR": {
+        "color": "#28a745"
+    },
+    "FILE_TREE_PARTIAL_STAGED_COLOR": {
+        "color": "#d15704"
+    },
+    "FILE_TREE_FILE_SELECTED_COLOR": {
+        "backgroundColor": "#e8e8e8"
     }
 }

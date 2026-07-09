@@ -34,28 +34,43 @@ type State =
     | 'combined-diff-hunk-header'
     | 'combined-diff-hunk-body';
 
-async function* iterSideBySideDiffsFormatted(
+export type DiffEvent =
+    | { type: 'line'; content: FormattedString }
+    | { type: 'file-start'; fileNameA: string; fileNameB: string; additions: number; deletions: number };
+
+export async function* iterSideBySideDiffs(
     context: Context,
     lines: AsyncIterable<string>
-): AsyncIterable<FormattedString> {
+) {
+    for await (const event of iterSideBySideDiffEvents(context, lines)) {
+        if (event.type === 'line') {
+            yield applyFormatting(context, event.content);
+        }
+    }
+}
+
+export async function* iterSideBySideDiffEvents(
+    context: Context,
+    lines: AsyncIterable<string>
+): AsyncIterable<DiffEvent> {
     const { HORIZONTAL_SEPARATOR } = context;
 
     let state: State = 'unknown';
-
-    // Commit metadata
     let isFirstCommitBodyLine = false;
-
-    // File metadata
     let fileNameA: string = '';
     let fileNameB: string = '';
-    function* yieldFileName() {
+    let fileAdditions: number = 0;
+    let fileDeletions: number = 0;
+    let hunkParts: HunkPart[] = [];
+    let hunkHeaderLine: string = '';
+
+    function* yieldFileNameLines() {
         yield* iterFormatFileName(context, fileNameA, fileNameB);
     }
 
-    // Hunk metadata
-    let hunkParts: HunkPart[] = [];
-    let hunkHeaderLine: string = '';
-    async function* yieldHunk(diffType: 'unified-diff' | 'combined-diff') {
+    async function* yieldHunkLines(
+        diffType: 'unified-diff' | 'combined-diff'
+    ) {
         yield* iterFormatHunk(context, diffType, hunkHeaderLine, hunkParts);
         for (const hunkPart of hunkParts) {
             hunkPart.startLineNo = -1;
@@ -63,20 +78,32 @@ async function* iterSideBySideDiffsFormatted(
         }
     }
 
-    async function* flushPending() {
+    async function* flushPendingEvents(): AsyncIterable<DiffEvent> {
         if (state === 'unified-diff' || state === 'combined-diff') {
-            yield* yieldFileName();
+            yield {
+                type: 'file-start',
+                fileNameA,
+                fileNameB,
+                additions: fileAdditions,
+                deletions: fileDeletions,
+            };
+            for (const line of yieldFileNameLines()) {
+                yield { type: 'line', content: line };
+            }
         } else if (state === 'unified-diff-hunk-body') {
-            yield* yieldHunk('unified-diff');
+            for await (const line of yieldHunkLines('unified-diff')) {
+                yield { type: 'line', content: line };
+            }
         } else if (state === 'combined-diff-hunk-body') {
-            yield* yieldHunk('combined-diff');
+            for await (const line of yieldHunkLines('combined-diff')) {
+                yield { type: 'line', content: line };
+            }
         }
     }
 
     for await (const rawLine of lines) {
         const line = rawLine.replace(ANSI_COLOR_CODE_REGEX, '');
 
-        // Update state
         let nextState: State | null = null;
         if (line.startsWith('commit ')) {
             nextState = 'commit-header';
@@ -105,9 +132,8 @@ async function* iterSideBySideDiffsFormatted(
             nextState = 'unknown';
         }
 
-        // Handle state starts
         if (nextState) {
-            yield* flushPending();
+            yield* flushPendingEvents();
 
             switch (nextState) {
                 case 'commit-header':
@@ -115,12 +141,17 @@ async function* iterSideBySideDiffsFormatted(
                         state === 'unified-diff-hunk-header' ||
                         state === 'unified-diff-hunk-body'
                     ) {
-                        yield HORIZONTAL_SEPARATOR;
+                        yield {
+                            type: 'line',
+                            content: HORIZONTAL_SEPARATOR,
+                        };
                     }
                     break;
                 case 'unified-diff':
                     fileNameA = '';
                     fileNameB = '';
+                    fileAdditions = 0;
+                    fileDeletions = 0;
                     break;
                 case 'unified-diff-hunk-header':
                     hunkParts = [
@@ -136,22 +167,25 @@ async function* iterSideBySideDiffsFormatted(
             state = nextState;
         }
 
-        // Handle state
         switch (state) {
             case 'unknown': {
-                yield T().appendString(rawLine);
+                yield { type: 'line', content: T().appendString(rawLine) };
                 break;
             }
             case 'commit-header': {
-                yield* iterFormatCommitHeaderLine(context, line);
+                for (const l of iterFormatCommitHeaderLine(context, line)) {
+                    yield { type: 'line', content: l };
+                }
                 break;
             }
             case 'commit-body': {
-                yield* iterFormatCommitBodyLine(
+                for (const l of iterFormatCommitBodyLine(
                     context,
                     line,
                     isFirstCommitBodyLine
-                );
+                )) {
+                    yield { type: 'line', content: l };
+                }
                 isFirstCommitBodyLine = false;
                 break;
             }
@@ -163,9 +197,8 @@ async function* iterSideBySideDiffsFormatted(
                     fileNameB = line.slice('+++ b/'.length);
                 } else if (line.startsWith('--- ')) {
                     fileNameA = line.slice('--- '.length);
-                    // https://git-scm.com/docs/diff-format says that
-                    // `/dev/null` is used to indicate creations and deletions,
-                    // so we can special case it.
+                    // /dev/null indicates file creation/deletion
+                    // per git diff-format spec
                     if (fileNameA === '/dev/null') {
                         fileNameA = '';
                     }
@@ -196,14 +229,11 @@ async function* iterSideBySideDiffsFormatted(
                     hunkHeaderEnd
                 );
                 hunkHeaderLine = line;
-
                 const [aHeader, bHeader] = hunkHeader.split(' ');
                 const [startAString] = aHeader.split(',');
                 const [startBString] = bHeader.split(',');
-
                 assert.ok(startAString.startsWith('-'));
                 hunkParts[0].startLineNo = parseInt(startAString.slice(1), 10);
-
                 assert.ok(startBString.startsWith('+'));
                 hunkParts[1].startLineNo = parseInt(startBString.slice(1), 10);
                 break;
@@ -213,8 +243,10 @@ async function* iterSideBySideDiffsFormatted(
                     hunkParts;
                 if (line.startsWith('-')) {
                     hunkLinesA.push(line);
+                    fileDeletions++;
                 } else if (line.startsWith('+')) {
                     hunkLinesB.push(line);
+                    fileAdditions++;
                 } else {
                     while (hunkLinesA.length < hunkLinesB.length) {
                         hunkLinesA.push(null);
@@ -230,13 +262,13 @@ async function* iterSideBySideDiffsFormatted(
             case 'combined-diff-hunk-header': {
                 const match = COMBINED_HUNK_HEADER_START_REGEX.exec(line);
                 assert.ok(match);
-                const hunkHeaderStart = match.index + match[0].length; // End of the opening "@@@ "
-                const hunkHeaderEnd = line.lastIndexOf(' ' + match[1]); // Start of the closing " @@@"
+                const hunkHeaderStart =
+                    match.index + match[0].length;
+                const hunkHeaderEnd = line.lastIndexOf(' ' + match[1]);
                 assert.ok(hunkHeaderStart >= 0);
                 assert.ok(hunkHeaderEnd > hunkHeaderStart);
                 const hunkHeader = line.slice(hunkHeaderStart, hunkHeaderEnd);
                 hunkHeaderLine = line;
-
                 const fileRanges = hunkHeader.split(' ');
                 hunkParts = [];
                 for (let i = 0; i < fileRanges.length; i++) {
@@ -252,26 +284,14 @@ async function* iterSideBySideDiffsFormatted(
                 break;
             }
             case 'combined-diff-hunk-body': {
-                // A combined diff works differently from a unified diff. See
-                // https://git-scm.com/docs/git-diff#_combined_diff_format for
-                // details, but essentially we get a row of prefixes in each
-                // line indicating whether the line is present on the parent,
-                // the current commit, or both. We convert this into N+1 parts
-                // (for N parents) where the first part shows the current state
-                // and the rest show changes made in the corresponding parent.
+                // Combined diffs have N+1 columns: first N show changes
+                // relative to each parent, last shows the merge result.
+                // Prefix chars: + (added), - (removed), space (unchanged).
+                // See: https://git-scm.com/docs/git-diff#_combined_diff_format
                 const linePrefix = line.slice(0, hunkParts.length - 1);
                 const lineSuffix = line.slice(hunkParts.length - 1);
                 const isLineAdded = linePrefix.includes('+');
                 const isLineRemoved = linePrefix.includes('-');
-
-                // First N parts show changes made in the corresponding parent
-                // Either the line is going to be:
-                // 1. In the current commit and missing in some parents, which
-                //    will have + prefixes, or
-                // 2. Missing in the current commit and present in some parents,
-                //    which will have - prefixes.
-                // 3. Present in all commits, which will all have a space
-                //    prefix.
                 let i = 0;
                 while (i < hunkParts.length - 1) {
                     const hunkPart = hunkParts[i];
@@ -293,32 +313,20 @@ async function* iterSideBySideDiffsFormatted(
                     }
                     i++;
                 }
-                // Final part shows the current state, so we just display the
-                // lines that exist in it without any highlighting.
+                // Final part: the merge result (current commit state)
                 if (isLineRemoved) {
                     hunkParts[i].lines.push('-' + lineSuffix);
+                    fileDeletions++;
                 } else if (isLineAdded) {
                     hunkParts[i].lines.push('+' + lineSuffix);
+                    fileAdditions++;
                 } else {
                     hunkParts[i].lines.push(' ' + lineSuffix);
                 }
-
                 break;
             }
         }
     }
 
-    yield* flushPending();
-}
-
-export async function* iterSideBySideDiffs(
-    context: Context,
-    lines: AsyncIterable<string>
-) {
-    for await (const formattedString of iterSideBySideDiffsFormatted(
-        context,
-        lines
-    )) {
-        yield applyFormatting(context, formattedString);
-    }
+    yield* flushPendingEvents();
 }

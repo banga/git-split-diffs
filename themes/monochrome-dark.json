@@ -15,7 +15,9 @@
         "color": "#eeeeee"
     },
     "COMMIT_TITLE_COLOR": {
-        "modifiers": ["bold"]
+        "modifiers": [
+            "bold"
+        ]
     },
     "FILE_NAME_COLOR": {
         "color": "#ffffff"
@@ -24,7 +26,9 @@
         "color": "#666666"
     },
     "HUNK_HEADER_COLOR": {
-        "modifiers": ["dim"],
+        "modifiers": [
+            "dim"
+        ],
         "color": "#ffffff"
     },
     "DELETED_LINE_NO_COLOR": {
@@ -55,5 +59,38 @@
     "INSERTED_WORD_COLOR": {
         "color": "#222222",
         "backgroundColor": "#aaaaaa"
+    },
+    "FILE_TREE_COLOR": {
+        "color": "#aaaaaa",
+        "backgroundColor": "#1a1a1a"
+    },
+    "FILE_TREE_SELECTED_COLOR": {
+        "modifiers": [
+            "inverse"
+        ]
+    },
+    "FILE_TREE_BORDER_COLOR": {
+        "color": "#666666"
+    },
+    "FILE_TREE_DIR_COLOR": {
+        "color": "#ffffff"
+    },
+    "FILE_TREE_BORDER_FOCUSED_COLOR": {
+        "color": "#ffffff"
+    },
+    "FILE_TREE_ADDITIONS_COLOR": {
+        "color": "#cccccc"
+    },
+    "FILE_TREE_DELETIONS_COLOR": {
+        "color": "#888888"
+    },
+    "FILE_TREE_STAGED_COLOR": {
+        "color": "#66cc66"
+    },
+    "FILE_TREE_PARTIAL_STAGED_COLOR": {
+        "color": "#cc9944"
+    },
+    "FILE_TREE_FILE_SELECTED_COLOR": {
+        "backgroundColor": "#333333"
     }
 }

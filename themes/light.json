@@ -60,5 +60,38 @@
     "UNMODIFIED_LINE_COLOR": {},
     "MISSING_LINE_COLOR": {
         "backgroundColor": "#e8e8e8"
+    },
+    "FILE_TREE_COLOR": {
+        "color": "#333333",
+        "backgroundColor": "#e6e6e6"
+    },
+    "FILE_TREE_SELECTED_COLOR": {
+        "modifiers": [
+            "inverse"
+        ]
+    },
+    "FILE_TREE_BORDER_COLOR": {
+        "color": "#cccccc"
+    },
+    "FILE_TREE_DIR_COLOR": {
+        "color": "#336666"
+    },
+    "FILE_TREE_BORDER_FOCUSED_COLOR": {
+        "color": "#336666"
+    },
+    "FILE_TREE_ADDITIONS_COLOR": {
+        "color": "#228822"
+    },
+    "FILE_TREE_DELETIONS_COLOR": {
+        "color": "#aa3333"
+    },
+    "FILE_TREE_STAGED_COLOR": {
+        "color": "#228822"
+    },
+    "FILE_TREE_PARTIAL_STAGED_COLOR": {
+        "color": "#aa6622"
+    },
+    "FILE_TREE_FILE_SELECTED_COLOR": {
+        "backgroundColor": "#d0d0d0"
     }
 }
