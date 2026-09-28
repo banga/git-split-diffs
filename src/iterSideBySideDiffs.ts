@@ -55,6 +55,39 @@ async function* iterSideBySideDiffsFormatted(
     // Hunk metadata
     let hunkParts: HunkPart[] = [];
     let hunkHeaderLine: string = '';
+    // Lines each hunk part still expects, from the counts in the hunk header.
+    // The hunk ends once they are all used up, so that whatever follows it
+    // (e.g. a commit printed with a custom --pretty format) isn't mistaken
+    // for hunk lines.
+    let hunkLinesRemaining: number[] = [];
+    // Whether the last hunk ended by running out of lines, rather than being
+    // interrupted by another state
+    let isAfterHunk = false;
+    function isHunkComplete() {
+        return hunkLinesRemaining.every((count) => count <= 0);
+    }
+    function parseHunkLineCount(fileRange: string) {
+        // A range is "start,count", or just "start" when the count is 1
+        const [, countString] = fileRange.slice(1).split(',');
+        return countString === undefined ? 1 : parseInt(countString, 10);
+    }
+    function consumeHunkLine(linePrefix: string) {
+        // "\ No newline at end of file" doesn't count as a line
+        if (linePrefix.startsWith('\\')) {
+            return;
+        }
+        // With N parents, the prefix has one column per parent. A line exists
+        // in a parent unless that parent's column is "+", and in the result
+        // unless any column is "-". A unified diff is the N = 1 case.
+        for (let i = 0; i < linePrefix.length; i++) {
+            if (linePrefix[i] !== '+') {
+                hunkLinesRemaining[i]--;
+            }
+        }
+        if (!linePrefix.includes('-')) {
+            hunkLinesRemaining[linePrefix.length]--;
+        }
+    }
     async function* yieldHunk(diffType: 'unified-diff' | 'combined-diff') {
         yield* iterFormatHunk(context, diffType, hunkHeaderLine, hunkParts);
         for (const hunkPart of hunkParts) {
@@ -103,6 +136,13 @@ async function* iterSideBySideDiffsFormatted(
             !line.startsWith('    ')
         ) {
             nextState = 'unknown';
+        } else if (
+            (state === 'unified-diff-hunk-body' ||
+                state === 'combined-diff-hunk-body') &&
+            isHunkComplete() &&
+            !line.startsWith('\\')
+        ) {
+            nextState = 'unknown';
         }
 
         // Handle state starts
@@ -113,7 +153,8 @@ async function* iterSideBySideDiffsFormatted(
                 case 'commit-header':
                     if (
                         state === 'unified-diff-hunk-header' ||
-                        state === 'unified-diff-hunk-body'
+                        state === 'unified-diff-hunk-body' ||
+                        (state === 'unknown' && isAfterHunk)
                     ) {
                         yield HORIZONTAL_SEPARATOR;
                     }
@@ -133,6 +174,13 @@ async function* iterSideBySideDiffsFormatted(
                     break;
             }
 
+            if (nextState !== 'unknown') {
+                isAfterHunk = false;
+            } else if (state !== 'unknown') {
+                isAfterHunk =
+                    state === 'unified-diff-hunk-body' ||
+                    state === 'combined-diff-hunk-body';
+            }
             state = nextState;
         }
 
@@ -206,9 +254,14 @@ async function* iterSideBySideDiffsFormatted(
 
                 assert.ok(startBString.startsWith('+'));
                 hunkParts[1].startLineNo = parseInt(startBString.slice(1), 10);
+
+                hunkLinesRemaining = [aHeader, bHeader].map(
+                    parseHunkLineCount
+                );
                 break;
             }
             case 'unified-diff-hunk-body': {
+                consumeHunkLine(line.slice(0, 1));
                 const [{ lines: hunkLinesA }, { lines: hunkLinesB }] =
                     hunkParts;
                 if (line.startsWith('-')) {
@@ -238,6 +291,7 @@ async function* iterSideBySideDiffsFormatted(
                 hunkHeaderLine = line;
 
                 const fileRanges = hunkHeader.split(' ');
+                hunkLinesRemaining = fileRanges.map(parseHunkLineCount);
                 hunkParts = [];
                 for (let i = 0; i < fileRanges.length; i++) {
                     const fileRange = fileRanges[i];
@@ -261,6 +315,7 @@ async function* iterSideBySideDiffsFormatted(
                 // and the rest show changes made in the corresponding parent.
                 const linePrefix = line.slice(0, hunkParts.length - 1);
                 const lineSuffix = line.slice(hunkParts.length - 1);
+                consumeHunkLine(linePrefix);
                 const isLineAdded = linePrefix.includes('+');
                 const isLineRemoved = linePrefix.includes('-');
 
