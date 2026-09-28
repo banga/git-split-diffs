@@ -38,7 +38,7 @@ async function* iterSideBySideDiffsFormatted(
     context: Context,
     lines: AsyncIterable<string>
 ): AsyncIterable<FormattedString> {
-    const { HORIZONTAL_SEPARATOR } = context;
+    const { HORIZONTAL_SEPARATOR, UNIFY_ONE_SIDED_DIFFS } = context;
 
     let state: State = 'unknown';
 
@@ -56,11 +56,41 @@ async function* iterSideBySideDiffsFormatted(
     let hunkParts: HunkPart[] = [];
     let hunkHeaderLine: string = '';
     async function* yieldHunk(diffType: 'unified-diff' | 'combined-diff') {
+        if (diffType === 'unified-diff' && UNIFY_ONE_SIDED_DIFFS) {
+            // Whether a file is one-sided is only known once all its hunks
+            // have been read, so hold them until the file ends.
+            fileHunks.push({ hunkHeaderLine, hunkParts });
+            return;
+        }
         yield* iterFormatHunk(context, diffType, hunkHeaderLine, hunkParts);
         for (const hunkPart of hunkParts) {
             hunkPart.startLineNo = -1;
             hunkPart.lines = [];
         }
+    }
+
+    // Hunks of the current file, held back when UNIFY_ONE_SIDED_DIFFS is set
+    let fileHunks: { hunkHeaderLine: string; hunkParts: HunkPart[] }[] = [];
+    async function* yieldFileHunks() {
+        const hasPrefix = (lines: (string | null)[], prefix: string) =>
+            lines.some((line) => line?.startsWith(prefix));
+        const hasDeletions = fileHunks.some(({ hunkParts: [partA] }) =>
+            hasPrefix(partA.lines, '-')
+        );
+        const hasInsertions = fileHunks.some(({ hunkParts: [, partB] }) =>
+            hasPrefix(partB.lines, '+')
+        );
+        const isOneSided = !(hasDeletions && hasInsertions);
+        for (const { hunkHeaderLine, hunkParts } of fileHunks) {
+            yield* iterFormatHunk(
+                context,
+                'unified-diff',
+                hunkHeaderLine,
+                hunkParts,
+                isOneSided
+            );
+        }
+        fileHunks = [];
     }
 
     async function* flushPending() {
@@ -108,6 +138,12 @@ async function* iterSideBySideDiffsFormatted(
         // Handle state starts
         if (nextState) {
             yield* flushPending();
+            if (
+                nextState !== 'unified-diff-hunk-header' &&
+                nextState !== 'unified-diff-hunk-body'
+            ) {
+                yield* yieldFileHunks();
+            }
 
             switch (nextState) {
                 case 'commit-header':
@@ -309,6 +345,7 @@ async function* iterSideBySideDiffsFormatted(
     }
 
     yield* flushPending();
+    yield* yieldFileHunks();
 }
 
 export async function* iterSideBySideDiffs(

@@ -18,7 +18,8 @@ export async function* iterFormatHunk(
     context: Context,
     diffType: 'unified-diff' | 'combined-diff',
     hunkHeaderLine: string,
-    hunkParts: HunkPart[]
+    hunkParts: HunkPart[],
+    forceUnified: boolean = false
 ): AsyncIterable<FormattedString> {
     const { HUNK_HEADER_COLOR, SCREEN_WIDTH, MIN_LINE_WIDTH } = context;
 
@@ -37,7 +38,8 @@ export async function* iterFormatHunk(
     );
 
     // Only split diffs if there's enough room
-    const splitDiffs = SCREEN_WIDTH >= MIN_LINE_WIDTH * hunkParts.length;
+    const splitDiffs =
+        !forceUnified && SCREEN_WIDTH >= MIN_LINE_WIDTH * hunkParts.length;
 
     if (splitDiffs) {
         yield* iterFormatHunkSplit(context, hunkParts, changes);

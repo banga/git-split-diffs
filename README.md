@@ -55,6 +55,16 @@ You can disable this with the `highlight-line-changes` setting:
 git config split-diffs.highlight-line-changes false
 ```
 
+### Unified diffs for one-sided files
+
+A file that only has additions, or only has deletions, leaves one half of a split diff empty. To show such files as unified diffs, and keep split diffs for files that have both, enable the `unify-one-sided-diffs` setting:
+
+```
+git config split-diffs.unify-one-sided-diffs true
+```
+
+This decides per file rather than per hunk, so each file's hunks are held back until the whole file has been read.
+
 ### Enable scrolling in the terminal
 
 ```sh
