@@ -522,6 +522,38 @@ index 095ee29..439621e 100644
             ).toMatchSnapshot();
         });
 
+        test('commits with a custom pretty format', async function () {
+            expect(
+                await transform(
+                    config,
+                    `
+Commit:  2222222222222222222222222222222222222222
+Subject: Second commit
+
+diff --git a/file.md b/file.md
+index 1111111..2222222 100644
+--- a/file.md
++++ b/file.md
+@@ -1,2 +1,2 @@
+ first
+-second
++changed second
+Commit:  1111111111111111111111111111111111111111
+Subject: First commit
+
+diff --git a/file.md b/file.md
+index 0000000..1111111 100644
+--- a/file.md
++++ b/file.md
+@@ -1 +1,2 @@
+ first
++second
+\\ No newline at end of file
+`
+                )
+            ).toMatchSnapshot();
+        });
+
         test('merge commit with 2 parents', async function () {
             // Source: the TypeScript repo
             expect(
