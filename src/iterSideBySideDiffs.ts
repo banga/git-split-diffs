@@ -18,6 +18,33 @@ const ANSI_COLOR_CODE_REGEX = ansiRegex();
 const BINARY_FILES_DIFF_REGEX =
     /^Binary files (?:a\/(.*)|\/dev\/null) and (?:b\/(.*)|\/dev\/null) differ$/;
 
+/**
+ * Diffs without hunks (empty files, mode changes) have no "---" and "+++"
+ * lines, so the file name has to come from the "diff --git a/<name> b/<name>"
+ * line. Spaces in names are not escaped there either, so this only trusts it
+ * when both halves name the same file.
+ */
+function getFileNameFromDiffGitLine(line: string): string {
+    const paths = line.slice('diff --git '.length);
+    const middle = (paths.length - 1) / 2;
+    if (!Number.isInteger(middle) || paths[middle] !== ' ') {
+        return '';
+    }
+    const pathA = paths.slice(0, middle);
+    const pathB = paths.slice(middle + 1);
+    if (pathA === pathB) {
+        return pathA;
+    }
+    if (
+        pathA.startsWith('a/') &&
+        pathB.startsWith('b/') &&
+        pathA.slice(2) === pathB.slice(2)
+    ) {
+        return pathA.slice(2);
+    }
+    return '';
+}
+
 // Combined hunk headers begin with N+1 @ characters for N parents
 const COMBINED_HUNK_HEADER_START_REGEX = /^(@{2,}) /;
 
@@ -157,7 +184,13 @@ async function* iterSideBySideDiffsFormatted(
             }
             case 'unified-diff':
             case 'combined-diff': {
-                if (line.startsWith('--- a/')) {
+                if (line.startsWith('diff --git ')) {
+                    fileNameA = fileNameB = getFileNameFromDiffGitLine(line);
+                } else if (line.startsWith('new file mode ')) {
+                    fileNameA = '';
+                } else if (line.startsWith('deleted file mode ')) {
+                    fileNameB = '';
+                } else if (line.startsWith('--- a/')) {
                     fileNameA = line.slice('--- a/'.length);
                 } else if (line.startsWith('+++ b/')) {
                     fileNameB = line.slice('+++ b/'.length);

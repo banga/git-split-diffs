@@ -522,6 +522,31 @@ index 095ee29..439621e 100644
             ).toMatchSnapshot();
         });
 
+        test('commit with files without hunks', async function () {
+            expect(
+                await transform(
+                    config,
+                    `
+commit 1111111111111111111111111111111111111111
+Author: Shrey Banga <banga.shrey@gmail.com>
+Date:   Sun Apr 11 15:25:34 2021 -0700
+
+    Add, delete and chmod files without content changes
+
+diff --git a/empty.txt b/empty.txt
+new file mode 100644
+index 0000000..e69de29
+diff --git a/old empty.txt b/old empty.txt
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/script.sh b/script.sh
+old mode 100644
+new mode 100755
+`
+                )
+            ).toMatchSnapshot();
+        });
+
         test('merge commit with 2 parents', async function () {
             // Source: the TypeScript repo
             expect(
