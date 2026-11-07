@@ -24,6 +24,7 @@ const TEST_CONFIG: Config = {
     MIN_LINE_WIDTH: 60,
     WRAP_LINES: false,
     HIGHLIGHT_LINE_CHANGES: false,
+    UNIFY_ONE_SIDED_DIFFS: false,
     ...TEST_THEME,
 };
 
@@ -55,6 +56,10 @@ const CONFIG_OVERRIDES: Record<string, TestOverrides> = {
         HIGHLIGHT_LINE_CHANGES: true,
         DELETED_WORD_COLOR: { color: { r: 255, g: 0, b: 0, a: 255 } },
         INSERTED_WORD_COLOR: { color: { r: 0, g: 255, b: 0, a: 255 } },
+    },
+    unifyOneSidedDiffs: {
+        MIN_LINE_WIDTH: 60,
+        UNIFY_ONE_SIDED_DIFFS: true,
     },
     syntaxHighlighted: {
         MIN_LINE_WIDTH: 60,
@@ -518,6 +523,55 @@ index 095ee29..439621e 100644
 @@ -1 +1,2 @@
 +All good
  This is file2`
+                )
+            ).toMatchSnapshot();
+        });
+
+        test('commit with one-sided and two-sided files', async function () {
+            expect(
+                await transform(
+                    config,
+                    `
+commit 1111111111111111111111111111111111111111
+Author: Shrey Banga <banga.shrey@gmail.com>
+Date:   Sun Apr 11 15:25:34 2021 -0700
+
+    Mix of changes
+
+diff --git a/added.md b/added.md
+index 1111111..2222222 100644
+--- a/added.md
++++ b/added.md
+@@ -1,2 +1,3 @@
+ first
++inserted
+ second
+@@ -10,2 +11,3 @@
+ tenth
++another insert
+ eleventh
+diff --git a/mixed.md b/mixed.md
+index 3333333..4444444 100644
+--- a/mixed.md
++++ b/mixed.md
+@@ -1,3 +1,3 @@
+ first
++only inserted in this hunk
+ second
+-third
+@@ -10,3 +10,2 @@
+ tenth
+-only deleted in this hunk
+ eleventh
+diff --git a/deleted.md b/deleted.md
+index 5555555..6666666 100644
+--- a/deleted.md
++++ b/deleted.md
+@@ -1,3 +1,2 @@
+ first
+-removed
+ second
+`
                 )
             ).toMatchSnapshot();
         });

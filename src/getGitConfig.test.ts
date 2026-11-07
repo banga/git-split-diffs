@@ -9,6 +9,7 @@ import {
 const DEFAULT_CONFIG: GitConfig = {
     WRAP_LINES: true,
     HIGHLIGHT_LINE_CHANGES: true,
+    UNIFY_ONE_SIDED_DIFFS: false,
     MIN_LINE_WIDTH: DEFAULT_MIN_LINE_WIDTH,
     THEME_NAME: DEFAULT_THEME_NAME,
     THEME_DIRECTORY: DEFAULT_THEME_DIRECTORY,
@@ -24,6 +25,7 @@ describe('getGitConfig', () => {
             getGitConfig(`
 split-diffs.wrap-lines=false
 split-diffs.highlight-line-changes=false
+split-diffs.unify-one-sided-diffs=true
 split-diffs.min-line-width=40
 split-diffs.theme-name=arctic
 split-diffs.theme-directory=/tmp
@@ -32,6 +34,7 @@ split-diffs.syntax-highlighting-theme=dark-plus
         ).toEqual({
             WRAP_LINES: false,
             HIGHLIGHT_LINE_CHANGES: false,
+            UNIFY_ONE_SIDED_DIFFS: true,
             MIN_LINE_WIDTH: 40,
             THEME_NAME: 'arctic',
             THEME_DIRECTORY: '/tmp',
@@ -57,6 +60,7 @@ split-diffs.syntax-highlighting-theme=nord
             getGitConfig(`
 split-diffs.wrap-lines=1
 split-diffs.highlight-line-changes=1
+split-diffs.unify-one-sided-diffs=1
 split-diffs.min-line-width=bar
 split-diffs.syntax-highlighting-theme=foo
 split-diffs.theme-name=baz

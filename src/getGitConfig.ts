@@ -5,6 +5,7 @@ export type GitConfig = {
     MIN_LINE_WIDTH: number;
     WRAP_LINES: boolean;
     HIGHLIGHT_LINE_CHANGES: boolean;
+    UNIFY_ONE_SIDED_DIFFS: boolean;
     THEME_DIRECTORY: string;
     THEME_NAME: string;
     SYNTAX_HIGHLIGHTING_THEME?: string;
@@ -53,6 +54,7 @@ export function getGitConfig(configString: string): GitConfig {
         MIN_LINE_WIDTH: minLineWidth,
         WRAP_LINES: rawConfig['wrap-lines'] !== 'false',
         HIGHLIGHT_LINE_CHANGES: rawConfig['highlight-line-changes'] !== 'false',
+        UNIFY_ONE_SIDED_DIFFS: rawConfig['unify-one-sided-diffs'] === 'true',
         THEME_DIRECTORY:
             rawConfig['theme-directory'] ?? DEFAULT_THEME_DIRECTORY,
         THEME_NAME: rawConfig['theme-name'] ?? DEFAULT_THEME_NAME,

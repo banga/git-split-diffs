@@ -6,12 +6,14 @@ export type Config = Theme & {
     MIN_LINE_WIDTH: number;
     WRAP_LINES: boolean;
     HIGHLIGHT_LINE_CHANGES: boolean;
+    UNIFY_ONE_SIDED_DIFFS: boolean;
 };
 
 export const CONFIG_DEFAULTS: Omit<Config, keyof Theme> = {
     MIN_LINE_WIDTH: 80,
     WRAP_LINES: true,
     HIGHLIGHT_LINE_CHANGES: true,
+    UNIFY_ONE_SIDED_DIFFS: false,
 };
 
 export function getConfig(gitConfig: GitConfig): Config {
